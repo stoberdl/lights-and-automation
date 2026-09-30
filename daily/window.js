@@ -61,8 +61,11 @@ html.win #toast{z-index:200}
 .w-dry:empty{display:none}
 
 /* up and left: what's playing, only while something is */
-.w-player{position:absolute;left:64px;top:300px;width:660px;padding:18px;display:flex;gap:20px;align-items:center;
-  animation:w-pop .45s ease both}
+.w-player{position:absolute;left:64px;top:318px;width:660px;padding:18px;display:flex;gap:20px;align-items:center;
+  animation:w-pop .45s ease both;transition:top .4s ease}
+/* When rain is due the dry line goes and the rain card takes the bottom, so
+   the player moves up into the space the dry line left. */
+.win-stage.has-cast .w-player{top:252px}
 .w-player[hidden]{display:none}
 @keyframes w-pop{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:none}}
 .w-player .media-art{width:200px;height:112px;border-radius:18px;flex:none;position:relative;overflow:hidden;
@@ -90,10 +93,10 @@ html.win #toast{z-index:200}
 .w-player #media-vol{flex:1;min-width:0;accent-color:#fff;height:28px}
 
 /* bottom left: the next two hours, only when something is due */
-.w-cast{position:absolute;left:64px;bottom:44px;width:720px;padding:22px 28px}
+.w-cast{position:absolute;left:64px;bottom:44px;width:720px;padding:16px 26px 14px}
 .w-cast[hidden]{display:none}
-.w-cast .h{font-size:32px;font-weight:600;display:flex;gap:12px;align-items:center}
-.w-cast .d{font-size:20px;opacity:.85;margin:4px 0 10px}
+.w-cast .h{font-size:30px;font-weight:600;display:flex;gap:12px;align-items:center}
+.w-cast .d{font-size:19px;opacity:.85;margin:2px 0 6px}
 
 /* top right: why today */
 .w-today{position:absolute;right:64px;top:40px;text-align:right;max-width:1060px}
@@ -127,6 +130,7 @@ html.win #toast{z-index:200}
 .w-more{position:relative}
 .w-more .row{display:flex;gap:8px;margin:0!important;align-items:center}
 .w-more select{display:none!important}
+.w-more .row[hidden]{display:none!important}
 .w-more .picker{flex:1;min-width:0;position:relative}
 .w-more .pick-btn{width:100%;height:56px;border-radius:16px;border:0;background:rgba(255,255,255,.14);color:#fff;
   font:500 20px Outfit,"Segoe UI",sans-serif;text-align:left;padding:0 16px;cursor:pointer}
@@ -143,6 +147,44 @@ html.win #toast{z-index:200}
 .w-ask.rec{background:#ff5b5b;color:#fff}
 .w-menu{position:absolute;right:18px;top:8px;width:44px;height:44px;border-radius:50%;border:0;
   background:rgba(14,20,34,.35);color:#fff;font-size:22px;cursor:pointer;opacity:.55}
+
+/* new theme art on the dock keys */
+.w-dock .qb .hero-art > *:not(svg){display:none}
+.w-dock .qb .hero-art svg{position:absolute;inset:0;width:100%;height:100%}
+.w-dock .qb::before,.w-dock .qb::after{display:none!important}
+.w-dock .qb{background:#222!important}
+.w-dock .qb.busy{opacity:.6}
+.w-alltheme{width:100%;height:56px;border-radius:16px;border:0;cursor:pointer;color:#fff;
+  background:rgba(255,255,255,.16);font:600 20px Outfit,"Segoe UI",sans-serif;display:flex;align-items:center;gap:12px;padding:0 16px}
+.w-alltheme svg{width:26px;height:26px;flex:none}
+.w-alltheme[aria-expanded="true"]{background:#fff;color:#141a26}
+
+/* every theme, as pictures: the pop-out */
+.w-pop{position:absolute;right:64px;bottom:200px;width:1524px;padding:18px 20px 20px;z-index:30;
+  transform-origin:78% 100%;background:rgba(10,14,24,.72)}
+.w-pop[hidden]{display:none}
+.w-pop.open{animation:w-popin .38s cubic-bezier(.2,.9,.25,1.12) both}
+.w-pop.closing{animation:w-popout .2s ease-in both}
+@keyframes w-popin{from{opacity:0;transform:translateY(40px) scale(.9)}to{opacity:1;transform:none}}
+@keyframes w-popout{to{opacity:0;transform:translateY(24px) scale(.96)}}
+.w-pop-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.w-pop-h b{font-size:20px;letter-spacing:.14em;text-transform:uppercase;font-weight:600}
+.w-pop-h span{font-size:18px;opacity:.7;margin-left:16px}
+.w-pop .w-close{position:static}
+.w-pop-grid{display:grid;grid-template-columns:repeat(7,200px);gap:14px}
+.w-pt{position:relative;width:200px;height:125px;border-radius:20px;overflow:hidden;border:0;padding:0;cursor:pointer;
+  background:#222;box-shadow:0 8px 20px rgba(0,0,0,.35);animation:w-tile .42s cubic-bezier(.2,.9,.3,1.15) both;
+  animation-delay:calc(var(--i) * 16ms);transition:transform .15s ease, box-shadow .15s ease}
+.w-pt:hover,.w-pt:focus-visible{transform:translateY(-4px) scale(1.03);box-shadow:0 14px 30px rgba(0,0,0,.45),0 0 0 3px #fff;outline:none}
+.w-pt:active{transform:scale(.97)}
+@keyframes w-tile{from{opacity:0;transform:translateY(22px) scale(.92)}to{opacity:1;transform:none}}
+.w-pt svg{position:absolute;inset:0;width:100%;height:100%}
+.w-pt .nm{position:absolute;left:12px;bottom:9px;font-size:21px;font-weight:600;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.7);z-index:2}
+.w-pt .st{position:absolute;right:8px;top:6px;width:34px;height:34px;display:grid;place-items:center;font-size:20px;z-index:2;
+  color:#fff;border-radius:50%;background:rgba(0,0,0,.28);opacity:.75}
+.w-pt .st.on{color:#ffd24a;opacity:1}
+.w-pt.busy::after{content:"";position:absolute;inset:0;background:rgba(255,255,255,.25);z-index:3}
+@media (prefers-reduced-motion:reduce){.w-pop.open,.w-pop.closing,.w-pt{animation:none}}
 
 /* the console, when you ask for it or while Claude is working */
 .w-con{position:absolute;right:64px;top:40px;width:1060px;height:440px;padding:20px 24px;display:flex;flex-direction:column}
@@ -282,8 +324,10 @@ function paintWeather(){
     card.innerHTML = `<div class="h">${ico}${escH(c.headline)}</div><div class="d">${escH(c.detail || "")}</div>${chart(c, fam === "snow" ? "#ffffff" : "#9fd8ff")}`;
     card.hidden = false;
     q("#w-dry").innerHTML = "";
+    q("#win-stage").classList.add("has-cast");
   } else {
     card.hidden = true;
+    q("#win-stage").classList.remove("has-cast");
     q("#w-dry").innerHTML = c ? `${ICON.drop.replace('width="30" height="30"', 'width="22" height="22"')} ${escH(c.headline === "Clear" || !c.detail ? "Dry for the next 2 hours" : c.detail)}` : "";
   }
 
@@ -331,12 +375,12 @@ function chart(c, col){
   const span = Math.max(stops || 0, (starts || 0) + (lasts || 0), lastWet + 1) <= 55 ? 60 : 120;
   prof = prof.slice(0, span);
   const peak = Math.max(.6, ...prof);                 // light rain stays modest
-  const w = 664, h = 104, fs = 16, plotH = h - fs - 10, n = 60, bw = w / n, per = span / n;
+  const w = 664, h = 86, fs = 15, plotH = h - fs - 8, n = 60, bw = w / n, per = span / n;
   let s = "";
   for(let k = 0; k < n; k++){
     const v = Math.max(...prof.slice(Math.floor(k * per), Math.floor((k + 1) * per)).concat(0));
     if(v <= .02) continue;
-    const bh = Math.max(4, v / peak * (plotH - 6));
+    const bh = Math.max(plotH * .3, v / peak * (plotH - 6));   // light rain still reads as rain
     s += `<rect x="${(k * bw + bw * .18).toFixed(1)}" y="${(plotH - bh).toFixed(1)}" width="${(bw * .64).toFixed(1)}" height="${bh.toFixed(1)}" rx="${(bw * .3).toFixed(1)}" fill="${col}"/>`;
   }
   const labels = span === 60 ? ["Now", "15m", "30m", "45m", "1h"] : ["Now", "30m", "1h", "1h 30m", "2h"];
@@ -425,6 +469,64 @@ function aurora(T){
 }
 function loop(now){ const dt = Math.min(.05, (now - FX.t0) / 1000); FX.t0 = now; step(dt); requestAnimationFrame(loop); }
 
+/* ------------------------------------------------------------ theme art */
+let artReady = null;
+function loadThemeArt(){
+  if(window.themeArt) return Promise.resolve();
+  return artReady || (artReady = new Promise(res => {
+    const s = document.createElement("script"); s.src = "/daily/theme-art.js";
+    s.onload = res; s.onerror = res;            // no art: the keys keep their old pictures
+    document.head.appendChild(s);
+  }));
+}
+function decorateKeys(){
+  if(!window.themeArt) return;
+  document.querySelectorAll("#quick .qb").forEach(b => {
+    if(b.dataset.ta === b.dataset.t) return;
+    const nm = (b.querySelector(".nm2") || {}).textContent || b.dataset.t;
+    const svg = themeArt(b.dataset.t, nm), box = b.querySelector(".hero-art");
+    if(svg && box){ box.innerHTML = svg; b.dataset.ta = b.dataset.t; }
+  });
+}
+let THEMES = null;
+async function themeList(){
+  if(THEMES) return THEMES;
+  try {
+    const r = await fetch("/api/lightd/themes", {cache: "no-store"}), j = await r.json();
+    const list = Array.isArray(j) ? j : (j.themes || []);
+    THEMES = list.map(t => ({id: t.id, name: t.name || t.id})).sort((a, b) => a.name.localeCompare(b.name));
+  } catch { THEMES = []; }
+  return THEMES;
+}
+const favList = () => { try { return typeof favs === "function" ? favs() : []; } catch { return []; } };
+function paintStars(){
+  const f = favList();
+  document.querySelectorAll("#w-pop-grid .w-pt").forEach(t => {
+    const on = f.includes(t.dataset.t), st = t.querySelector(".st");
+    st.classList.toggle("on", on); st.textContent = on ? "★" : "☆";
+    st.setAttribute("aria-label", (on ? "Remove " : "Keep ") + t.dataset.n + (on ? " from the dock" : " in the dock"));
+  });
+}
+async function openPop(){
+  await loadThemeArt();
+  const list = await themeList(), grid = q("#w-pop-grid");
+  if(grid.dataset.n !== String(list.length)){
+    grid.innerHTML = list.map((t, i) => `<button class="w-pt" style="--i:${i}" data-t="${escH(t.id)}" data-n="${escH(t.name)}" aria-label="${escH(t.name)}">${(window.themeArt && themeArt(t.id, t.name)) || ""}<span class="nm">${escH(t.name)}</span><span class="st" role="button">☆</span></button>`).join("");
+    grid.dataset.n = String(list.length);
+  } else grid.querySelectorAll(".w-pt").forEach(t => { t.style.animation = "none"; void t.offsetWidth; t.style.animation = ""; });
+  paintStars();
+  const pop = q("#w-pop");
+  pop.classList.remove("closing"); pop.hidden = false; void pop.offsetWidth; pop.classList.add("open");
+  q("#w-alltheme").setAttribute("aria-expanded", "true");
+  q("#w-today").style.visibility = "hidden";
+}
+function closePop(){
+  const pop = q("#w-pop"); if(pop.hidden) return;
+  pop.classList.remove("open"); pop.classList.add("closing");
+  q("#w-alltheme").setAttribute("aria-expanded", "false");
+  setTimeout(() => { pop.hidden = true; pop.classList.remove("closing"); if(q("#w-con").hidden) q("#w-today").style.visibility = ""; }, 200);
+}
+
 /* ----------------------------------------------------------------- layout */
 function fit(){
   const st = q("#win-stage"); if(!st) return;
@@ -475,11 +577,18 @@ function windowLayout(){
   </div>`;
   document.body.appendChild(root);
 
-  // Quick apply: the four keys, then the rest of the list behind a picker.
+  // Quick apply: the favourite keys, redrawn with the new theme art whenever
+  // the page repaints them (paintQuick rebuilds the row on every star).
   const quick = q("#quick"); if(quick) q("#w-quick").appendChild(quick);
+  loadThemeArt().then(() => { decorateKeys(); if(quick) new MutationObserver(decorateKeys).observe(quick, {childList: true}); });
+  // The rest of the list: one button, which opens every theme as a picture.
+  // The old <select> row stays in the DOM (the page still fills it) but is
+  // not shown here.
   const moreRow = q("#q-more") && q("#q-more").closest(".row");
-  if(moreRow){ q("#w-more").appendChild(moreRow); const fav = q("#q-fav"); if(fav) fav.hidden = true; }
-  if(typeof wirePicker === "function") wirePicker();
+  if(moreRow){ moreRow.hidden = true; q("#w-more").appendChild(moreRow); }
+  const all = el("button", "w-alltheme", `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>All themes`);
+  all.id = "w-alltheme"; all.setAttribute("aria-expanded", "false"); all.setAttribute("aria-controls", "w-pop");
+  q("#w-more").appendChild(all);
   if(typeof wireMaster === "function") wireMaster();
 
   // The player, up and left. paintMedia finds its column by .bar-media and
@@ -505,6 +614,31 @@ function windowLayout(){
   };
   q("#w-menu").onclick = () => { location.search = "?view=classic"; };
 
+  // Every theme, as pictures.
+  const pop = el("div", "w-pop glass"); pop.id = "w-pop"; pop.hidden = true;
+  pop.setAttribute("role", "dialog"); pop.setAttribute("aria-label", "All themes");
+  pop.innerHTML = `<div class="w-pop-h"><div><b>All themes</b><span>Tap one to set every light · ★ keeps it in the dock</span></div>
+    <button class="w-close" id="w-pop-x" aria-label="Close">✕</button></div><div class="w-pop-grid" id="w-pop-grid"></div>`;
+  q("#win-stage").appendChild(pop);
+  all.onclick = e => { e.stopPropagation(); pop.hidden ? openPop() : closePop(); };
+  q("#w-pop-x").onclick = closePop;
+  pop.addEventListener("click", e => e.stopPropagation());
+  q("#win-stage").addEventListener("click", () => { if(!pop.hidden) closePop(); });
+  document.addEventListener("keydown", e => { if(e.key === "Escape" && !pop.hidden) closePop(); });
+  q("#w-pop-grid").addEventListener("click", e => {
+    const t = e.target.closest(".w-pt"); if(!t) return;
+    const id = t.dataset.t, nm = t.dataset.n;
+    if(e.target.closest(".st")){
+      if(typeof toggleFav === "function") toggleFav(id, nm);
+      setTimeout(paintStars, 250);
+      return;
+    }
+    if(typeof applyTheme !== "function") return;
+    t.classList.add("busy");
+    applyTheme(id, null).finally(() => t.classList.remove("busy"));
+    setTimeout(closePop, 350);
+  });
+
   // Effects canvases.
   g = q("#wl-fx").getContext("2d"); ga = q("#wl-aur").getContext("2d");
   flake = document.createElement("canvas"); flake.width = flake.height = 32;
@@ -523,6 +657,9 @@ function windowLayout(){
     const mic = q("#mini-mic"); q("#w-ask").classList.toggle("rec", !!(mic && mic.classList.contains("rec")));
   }, 3000);
   setTimeout(paintWeather, 800);
+  // #allthemes opens the pop-out on load: a preview for a panel nobody is
+  // standing at.
+  if(location.hash === "#allthemes") setTimeout(openPop, 1200);
 }
 window.windowLayout = windowLayout;
 })();

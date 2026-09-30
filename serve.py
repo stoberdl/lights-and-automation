@@ -565,7 +565,7 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, OSError):
             return self.send_json(404, {"detail": "no such daily file"})
         ctype = self.DAILY_TYPES.get(f.suffix.lower())
-        allowed = (len(rel.parts) == 1 and rel.name in ("window.js", "days.json")) or \
+        allowed = (len(rel.parts) == 1 and rel.name in ("window.js", "theme-art.js", "days.json")) or \
                   (len(rel.parts) > 1 and rel.parts[0] in self.DAILY_DIRS)
         if not (ctype and allowed and f.is_file()):
             return self.send_json(404, {"detail": "no such daily file"})
