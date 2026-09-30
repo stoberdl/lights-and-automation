@@ -65,7 +65,7 @@ html.win #toast{z-index:200}
   animation:w-pop .45s ease both;transition:top .4s ease}
 /* When rain is due the dry line goes and the rain card takes the bottom, so
    the player moves up into the space the dry line left. */
-.win-stage.has-cast .w-player{top:252px}
+.win-stage.has-cast .w-player{top:246px}
 .w-player[hidden]{display:none}
 @keyframes w-pop{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:none}}
 .w-player .media-art{width:200px;height:112px;border-radius:18px;flex:none;position:relative;overflow:hidden;
@@ -73,18 +73,18 @@ html.win #toast{z-index:200}
 /* Full art: the still fills the whole card, darkened on the left where the
    text sits, the way the old media column did. Without art (the Chromecast
    never sends any) the card stays glass with the small glyph plate. */
-.w-player.has-art{background:#0a0e18;overflow:hidden;min-height:210px;align-items:flex-end;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),0 12px 30px rgba(0,0,0,.35)}
-/* layer 1: the still, blurred, filling every corner so nothing is letterboxed */
-.w-player.has-art::before{content:"";position:absolute;inset:-40px;z-index:0;
-  background:var(--art) center/cover no-repeat;filter:blur(28px) saturate(1.35) brightness(.62)}
-/* layer 2: the whole still, sharp, on the right, fading into the blur */
-.w-player.has-art::after{content:"";position:absolute;top:0;bottom:0;right:0;width:374px;z-index:0;
-  background:var(--art) center/cover no-repeat;
-  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 34%);mask-image:linear-gradient(90deg,transparent 0,#000 34%)}
+/* Full art: the card is the still's own 16:9 shape and the still fills all
+   of it, sharp and uncropped. Title and controls sit at the foot over a
+   scrim, as on the old media column. */
+.w-player.has-art{width:480px;height:270px;padding:18px 20px;overflow:hidden;align-items:flex-end;
+  background:#0a0e18 var(--art) center/cover no-repeat;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),0 12px 30px rgba(0,0,0,.4);transition:top .4s ease,width .4s ease,height .4s ease}
+.w-player.has-art::before{content:"";position:absolute;inset:0;z-index:0;
+  background:linear-gradient(180deg,rgba(0,0,0,.35) 0%,rgba(0,0,0,0) 28%,rgba(0,0,0,0) 42%,rgba(0,0,0,.82) 100%)}
 .w-player > *{position:relative;z-index:1}
 .w-player.has-art .media-art{display:none}
-.w-player.has-art .media{max-width:380px;text-shadow:0 2px 10px rgba(0,0,0,.6)}
+.w-player.has-art .media{text-shadow:0 2px 10px rgba(0,0,0,.7)}
+.win-stage.has-cast .w-player.has-art{width:384px;height:216px}
 .w-player .media-art .plate-ring svg{width:56px;height:56px;opacity:.8}
 .w-player .media{all:unset;display:block;flex:1;min-width:0;position:relative;z-index:2}
 .w-player .media, .w-player .media-src, .w-player .media-title, .w-player .media-by{color:#fff!important}
