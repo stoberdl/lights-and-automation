@@ -65,7 +65,7 @@ html.win #toast{z-index:200}
   animation:w-pop .45s ease both;transition:top .4s ease}
 /* When rain is due the dry line goes and the rain card takes the bottom, so
    the player moves up into the space the dry line left. */
-.win-stage.has-cast .w-player{top:246px}
+.win-stage.has-cast .w-player{top:240px}
 .w-player[hidden]{display:none}
 @keyframes w-pop{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:none}}
 .w-player .media-art{width:200px;height:112px;border-radius:18px;flex:none;position:relative;overflow:hidden;
@@ -76,7 +76,7 @@ html.win #toast{z-index:200}
 /* Full art: the card is the still's own 16:9 shape and the still fills all
    of it, sharp and uncropped. Title and controls sit at the foot over a
    scrim, as on the old media column. */
-.w-player.has-art{width:480px;height:270px;padding:18px 20px;overflow:hidden;align-items:flex-end;
+.w-player.has-art{width:540px;height:304px;padding:18px 20px;overflow:hidden;align-items:flex-end;
   background:#0a0e18 var(--art-full, var(--art)) no-repeat;
   background-size:var(--art-size, cover);background-position:var(--art-pos, center);
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),0 12px 30px rgba(0,0,0,.4);transition:none}
@@ -85,7 +85,10 @@ html.win #toast{z-index:200}
 .w-player > *{position:relative;z-index:1}
 .w-player.has-art .media-art{display:none}
 .w-player.has-art .media{text-shadow:0 2px 10px rgba(0,0,0,.7)}
-.win-stage.has-cast .w-player.has-art{width:384px;height:216px}
+.win-stage.has-cast .w-player.has-art{width:412px;height:230px;padding-top:10px;padding-bottom:12px}
+.win-stage.has-cast .w-player .media-by{display:none}
+.win-stage.has-cast .w-player .media-controls{margin-top:6px}
+.win-stage.has-cast .w-vol{margin-top:6px}
 .w-player .media-art .plate-ring svg{width:56px;height:56px;opacity:.8}
 .w-player .media{all:unset;display:block;flex:1;min-width:0;position:relative;z-index:2}
 .w-player .media, .w-player .media-src, .w-player .media-title, .w-player .media-by{color:#fff!important}
@@ -104,7 +107,19 @@ html.win #toast{z-index:200}
 .w-player .media .i-play,.w-player .media.paused .i-pause{display:none}
 .w-player .media .i-mute,.w-player .media.muted .i-vol{display:none}
 .w-player .media .i-vol,.w-player .media.muted .i-mute{display:block}
-.w-player #media-vol{flex:1;min-width:0;accent-color:#fff;height:28px}
+/* volume: its own full-width row, a thumb you can grab, 1% buttons either
+   side, and the figure always showing */
+.w-vol{display:flex;align-items:center;gap:10px;margin-top:10px}
+.w-vb{width:52px;height:52px;flex:none;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;
+  font:500 30px/1 Outfit,"Segoe UI",sans-serif;display:grid;place-items:center;cursor:pointer;padding:0;touch-action:none;user-select:none}
+.w-vb:active{background:rgba(255,255,255,.34)}
+.w-player #media-vol{flex:1;min-width:0;height:52px;margin:0}
+.w-player #media-vol::-webkit-slider-runnable-track{height:12px;border-radius:99px;border:0;
+  background:linear-gradient(90deg,#fff var(--fill,100%),rgba(255,255,255,.25) var(--fill,100%))}
+.w-player #media-vol::-webkit-slider-thumb{width:36px;height:36px;margin-top:-12px;border-radius:50%;background:#fff;border:0;
+  box-shadow:0 2px 10px rgba(0,0,0,.5)}
+.w-player .vol-val{opacity:1!important;visibility:visible!important;display:block!important;font-size:22px;font-weight:600;
+  min-width:62px;text-align:right;font-variant-numeric:tabular-nums;color:#fff!important}
 
 /* bottom left: the next two hours, only when something is due */
 .w-cast{position:absolute;left:64px;bottom:44px;width:720px;padding:16px 26px 14px}
@@ -654,6 +669,37 @@ function windowLayout(){
   player.append(artI);
   const mw = q("#media-w"); if(mw) player.append(mw);
   q("#win-stage").appendChild(player);
+
+  // Volume gets its own row with 1% steps. The buttons move the page's own
+  // slider and fire its own events, so the send-on-release logic in
+  // index.html is still the one that talks to the player.
+  const vol = q("#media-vol");
+  if(vol && mw){
+    const row = el("div", "w-vol");
+    const minus = el("button", "w-vb", "−"), plus = el("button", "w-vb", "+");
+    minus.setAttribute("aria-label", "Volume down 1%"); plus.setAttribute("aria-label", "Volume up 1%");
+    row.append(minus, vol, plus);
+    const vv = q("#media-vol-v"); if(vv) row.append(vv);
+    mw.appendChild(row);
+    let sendT = null, rep = null, repT = null;
+    const nudge = d => {
+      if(vol.disabled) return;
+      vol.value = Math.max(0, Math.min(100, Number(vol.value) + d));
+      vol.dispatchEvent(new Event("input"));
+      clearTimeout(sendT); sendT = setTimeout(() => vol.dispatchEvent(new Event("change")), 450);
+    };
+    const hold = (btn, d) => {
+      const stop = () => { clearTimeout(repT); clearInterval(rep); };
+      btn.addEventListener("pointerdown", e => { e.preventDefault(); nudge(d); stop();
+        repT = setTimeout(() => { rep = setInterval(() => nudge(d), 90); }, 380); });
+      ["pointerup", "pointerleave", "pointercancel"].forEach(ev => btn.addEventListener(ev, stop));
+      btn.addEventListener("keydown", e => { if(e.key === "Enter" || e.key === " "){ e.preventDefault(); nudge(d); } });
+    };
+    hold(minus, -1); hold(plus, 1);
+    // Keep the figure current even when nobody is touching it.
+    const showV = () => { const v = q("#media-vol-v"); if(v && !vol.matches(":active")) v.textContent = vol.value + "%"; };
+    setInterval(showV, 1000); showV();
+  }
   // paintMedia marks the column with has-art; mirror it into the card class
   // the CSS reads (it is the same element, so this is just the variable).
 
