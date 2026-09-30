@@ -77,8 +77,9 @@ html.win #toast{z-index:200}
    of it, sharp and uncropped. Title and controls sit at the foot over a
    scrim, as on the old media column. */
 .w-player.has-art{width:480px;height:270px;padding:18px 20px;overflow:hidden;align-items:flex-end;
-  background:#0a0e18 var(--art) center/cover no-repeat;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),0 12px 30px rgba(0,0,0,.4);transition:top .4s ease,width .4s ease,height .4s ease}
+  background:#0a0e18 var(--art-full, var(--art)) no-repeat;
+  background-size:var(--art-size, cover);background-position:var(--art-pos, center);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),0 12px 30px rgba(0,0,0,.4);transition:none}
 .w-player.has-art::before{content:"";position:absolute;inset:0;z-index:0;
   background:linear-gradient(180deg,rgba(0,0,0,.35) 0%,rgba(0,0,0,0) 28%,rgba(0,0,0,0) 42%,rgba(0,0,0,.82) 100%)}
 .w-player > *{position:relative;z-index:1}
@@ -337,10 +338,10 @@ function paintWeather(){
     card.innerHTML = `<div class="h">${ico}${escH(c.headline)}</div><div class="d">${escH(c.detail || "")}</div>${chart(c, fam === "snow" ? "#ffffff" : "#9fd8ff")}`;
     card.hidden = false;
     q("#w-dry").innerHTML = "";
-    q("#win-stage").classList.add("has-cast");
+    if(!q("#win-stage").classList.contains("has-cast")){ q("#win-stage").classList.add("has-cast"); FRAME.url = ""; setTimeout(frameArt, 0); }
   } else {
     card.hidden = true;
-    q("#win-stage").classList.remove("has-cast");
+    if(q("#win-stage").classList.contains("has-cast")){ q("#win-stage").classList.remove("has-cast"); setTimeout(frameArt, 0); }
     q("#w-dry").innerHTML = c ? `${ICON.drop.replace('width="30" height="30"', 'width="22" height="22"')} ${escH(c.headline === "Clear" || !c.detail ? "Dry for the next 2 hours" : c.detail)}` : "";
   }
 
@@ -481,6 +482,48 @@ function aurora(T){
   ga.globalCompositeOperation = "source-over";
 }
 function loop(now){ const dt = Math.min(.05, (now - FX.t0) / 1000); FX.t0 = now; step(dt); requestAnimationFrame(loop); }
+
+/* ---------------------------------------------------- player art framing
+   A thumbnail is often a tall picture on a dark 16:9 field (vertical video,
+   album art). Find where the picture actually is - the columns and rows that
+   are not near-black - and zoom so that region fills the card edge to edge,
+   centred, a little high so faces and titles survive the crop. */
+const FRAME = { url: "", box: null, w: 0, h: 0 };
+function contentBox(img){
+  const W = 160, H = Math.round(160 * img.naturalHeight / img.naturalWidth) || 90;
+  const c = document.createElement("canvas"); c.width = W; c.height = H;
+  const x = c.getContext("2d", {willReadFrequently: true}); x.drawImage(img, 0, 0, W, H);
+  const d = x.getImageData(0, 0, W, H).data, lum = (i) => .2126 * d[i] + .7152 * d[i + 1] + .0722 * d[i + 2];
+  const col = new Array(W).fill(0), row = new Array(H).fill(0);
+  for(let yy = 0; yy < H; yy++) for(let xx = 0; xx < W; xx++){ if(lum((yy * W + xx) * 4) > 38){ col[xx]++; row[yy]++; } }
+  const on = (a, n) => a.map(v => v / n > .06);
+  const cs = on(col, H), rs = on(row, W);
+  let x0 = cs.indexOf(true), x1 = cs.lastIndexOf(true), y0 = rs.indexOf(true), y1 = rs.lastIndexOf(true);
+  if(x0 < 0 || y0 < 0) return null;
+  const pad = 2; x0 = Math.max(0, x0 - pad); x1 = Math.min(W - 1, x1 + pad); y0 = Math.max(0, y0 - pad); y1 = Math.min(H - 1, y1 + pad);
+  return { x: x0 / W, y: y0 / H, w: (x1 - x0 + 1) / W, h: (y1 - y0 + 1) / H };
+}
+function frameArt(){
+  const p = q("#w-player"); if(!p || p.hidden || !p.classList.contains("has-art")) return;
+  const raw = (p.style.getPropertyValue("--art-full") || p.style.getPropertyValue("--art") || "").trim();
+  const m = /url\("(.*)"\)/.exec(raw); if(!m) return;
+  const cw = p.clientWidth, ch = p.clientHeight;
+  const place = () => {
+    const b = FRAME.box; if(!b || !FRAME.w){ p.style.removeProperty("--art-size"); p.style.removeProperty("--art-pos"); return; }
+    const bw = b.w * FRAME.w, bh = b.h * FRAME.h, s = Math.max(cw / bw, ch / bh);
+    const iw = FRAME.w * s, ih = FRAME.h * s;
+    const ox = -(b.x * iw) + (cw - bw * s) / 2, oy = -(b.y * ih) + (ch - bh * s) * .35;
+    p.style.setProperty("--art-size", `${iw.toFixed(1)}px ${ih.toFixed(1)}px`);
+    p.style.setProperty("--art-pos", `${ox.toFixed(1)}px ${oy.toFixed(1)}px`);
+  };
+  if(FRAME.url === m[1]) return place();
+  FRAME.url = m[1]; FRAME.box = null; FRAME.w = 0;
+  const img = new Image(); img.crossOrigin = "anonymous";
+  img.onload = () => { if(FRAME.url !== m[1]) return; FRAME.w = img.naturalWidth; FRAME.h = img.naturalHeight;
+    try { FRAME.box = contentBox(img); } catch { FRAME.box = null; }   // a host without CORS: plain cover
+    place(); };
+  img.src = m[1];
+}
 
 /* ------------------------------------------------------------ theme art */
 let artReady = null;
@@ -665,6 +708,7 @@ function windowLayout(){
   // One slow tick for everything read from state the page keeps fresh.
   setInterval(() => {
     paintWeather();
+    frameArt();
     if(dateKey(new Date()) !== WS.key) loadDay(); else paintScene();
     if(ST().run) openCon();
     const mic = q("#mini-mic"); q("#w-ask").classList.toggle("rec", !!(mic && mic.classList.contains("rec")));

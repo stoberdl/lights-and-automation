@@ -7589,8 +7589,12 @@ function paintMedia(m){
     const key = arts.join("|");
     if(col.dataset.art !== key){
       col.dataset.art = key;
-      const use = (src, img) => {
+      const use = (src, img, full) => {
         col.style.setProperty("--art", src ? `url("${src}")` : "none");
+        // The uncropped 16:9 still as well. unbar() trims a vertical video
+        // down to its tall middle, which suits the classic portrait column;
+        // the scene bar's player is a wide card and wants the whole frame.
+        col.style.setProperty("--art-full", full ? `url("${full}")` : (src ? `url("${src}")` : "none"));
         col.classList.toggle("has-art", !!src);
         // Once per track, never per repaint: this runs every six seconds and
         // reading pixels back is the one expensive thing in it. The cache is
@@ -7617,7 +7621,7 @@ function paintMedia(m){
           // is the placeholder and the next rung is worth trying.
           if(img.naturalWidth && img.naturalWidth < 200) return step(i + 1);
           if(col.dataset.art !== key) return;
-          use(unbar(img) || arts[i], img);
+          use(unbar(img) || arts[i], img, arts[i]);
         };
         img.onerror = ()=> step(i + 1);
         // Set before .src, and the reason is the palette rather than the
