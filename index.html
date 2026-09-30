@@ -8633,6 +8633,18 @@ applySeason();
   const _view = new URLSearchParams(location.search).get("view");
   if(_view === "classic" || (_view === "bar" && !window.windowLayout)) barLayout();
   else if((_view === "bar" || _view === "window") && window.windowLayout) windowLayout();
+  // The classic board is reached from the new bar's ☰, and has no address
+  // bar to come back with - so it carries its own way back.
+  if(_view === "classic"){
+    const back = document.createElement("button");
+    back.className = "pill";
+    back.textContent = "← New bar";
+    back.title = "Back to the scene view";
+    back.style.cssText = "margin:.4rem auto 0;font-weight:600";
+    back.onclick = () => { location.search = "?view=bar"; };
+    const rail = document.querySelector(".rail");
+    (rail || document.body).appendChild(back);
+  }
 }
 
 /* #dbg - layout diagnostic. Loading the page with that hash replaces it with a

@@ -70,10 +70,23 @@ html.win #toast{z-index:200}
 @keyframes w-pop{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:none}}
 .w-player .media-art{width:200px;height:112px;border-radius:18px;flex:none;position:relative;overflow:hidden;
   background:linear-gradient(135deg,#2d3a52,#151c2a);display:grid;place-items:center}
-.w-player.has-art .media-art{background:var(--art) center/cover no-repeat}
-.w-player.has-art .media-art .plate-ring{display:none}
+/* Full art: the still fills the whole card, darkened on the left where the
+   text sits, the way the old media column did. Without art (the Chromecast
+   never sends any) the card stays glass with the small glyph plate. */
+.w-player.has-art{background:#0a0e18;overflow:hidden;min-height:210px;align-items:flex-end;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),0 12px 30px rgba(0,0,0,.35)}
+/* layer 1: the still, blurred, filling every corner so nothing is letterboxed */
+.w-player.has-art::before{content:"";position:absolute;inset:-40px;z-index:0;
+  background:var(--art) center/cover no-repeat;filter:blur(28px) saturate(1.35) brightness(.62)}
+/* layer 2: the whole still, sharp, on the right, fading into the blur */
+.w-player.has-art::after{content:"";position:absolute;top:0;bottom:0;right:0;width:374px;z-index:0;
+  background:var(--art) center/cover no-repeat;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 34%);mask-image:linear-gradient(90deg,transparent 0,#000 34%)}
+.w-player > *{position:relative;z-index:1}
+.w-player.has-art .media-art{display:none}
+.w-player.has-art .media{max-width:380px;text-shadow:0 2px 10px rgba(0,0,0,.6)}
 .w-player .media-art .plate-ring svg{width:56px;height:56px;opacity:.8}
-.w-player .media{all:unset;display:block;flex:1;min-width:0}
+.w-player .media{all:unset;display:block;flex:1;min-width:0;position:relative;z-index:2}
 .w-player .media, .w-player .media-src, .w-player .media-title, .w-player .media-by{color:#fff!important}
 .w-player .media-state{font-size:14px;padding:3px 10px;border-radius:10px;background:rgba(93,255,154,.2);color:#b8ffd2!important;letter-spacing:.1em}
 .w-player .mbtn{color:#fff!important}
