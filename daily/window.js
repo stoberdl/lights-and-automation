@@ -26,6 +26,16 @@ const FALLBACK = {
   fx: ["leaves"],
 };
 
+/* The plain day/night background, for when today's special scene is not
+   wanted: one place, drawn by day and by night, following the sun. */
+const CYCLE = {
+  scene: { file: "scenes/covered-bridge-creek.js", fn: "coveredBridgeCreekArt", opts: {} },
+  night: { file: "scenes/covered-bridge-creek.js", fn: "coveredBridgeCreekArt", opts: { time: "night" } },
+  fx: [], nightFx: [],
+};
+const store = { get(k){ try { return localStorage.getItem(k); } catch { return null; } },
+                set(k, v){ try { localStorage.setItem(k, v); } catch {} } };
+
 const CSS = `
 html.win, html.win body{height:100%;overflow:hidden;background:#000}
 html.win #sky, html.win #sky-front, html.win header, html.win .navwrap,
@@ -176,6 +186,13 @@ html.win #toast{z-index:200}
 .w-ask.rec{background:#ff5b5b;color:#fff}
 .w-menu{position:absolute;right:18px;top:8px;width:44px;height:44px;border-radius:50%;border:0;
   background:rgba(14,20,34,.35);color:#fff;font-size:22px;cursor:pointer;opacity:.55}
+.w-bgmode{position:absolute;right:70px;top:8px;width:44px;height:44px;border-radius:50%;border:0;padding:0;
+  background:rgba(14,20,34,.35);color:#fff;cursor:pointer;opacity:.55;display:grid;place-items:center}
+.w-bgmode svg{width:24px;height:24px}
+.w-bgmode:hover,.w-menu:hover{opacity:.9}
+.w-bgtip{position:absolute;right:124px;top:14px;font-size:18px;padding:5px 12px;border-radius:14px;
+  background:rgba(14,20,34,.6);opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.w-bgtip.on{opacity:1}
 
 /* new theme art on the dock keys */
 .w-dock .qb .hero-art > *:not(svg){display:none}
@@ -271,7 +288,7 @@ async function buildScene(spec){
 }
 
 /* ------------------------------------------------------------------ state */
-const WS = { day: null, key: "", shown: "", fx: [], mode: "clear", night: false };
+const WS = { day: null, key: "", shown: "", fx: [], mode: "clear", night: false, cycle: store.get("win-bg") === "cycle" };
 
 async function loadDay(){
   const key = dateKey(new Date());
@@ -283,7 +300,8 @@ async function loadDay(){
   await paintScene();
 }
 async function paintScene(){
-  const d = WS.day; if(!d) return;
+  if(!WS.day) return;
+  const d = WS.cycle ? CYCLE : WS.day;               // the headline stays; only the picture changes
   const night = ST().mood === "night";
   const spec = d.art ? {art: d.art} : (night && d.night) ? d.night : d.scene;
   const want = JSON.stringify(spec) + "|" + night;
@@ -645,6 +663,8 @@ function windowLayout(){
       <button class="w-ask" id="w-ask" aria-label="Ask Claude">${ICON.mic}ASK</button>
     </div>
     <button class="w-menu" id="w-menu" title="Full controls" aria-label="Full controls">☰</button>
+    <button class="w-bgmode" id="w-bgmode"></button>
+    <span class="w-bgtip" id="w-bgtip"></span>
   </div>`;
   document.body.appendChild(root);
 
@@ -716,6 +736,25 @@ function windowLayout(){
   };
   q("#w-menu").onclick = () => { location.search = "?view=classic"; };
 
+  // Background: today's special scene, or the plain day/night cycle.
+  const ICON_TODAY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="M12 13l1 2 2 .3-1.5 1.4.4 2.1-1.9-1-1.9 1 .4-2.1L9 15.3l2-.3z" fill="currentColor" stroke="none"/></svg>';
+  const ICON_CYCLE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="8" cy="12" r="3.2"/><path d="M8 5v1.5M8 17.5V19M2.8 12h1.4M3.9 7.9l1 1M3.9 16.1l1-1"/><path d="M19.5 14.5A5 5 0 0 1 14 8a5 5 0 1 0 5.5 6.5z" fill="currentColor" stroke="none"/></svg>';
+  const bg = q("#w-bgmode"), tip = q("#w-bgtip");
+  const paintBg = () => {
+    bg.innerHTML = WS.cycle ? ICON_CYCLE : ICON_TODAY;
+    const label = WS.cycle ? "Background: day/night cycle" : "Background: today's scene";
+    bg.title = label + " (tap to switch)"; bg.setAttribute("aria-label", label + ", tap to switch");
+    tip.textContent = WS.cycle ? "Day/night cycle" : "Today's scene";
+  };
+  let tipT = null;
+  bg.onclick = e => {
+    e.stopPropagation();
+    WS.cycle = !WS.cycle; store.set("win-bg", WS.cycle ? "cycle" : "today");
+    paintBg(); WS.shown = ""; paintScene();
+    tip.classList.add("on"); clearTimeout(tipT); tipT = setTimeout(() => tip.classList.remove("on"), 1800);
+  };
+  paintBg();
+
   // Every theme, as pictures.
   const pop = el("div", "w-pop glass"); pop.id = "w-pop"; pop.hidden = true;
   pop.setAttribute("role", "dialog"); pop.setAttribute("aria-label", "All themes");
@@ -749,6 +788,7 @@ function windowLayout(){
   fc.fillStyle = gr; fc.fillRect(0, 0, 32, 32);
 
   addEventListener("resize", fit); fit();
+  if(location.hash === "#cycle"){ WS.cycle = true; paintBg(); }      // preview the cycle without tapping
   loadDay();
   requestAnimationFrame(loop);
   // One slow tick for everything read from state the page keeps fresh.
