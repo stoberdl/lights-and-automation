@@ -472,7 +472,7 @@ function windowLayout(){
     const mic = q("#mini-mic");
     if(mic && !mic.hidden) mic.click(); else { const t = q("#mini-prompt"); if(t) t.focus(); }
   };
-  q("#w-menu").onclick = () => { location.search = "?view=bar"; };
+  q("#w-menu").onclick = () => { location.search = "?view=classic"; };
 
   // Effects canvases.
   g = q("#wl-fx").getContext("2d"); ga = q("#wl-aur").getContext("2d");

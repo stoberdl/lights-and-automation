@@ -8625,10 +8625,15 @@ if(_wantOcc !== null) S.forcedOccasion = (_wantOcc === "none" ? "" : _wantOcc);
    notices the attributes it did not set, and rebuilds once. */
 applySeason();
 
-if(new URLSearchParams(location.search).get("view") === "bar") barLayout();
-/* ?view=window - the bar as one full-bleed daily scene. Lives in
-   daily/window.js so the scene work stays out of this file. */
-if(new URLSearchParams(location.search).get("view") === "window" && window.windowLayout) windowLayout();
+/* ?view=bar - the bar as one full-bleed daily scene (daily/window.js). The
+   panel under the monitor already loads this URL, so the new layout lives
+   here rather than behind a new one. The previous board layout is kept at
+   ?view=classic; if window.js fails to load, the bar falls back to it. */
+{
+  const _view = new URLSearchParams(location.search).get("view");
+  if(_view === "classic" || (_view === "bar" && !window.windowLayout)) barLayout();
+  else if((_view === "bar" || _view === "window") && window.windowLayout) windowLayout();
+}
 
 /* #dbg - layout diagnostic. Loading the page with that hash replaces it with a
    report of anything laid out wider than the viewport. Kept because "it looks
