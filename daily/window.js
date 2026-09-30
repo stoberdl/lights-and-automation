@@ -45,6 +45,7 @@ html.win #toast{z-index:200}
   font-family:Outfit,"Segoe UI",system-ui,sans-serif;color:#fff}
 .win-stage{position:absolute;left:0;top:0;width:${W}px;height:${H}px;transform-origin:0 0}
 .wl{position:absolute;inset:0;width:${W}px;height:${H}px;display:block;pointer-events:none}
+.wl[hidden]{display:none}
 .wl-art{object-fit:cover}
 #wl-clouds{animation:w-drift 120s ease-in-out infinite alternate}
 @keyframes w-drift{from{transform:translateX(-70px)}to{transform:translateX(90px)}}
@@ -184,13 +185,13 @@ html.win #toast{z-index:200}
   font:600 17px Outfit,"Segoe UI",sans-serif;letter-spacing:.06em}
 .w-ask svg{width:52px;height:52px}
 .w-ask.rec{background:#ff5b5b;color:#fff}
-.w-menu{position:absolute;right:18px;top:8px;width:44px;height:44px;border-radius:50%;border:0;
+.w-menu{position:absolute;right:8px;top:8px;width:44px;height:44px;border-radius:50%;border:0;
   background:rgba(14,20,34,.35);color:#fff;font-size:22px;cursor:pointer;opacity:.55}
-.w-bgmode{position:absolute;right:70px;top:8px;width:44px;height:44px;border-radius:50%;border:0;padding:0;
+.w-bgmode{position:absolute;right:8px;top:60px;width:44px;height:44px;border-radius:50%;border:0;padding:0;
   background:rgba(14,20,34,.35);color:#fff;cursor:pointer;opacity:.55;display:grid;place-items:center}
 .w-bgmode svg{width:24px;height:24px}
 .w-bgmode:hover,.w-menu:hover{opacity:.9}
-.w-bgtip{position:absolute;right:124px;top:14px;font-size:18px;padding:5px 12px;border-radius:14px;
+.w-bgtip{position:absolute;right:60px;top:66px;z-index:5;font-size:18px;padding:5px 12px;border-radius:14px;
   background:rgba(14,20,34,.6);opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 .w-bgtip.on{opacity:1}
 
@@ -312,7 +313,7 @@ async function paintScene(){
     art.hidden = false; art.src = "/daily/" + spec.art; art.style.objectPosition = d.focus || "center";
     ["#wl-sky", "#wl-clouds", "#wl-land"].forEach(s => q(s).removeAttribute("src"));
   } else {
-    art.hidden = true;
+    art.hidden = true; art.removeAttribute("src");
     try {
       const u = await buildScene(spec);
       q("#wl-sky").src = u.sky; q("#wl-clouds").src = u.clouds; q("#wl-land").src = u.land;
