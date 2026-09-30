@@ -279,7 +279,7 @@ function paintWeather(){
   if(due){
     const fam = family(c.kind === "thunder" ? "thunder" : wx.cond);
     const ico = c.kind === "alert" || fam === "storm" ? ICON.bolt : fam === "snow" ? ICON.snow : ICON.drop;
-    card.innerHTML = `<div class="h">${ico}${escH(c.headline)}</div><div class="d">${escH(c.detail || "")}</div>${chart(mm, fam === "snow" ? "#ffffff" : "#9fd8ff")}`;
+    card.innerHTML = `<div class="h">${ico}${escH(c.headline)}</div><div class="d">${escH(c.detail || "")}</div>${chart(c, fam === "snow" ? "#ffffff" : "#9fd8ff")}`;
     card.hidden = false;
     q("#w-dry").innerHTML = "";
   } else {
@@ -303,15 +303,46 @@ function paintWeather(){
     snow: "linear-gradient(180deg,rgba(200,215,235,.22),rgba(220,230,240,.1))",
     storm: "linear-gradient(180deg,rgba(20,24,40,.45),rgba(10,14,24,.25))" }[mode];
 }
-function chart(mm, col){
-  const w = 664, h = 104, fs = 16, plotH = h - fs - 10, n = 48, vals = mm.map(b => b.mm || 0);
-  const val = k => { const x = k / (n - 1) * (vals.length - 1), i = Math.floor(x), f = x - i; return (vals[i] || 0) * (1 - f) + (vals[i + 1] || 0) * f; };
-  const bw = w / n; let s = "";
-  for(let k = 0; k < n; k++){ const v = val(k), bh = v <= .02 ? 0 : Math.max(3, Math.min(1, v / 1.6) * (plotH - 6));
-    if(bh) s += `<rect x="${(k * bw + bw * .18).toFixed(1)}" y="${(plotH - bh).toFixed(1)}" width="${(bw * .64).toFixed(1)}" height="${bh.toFixed(1)}" rx="${(bw * .3).toFixed(1)}" fill="${col}"/>`; }
-  const grid = [.25, .5, .75].map(p => `<line x1="${p * w}" y1="0" x2="${p * w}" y2="${plotH}" stroke="rgba(255,255,255,.3)" stroke-dasharray="2 4"/>`).join("");
-  const lab = ["Now", "30m", "1h", "1h 30m", "2h"].map((t, i) => `<text x="${i / 4 * w}" y="${h - 2}" fill="rgba(255,255,255,.75)" font-size="${fs}" text-anchor="${i === 0 ? "start" : i === 4 ? "end" : "middle"}">${t}</text>`).join("");
-  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${grid}<line x1="0" y1="${plotH}" x2="${w}" y2="${plotH}" stroke="rgba(255,255,255,.3)" stroke-width="1.5" stroke-dasharray="3 3"/>${s}${lab}</svg>`;
+/* The next-hour chart, drawn to agree with the sentence above it.
+   The forecast arrives as 15-minute buckets ({in, mm}, `in` = minutes from
+   now to the bucket's start), but the headline says "stopping in 10 min" -
+   so the rain is laid out minute by minute and then cut at the nowcast's own
+   start and stop times. Blurring bucket into bucket used to paint rain for
+   half an hour after the card said it would stop. The height scales to the
+   heaviest minute shown, and the time axis zooms to one hour when everything
+   happens inside it, the way the iPhone's does. */
+function chart(c, col){
+  const mm = (c && Array.isArray(c.minutes)) ? c.minutes : [];
+  const grid = (c && c.grid_min) || 15;
+  const num = (v, re, s) => v != null ? v : (m => m ? Number(m[1]) : null)(re.exec(s || ""));
+  const text = ((c && c.headline) || "") + " " + ((c && c.detail) || "");
+  const stops = num(c && c.stops_in, /stopping in (\d+)\s*min/i, text);
+  const starts = num(c && c.starts_in, /starting in (\d+)\s*min/i, text);
+  const lasts = num(c && c.lasts, /(?:for about|about) (\d+)\s*min/i, text);
+  const at = t => { const b = mm.find(b => t >= b.in && t < b.in + grid); return b ? (b.mm || 0) : 0; };
+  let prof = Array.from({length: 120}, (_, t) => at(t));
+  if(stops != null) prof = prof.map((v, t) => t < stops ? Math.max(v, .15) : 0);
+  if(starts != null) prof = prof.map((v, t) => {
+    if(t < starts) return 0;
+    if(lasts != null) return t < starts + lasts ? Math.max(v, .15) : 0;
+    return t < starts + grid ? Math.max(v, .15) : v;      // no length given: trust the buckets
+  });
+  const lastWet = prof.reduce((a, v, t) => v > .02 ? t : a, -1);
+  const span = Math.max(stops || 0, (starts || 0) + (lasts || 0), lastWet + 1) <= 55 ? 60 : 120;
+  prof = prof.slice(0, span);
+  const peak = Math.max(.6, ...prof);                 // light rain stays modest
+  const w = 664, h = 104, fs = 16, plotH = h - fs - 10, n = 60, bw = w / n, per = span / n;
+  let s = "";
+  for(let k = 0; k < n; k++){
+    const v = Math.max(...prof.slice(Math.floor(k * per), Math.floor((k + 1) * per)).concat(0));
+    if(v <= .02) continue;
+    const bh = Math.max(4, v / peak * (plotH - 6));
+    s += `<rect x="${(k * bw + bw * .18).toFixed(1)}" y="${(plotH - bh).toFixed(1)}" width="${(bw * .64).toFixed(1)}" height="${bh.toFixed(1)}" rx="${(bw * .3).toFixed(1)}" fill="${col}"/>`;
+  }
+  const labels = span === 60 ? ["Now", "15m", "30m", "45m", "1h"] : ["Now", "30m", "1h", "1h 30m", "2h"];
+  const gl = [.25, .5, .75].map(p => `<line x1="${p * w}" y1="0" x2="${p * w}" y2="${plotH}" stroke="rgba(255,255,255,.3)" stroke-dasharray="2 4"/>`).join("");
+  const lab = labels.map((t, i) => `<text x="${i / 4 * w}" y="${h - 2}" fill="rgba(255,255,255,.75)" font-size="${fs}" text-anchor="${i === 0 ? "start" : i === 4 ? "end" : "middle"}">${t}</text>`).join("");
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${gl}<line x1="0" y1="${plotH}" x2="${w}" y2="${plotH}" stroke="rgba(255,255,255,.3)" stroke-width="1.5" stroke-dasharray="3 3"/>${s}${lab}</svg>`;
 }
 
 /* ---------------------------------------------------------------- effects */
