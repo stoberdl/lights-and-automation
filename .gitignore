@@ -1,0 +1,27 @@
+# Secrets: never commit these. lightd.config.json and .lightd.env hold the
+# lightd token; the ytbridge extension ships with a copy of the browser token
+# (see serve.py); _push.json is left over from the removed push setup.
+lightd.config.json
+.lightd.env
+_push.json
+ytbridge/
+
+# Local Claude Code settings
+.claude/settings.local.json
+daily/.claude/settings.local.json
+
+# Dependencies and downloaded official art (re-fetched weekly)
+node_modules/
+daily/art/
+
+# Logs and run output
+*.log
+prompts/
+__pycache__/
+tests/*.png
+
+# Render leftovers from daily/
+daily/prof-*/
+daily/scenes/_drafts/
+daily/*.png
+daily/scenes/zoom.html

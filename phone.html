@@ -1,0 +1,36 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>phone preview</title>
+<style>
+  body{margin:0; background:#222; display:flex; gap:14px; padding:14px; font:12px monospace; color:#ddd}
+  .dev{width:393px; height:1500px; border:3px solid #555; border-radius:26px; overflow:hidden; flex:none}
+  iframe{width:393px; height:1500px; border:0; display:block}
+  #rep{white-space:pre-wrap; color:#9fe; max-width:520px}
+</style>
+<div class="dev"><iframe id="f" src="/"></iframe></div>
+<div id="rep">measuring…</div>
+<script>
+// A real 393px layout viewport, which is what an iPhone 15 has. Headless
+// Chromium applies this machine's 125% display scale to --window-size, so a
+// top-level render at "393" is actually laid out at 492 and then cropped -
+// which looks exactly like a CSS overflow bug and is not one.
+document.getElementById("f").onload = ()=>setTimeout(()=>{
+  const w = document.getElementById("f").contentWindow;
+  const d = w.document, W = d.documentElement.clientWidth, bad = [];
+  d.querySelectorAll("body *").forEach(el=>{
+    if(el.closest("#sky")) return;
+    const r = el.getBoundingClientRect();
+    if(!r.width && !r.height) return;
+    if(r.right > W + 0.5 || r.left < -0.5){
+      bad.push(`${el.tagName.toLowerCase()}${el.id?"#"+el.id:""}` +
+        `${el.className && typeof el.className==="string" ? "."+el.className.trim().split(/\s+/).slice(0,2).join(".") : ""}` +
+        ` L${Math.round(r.left)} R${Math.round(r.right)} W${Math.round(r.width)}`);
+    }
+  });
+  document.getElementById("rep").textContent =
+    `layout viewport = ${W}\n` +
+    `doc scrollWidth = ${d.documentElement.scrollWidth}\n` +
+    `mobile media    = ${w.matchMedia("(max-width:640px)").matches}\n\n` +
+    (bad.length ? "OVERFLOWING:\n" + bad.join("\n") : "nothing overflows");
+}, 4000);
+</script>

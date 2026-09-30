@@ -1,0 +1,39 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>theme check</title>
+<style>
+  body{margin:0;background:#111;display:flex;gap:10px;padding:10px;font:11px monospace;color:#ccc}
+  .c{flex:1}
+  .c h4{margin:0 0 4px;color:#8df}
+  iframe{width:100%;height:1080px;border:1px solid #444;display:block}
+</style>
+<div class="c"><h4>day</h4><iframe data-m="day"></iframe></div>
+<div class="c"><h4>rain</h4><iframe data-m="rain"></iframe></div>
+<div class="c"><h4>night</h4><iframe data-m="night"></iframe></div>
+<script>
+// Force each mood so all three can be compared without waiting for weather
+// or nightfall. Uses the same S.forced path the theme orb drives.
+// Set the attribute directly. `const S` inside the page's script is in the
+// global lexical scope, not on window, so reaching in for S.forced silently
+// does nothing - which is why all three frames rendered identical the first
+// time. Re-assert it on a timer so the page's own mood() cannot win.
+document.querySelectorAll("iframe").forEach(f=>{
+  f.src = "/";
+  f.onload = ()=>{
+    const hold = ()=>{
+      try{
+        f.contentDocument.documentElement.dataset.mood = f.dataset.m;
+        // ?tab=lights on the harness URL shows that tab in every frame
+        const tab = new URLSearchParams(location.search).get("tab");
+        if(tab){
+          const b = [...f.contentDocument.querySelectorAll("nav button")]
+                      .find(x=>x.dataset.v === tab);
+          if(b && !b.classList.contains("on")) b.click();
+        }
+      }catch(e){}
+    };
+    hold();
+    setInterval(hold, 600);
+  };
+});
+</script>

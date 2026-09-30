@@ -1,0 +1,41 @@
+<!doctype html>
+<meta charset="utf-8"><title>bar layout probe</title>
+<!-- A measuring stick for the bar, not part of the dashboard.
+
+     Loads the real page in a 2560x720 iframe from this same origin and prints
+     the boxes of the things that are supposed to line up. Guessing at a 13px
+     inset from a screenshot is how you end up chasing the wrong rule; this
+     says which element actually has the margin. -->
+<style>body{margin:0;font:12px ui-monospace,Consolas,monospace;background:#fff;color:#000}
+pre{padding:8px;white-space:pre-wrap}
+iframe{position:absolute;left:-9999px;top:0;width:2560px;height:720px;border:0}</style>
+<iframe id="f" src="/?view=bar#today"></iframe>
+<pre id="out">measuring…</pre>
+<script>
+const WANT = [
+  [".bar-now", "right now panel"],
+  [".bar-quick", "quick apply panel"],
+  [".bar-con", "console panel"],
+  [".bar-con .console", "console box"],
+  [".bar-con .console-out", "transcript"],
+  [".bar-media", "media column"],
+  [".bar-quick .quick", "theme key grid"],
+  [".bar-quick .qa-all", "all on/off row"],
+  [".bar-now .bar-topline", "top line"],
+  [".bar-now #plan", "day strip"],
+  [".bar-now .ds-bands", "band lane"],
+];
+setTimeout(() => {
+  const d = document.getElementById("f").contentDocument;
+  const rows = WANT.map(([sel, name]) => {
+    const el = d.querySelector(sel);
+    if (!el) return `${name.padEnd(20)} MISSING (${sel})`;
+    const r = el.getBoundingClientRect();
+    const cs = d.defaultView.getComputedStyle(el);
+    return `${name.padEnd(20)} x=${Math.round(r.x)} y=${Math.round(r.y)} `
+         + `w=${Math.round(r.width)} h=${Math.round(r.height)} `
+         + `margin=${cs.margin} padding=${cs.padding} bg=${cs.backgroundColor}`;
+  });
+  document.getElementById("out").textContent = rows.join("\n");
+}, 9000);
+</script>
