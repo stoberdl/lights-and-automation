@@ -3986,6 +3986,7 @@ html.bar .qstar{width:2.6rem; height:2.6rem; font-size:1.3rem; top:.4rem; right:
 html.bar .rail .pill{min-height:2.75rem; padding:.5rem .7rem}
 html.bar .btn.sm{min-height:2.75rem; padding-inline:1rem}
 </style>
+<script src="/daily/window.js"></script>
 </head>
 <body>
 <div id="sky" aria-hidden="true"></div>
@@ -8625,6 +8626,9 @@ if(_wantOcc !== null) S.forcedOccasion = (_wantOcc === "none" ? "" : _wantOcc);
 applySeason();
 
 if(new URLSearchParams(location.search).get("view") === "bar") barLayout();
+/* ?view=window - the bar as one full-bleed daily scene. Lives in
+   daily/window.js so the scene work stays out of this file. */
+if(new URLSearchParams(location.search).get("view") === "window" && window.windowLayout) windowLayout();
 
 /* #dbg - layout diagnostic. Loading the page with that hash replaces it with a
    report of anything laid out wider than the viewport. Kept because "it looks

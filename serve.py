@@ -541,10 +541,35 @@ class Handler(BaseHTTPRequestHandler):
             st = browser_state()
             return self.send_json(200, st or {"found": False, "bridge": False})
 
+        # The daily window (?view=window): its script, the list of days, the
+        # scene scripts and official art. Only those - daily/ also holds a
+        # Claude settings file and run logs, and none of that is the page's.
+        if p.startswith("/daily/"):
+            return self.send_daily(p)
+
         if p.startswith("/api/lightd/"):
             return self.proxy("GET", p[len("/api/lightd"):], q, None)
 
         return self.send_json(404, {"detail": "no route " + p})
+
+    DAILY_TYPES = {".js": "text/javascript; charset=utf-8", ".json": "application/json",
+                   ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
+                   ".webp": "image/webp"}
+    DAILY_DIRS = ("scenes", "reference", "art")
+
+    def send_daily(self, p):
+        root = (HERE / "daily").resolve()
+        try:
+            f = (root / urllib.parse.unquote(p[len("/daily/"):])).resolve()
+            rel = f.relative_to(root)            # raises if it escapes daily/
+        except (ValueError, OSError):
+            return self.send_json(404, {"detail": "no such daily file"})
+        ctype = self.DAILY_TYPES.get(f.suffix.lower())
+        allowed = (len(rel.parts) == 1 and rel.name in ("window.js", "days.json")) or \
+                  (len(rel.parts) > 1 and rel.parts[0] in self.DAILY_DIRS)
+        if not (ctype and allowed and f.is_file()):
+            return self.send_json(404, {"detail": "no such daily file"})
+        return self.send_bytes(200, f.read_bytes(), ctype)
 
     def stream_run(self, run_id):
         """Server-sent events for one Claude run, replayed from the start.
