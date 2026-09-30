@@ -121,15 +121,15 @@ html.win #toast{z-index:200}
 /* volume: its own full-width row, a thumb you can grab, 1% buttons either
    side, and the figure always showing */
 .w-vol{display:flex;align-items:center;gap:10px;margin-top:10px}
-.w-vb{width:52px;height:52px;flex:none;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;
+.w-vb{width:52px;height:52px;flex:none;border-radius:50%;border:0;background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);
   font:500 30px/1 Outfit,"Segoe UI",sans-serif;display:grid;place-items:center;cursor:pointer;padding:0;touch-action:none;user-select:none}
-.w-vb:active{background:rgba(255,255,255,.34)}
+.w-vb:active{background:rgba(255,255,255,.3);color:#fff}
 .w-player #media-vol{flex:1;min-width:0;height:52px;margin:0}
 .w-player #media-vol::-webkit-slider-runnable-track{height:12px;border-radius:99px;border:0;
   background:linear-gradient(90deg,#fff var(--fill,100%),rgba(255,255,255,.25) var(--fill,100%))}
 .w-player #media-vol::-webkit-slider-thumb{width:36px;height:36px;margin-top:-12px;border-radius:50%;background:#fff;border:0;
   box-shadow:0 2px 10px rgba(0,0,0,.5)}
-.w-player .vol-val{opacity:1!important;visibility:visible!important;display:block!important;font-size:22px;font-weight:600;
+.w-player .vol-val{opacity:.6!important;visibility:visible!important;display:block!important;font-size:22px;font-weight:600;
   min-width:62px;text-align:right;font-variant-numeric:tabular-nums;color:#fff!important}
 
 /* bottom left: the next two hours, only when something is due */
