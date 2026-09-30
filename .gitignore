@@ -25,3 +25,5 @@ daily/prof-*/
 daily/scenes/_drafts/
 daily/*.png
 daily/scenes/zoom.html
+daily/logs/
+daily/calendar/*.png

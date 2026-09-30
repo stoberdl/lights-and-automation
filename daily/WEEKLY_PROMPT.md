@@ -15,8 +15,9 @@ Read `..\CLAUDE.md` first for how the dashboard and lightd work. Do not edit
 ## 1. The week
 
 Cover the next 7 days, Monday to Sunday, starting from the next Monday after
-today. Write the result to `calendar\YYYY-Www.json` (ISO week). If that file
-already exists, update it: keep any day marked `"locked": true`.
+today, unless the request names specific dates; then do exactly those dates.
+The result goes into `days.json` (section 8). Keep every existing entry you
+were not asked to rebuild, and never change a day marked `"locked": true`.
 
 Location for anything local (sky, sunset, nature, weather) is the city, Ohio
 (weather station the local station). Times are America/New_York.
@@ -80,12 +81,22 @@ tell what it is before reading the title.
 recoloured through its options (time of day, season) if it has them.
 
 **c. A new illustrated scene.** Write it only when nothing in the library
-fits and the day deserves one. At most **2 new scenes per week**. Each is a
-JavaScript file `scenes\{slug}.js` in the same shape as
-`reference\autumn-valley.js`: one function that returns SVG, with
-`opts.part` of `"sky"`, `"clouds"` or `"land"` so the page can animate the
-layers separately. It may use `rng()` and `mix()` from
-`reference\scene-helpers.js`.
+fits and the day deserves one. At most **2 new scenes per week**, unless the
+request gives a different limit. Each is a JavaScript file
+`scenes\{slug}.js` in the same shape as `reference\autumn-valley.js`: exactly
+one top-level function, named in camelCase after the file (for example
+`harvestMoonArt`), that returns SVG, with `opts.part` of `"sky"`, `"clouds"`
+or `"land"` so the page can animate the layers separately. Do not declare
+anything else at the top level; the page evaluates the file together with
+`reference\scene-helpers.js`, and a duplicate name breaks both. You may use
+`rng()` and `mix()` from the helpers. `scenes\hunters-moon-lake.js` has the
+mountain shading that fixed the "vertical seams" fault; copy its approach.
+
+**Day and night.** The bar is on around the clock and switches to its night
+look after sunset. Every illustrated day needs a night version: either the
+same function drawing night when `opts.time === "night"` (moon for sun, lit
+windows, stars, deep blue grading), or a separate night scene file. A day
+without one gets a crude darkening filter, which looks bad; avoid it.
 
 ## 5. The art style (read this before writing any scene)
 
@@ -147,39 +158,41 @@ closest match; do not create themes or automations. Every other day has
 
 ## 8. Output format
 
-`calendar\YYYY-Www.json`:
+`days.json` is one object keyed by local date. This is exactly what the bar
+reads (`daily\window.js`), so keep to these field names:
 
 ```json
 {
-  "week": "2026-W44",
-  "built": "2026-10-25T09:00:00-04:00",
-  "days": [
-    {
-      "date": "2026-10-31",
-      "kind": "holiday",
-      "title": "Halloween",
-      "detail": "Lights go to Pumpkin at 7. Back to normal tomorrow.",
-      "chips": ["Clocks go back tomorrow, 2 AM"],
-      "scene": { "type": "illustrated", "file": "scenes/halloween-hollow.js", "opts": { "time": "night" } },
-      "fx": ["leaves", "smoke@1790,500", "stars-twinkle", "birds:bats"],
-      "lights": { "theme": "pumpkin", "from": "19:00" },
-      "sources": ["https://www.timeanddate.com/holidays/us/halloween"],
-      "confidence": "confirmed",
-      "locked": false
-    }
-  ],
-  "fx_todo": ["birds:bats - bats instead of birds for Halloween"],
-  "notes": "Why each day got its headline, one line each."
+  "2026-10-31": {
+    "kind": "Holiday",
+    "title": "Halloween",
+    "detail": "Lights go to Pumpkin at 7. Back to normal tomorrow.",
+    "chips": ["Clocks go back tomorrow, 2 AM"],
+    "scene": { "file": "scenes/halloween-hollow.js", "fn": "halloweenHollowArt", "opts": {} },
+    "night": { "file": "scenes/halloween-hollow.js", "fn": "halloweenHollowArt", "opts": { "time": "night" } },
+    "fx": ["leaves"],
+    "nightFx": [],
+    "lights": { "theme": "pumpkin", "from": "19:00" },
+    "sources": ["https://www.timeanddate.com/holidays/us/halloween"],
+    "confidence": "confirmed",
+    "locked": false
+  }
 }
 ```
 
-- `scene.type` is `"illustrated"` or `"art"`.
-- For `"art"`, set `"file": "art/2026-11-19-gta6.jpg"` and `"focus": "right center"`.
+- `kind` is the label shown in the pill above the headline, written for a person: `Holiday`, `Tonight's sky`, `Out today`, `Anime · season finale`, `Outside this week`, `Somewhere else`, `On this day`.
+- `scene.file` is relative to `daily\`. `fn` is the function name in that file.
+- `night` is the scene used after dark. Use `null` only for official-art days.
+- For official art, leave out `scene` and `night`, and set `"art": "art/2026-11-19-gta6.jpg"` and `"focus": "right center"` (a CSS object-position).
+- `fx` and `nightFx` are what the bar animates on top: `"leaves"` (optionally `{"leaves": [x0, y0, x1, y1]}`, the box they fall from, usually the tree crown) and `"aurora"`. Put any effect the bar doesn't have yet in the review under "Effects to build".
 - `confidence` is `"confirmed"` (date checked at the source) or `"approximate"` (nature items only).
 - `detail` is one plain sentence under 90 characters. `title` is under 32 characters.
+- Write the file as UTF-8 JSON with your file tools, never through PowerShell.
 
 ## 9. Finish
 
-End with a short summary in `calendar\YYYY-Www.review.md`: the 7 headlines,
-which scenes are new, what you rejected and why, and anything you couldn't
-confirm.
+End with a short summary in `calendar\{first date}.review.md`: each day's
+headline, which scenes are new, what you rejected and why, and anything you
+couldn't confirm. Render every new scene (day and night) into
+`calendar\{date}-day.png` and `calendar\{date}-night.png` so a person can
+look at the result without opening the bar.
