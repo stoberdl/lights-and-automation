@@ -79,6 +79,11 @@ tell what it is before reading the title.
 
 **b. A library scene.** Reuse any file in `scenes\` whose subject fits,
 recoloured through its options (time of day, season) if it has them.
+Never use `scenes\covered-bridge-creek.js` or `reference\autumn-valley.js`
+for a day: they are the dashboard's default backgrounds, so a day built on
+them looks like no scene at all. Do not reuse a scene that appears in
+days.json within 7 days either side. Every day must end up with its own
+picture; if no library scene fits, write a new one (c).
 
 **c. A new illustrated scene.** Write it only when nothing in the library
 fits and the day deserves one. At most **2 new scenes per week**, unless the

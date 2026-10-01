@@ -7,7 +7,11 @@
 # Permissions come from .claude\settings.local.json here (web yes, deletes no).
 # The full event stream goes to logs\run-<stamp>.log; the result is days.json
 # plus a review and PNGs in calendar\.
-param([string[]]$Dates = @(), [int]$MaxNewScenes = 2)
+#   .\run-daily.ps1 -Daily                  today and tomorrow (the 4am task)
+param([string[]]$Dates = @(), [int]$MaxNewScenes = 2, [switch]$Daily)
+if ($Daily) {
+    $Dates = @((Get-Date).ToString("yyyy-MM-dd"), (Get-Date).AddDays(1).ToString("yyyy-MM-dd"))
+}
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $here
 $claude = "C:\Users\user\.local\bin\claude.exe"
@@ -18,6 +22,7 @@ $today = Get-Date -Format "yyyy-MM-dd (dddd)"
 
 if ($Dates.Count) { $scope = "Build exactly these dates: " + ($Dates -join ", ") + "." }
 else { $scope = "Build the next Monday to Sunday week." }
+if ($Daily) { $scope += " A date that already has its own finished scene or art can be kept as is; refresh its title and weather facts only if they changed. A date with no scene, or one using a default background, must get its own picture now." }
 
 # No double quotes inside: Windows PowerShell 5.1 mangles them on the way to
 # a native program's command line.
