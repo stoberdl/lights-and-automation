@@ -206,8 +206,8 @@ covering the date is in the draw.
 Every run, after the days are done, look at the pools that start within the
 next **21 days** or are already running. Any such pool with fewer than **4**
 scenes (holiday pools, and above all the end-of-year ones: Thanksgiving,
-Christmas season, Christmas week, New Year) gets new scenes this run, on top
-of the per-run limit: up to 2 per pool, 4 in total. Rules for these:
+Christmas season, Christmas week, New Year) gets one new scene this run, on top
+of the per-run limit (one in total per run; usage is limited). Rules for these:
 - Same format and art rules as section 4c and 5, with a day version and an
   `opts.time === "night"` version.
 - Vary them: a different place, palette, composition and take on the theme
