@@ -203,11 +203,16 @@ When the user taps the background button, the bar draws a random scene from
 `spring`, `july-4`, `summer`), each with `from`/`to` as `MM-DD`. Every pool
 covering the date is in the draw.
 
-Every run, after the days are done, look at the pools that start within the
-next **21 days** or are already running. Any such pool with fewer than **4**
-scenes (holiday pools, and above all the end-of-year ones: Thanksgiving,
-Christmas season, Christmas week, New Year) gets one new scene this run, on top
-of the per-run limit (one in total per run; usage is limited). Rules for these:
+**Every daily run adds one new scene to the default pool for right now**, on
+top of the day's own scene. That is how the default list grows: a little each
+day, always for the current time of year. Pick the pool covering today; if
+more than one does, the holiday pool first (the end-of-year holidays matter
+most to the user), else the one with the fewest scenes. Only if every current
+pool already has 12+ scenes, add to the next pool that starts within 21 days.
+A good day scene of yours that fits the season may also be added to its pool
+(it counts as that run's addition only if it has a night version).
+
+Rules for these:
 - Same format and art rules as section 4c and 5, with a day version and an
   `opts.time === "night"` version.
 - Vary them: a different place, palette, composition and take on the theme
@@ -219,6 +224,15 @@ of the per-run limit (one in total per run; usage is limited). Rules for these:
 Add each to its pool in `cycle.json` with the file tools, keeping the format:
 `{"id", "name" (2-4 words), "scene", "night", "fx", "nightFx"}`. A scene can
 sit in more than one pool. Never remove or reorder existing entries.
+
+## 8c. Open work (TODO.md)
+
+Read `..\TODO.md` at the start. Do any open item about scenes or the default
+pools that fits this run (for example a scene marked below standard, a
+broken scene, a missing pool scene) as that run's pool addition. When you
+finish one, mark it `[x]` with the date, in place, using Edit. That file is
+append-only: never rewrite it, reorder it or delete lines. Add a new line at
+the bottom for anything you could not finish.
 
 ## 9. Finish
 

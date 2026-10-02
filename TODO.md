@@ -44,3 +44,9 @@
       cut off mid-review — look them over.
 - [ ] Spring / summer / Valentine's / July 4 pools are empty (script fills later).
 - [x] 2026-10-02 — Daily build exit code: 4am run exited 0; resolved.
+- [x] 2026-10-02 — new-years-skyline fixed (precedence error) and in the New Year pool.
+- [x] 2026-10-02 — trick-or-treat-lane, harvest-farm-thanksgiving reviewed: OK.
+- [ ] frozen-falls-pass is below standard (blocky cliff, flat front-on bridge,
+      empty foreground). Pulled from pools; redo, then add back to winter.
+- Note 2026-10-02: the 4am daily run now adds one scene a day to the current
+  default pool and works these items itself (WEEKLY_PROMPT 8b/8c).
