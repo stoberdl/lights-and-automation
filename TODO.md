@@ -85,3 +85,4 @@
       compare a weighed day against the app.
 - Note 2026-10-02: the 4am daily run now adds one scene a day to the current
   default pool and works these items itself (WEEKLY_PROMPT 8b/8c).
+- [x] 2026-10-02 — perspective pass: harbor-lighthouse-fall done.
