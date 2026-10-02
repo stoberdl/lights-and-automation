@@ -148,7 +148,8 @@ For every new scene:
 1. Render it with `render.ps1 <test-page> <out.png>`. Write a small HTML page that loads the helpers and your scene and renders `part` unset.
 2. Open the PNG and check it against every rule in section 5, one line per rule, in `calendar\YYYY-Www.review.md`.
 3. Also check it next to `reference\autumn-valley.png`. Would the two sit on the same wall? If not, say what differs and fix it.
-4. Fix and re-render at most twice. If it still fails, use a library scene for that day, keep the failed file as `scenes\_rejected\{slug}.js`, and write down why.
+4. Composition check: the scene must not read as a hard-edged rectangle or flat front-on slab (the covered-bridge lesson). Things recede, overlap and sit in perspective.
+5. Fix and re-render at most twice. If it still fails, use a library scene for that day, keep the failed file as `scenes\_rejected\{slug}.js`, and write down why.
 
 For official art, open the downloaded image and confirm it is the right
 game or show, is wide enough, and leaves the two text corners readable.
@@ -193,6 +194,31 @@ reads (`daily\window.js`), so keep to these field names:
 - `confidence` is `"confirmed"` (date checked at the source) or `"approximate"` (nature items only).
 - `detail` is one plain sentence under 90 characters. `title` is under 32 characters.
 - Write the file as UTF-8 JSON with your file tools, never through PowerShell.
+
+## 8b. The default backgrounds (cycle.json)
+
+When the user taps the background button, the bar draws a random scene from
+`cycle.json`: pools by time of year (`fall`, `halloween`, `thanksgiving`,
+`christmas-season`, `christmas-week`, `new-year`, `winter`, `valentines`,
+`spring`, `july-4`, `summer`), each with `from`/`to` as `MM-DD`. Every pool
+covering the date is in the draw.
+
+Every run, after the days are done, look at the pools that start within the
+next **21 days** or are already running. Any such pool with fewer than **4**
+scenes (holiday pools, and above all the end-of-year ones: Thanksgiving,
+Christmas season, Christmas week, New Year) gets new scenes this run, on top
+of the per-run limit: up to 2 per pool, 4 in total. Rules for these:
+- Same format and art rules as section 4c and 5, with a day version and an
+  `opts.time === "night"` version.
+- Vary them: a different place, palette, composition and take on the theme
+  from every scene already in that pool (for Halloween: classic haunted
+  house, cozy pumpkin patch, and uncommon takes; not four graveyards).
+- Never write people into them.
+- Render and check them as in section 6.
+
+Add each to its pool in `cycle.json` with the file tools, keeping the format:
+`{"id", "name" (2-4 words), "scene", "night", "fx", "nightFx"}`. A scene can
+sit in more than one pool. Never remove or reorder existing entries.
 
 ## 9. Finish
 

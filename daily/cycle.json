@@ -1,0 +1,28 @@
+{
+  "about": "Default day/night backgrounds by time of year. Every pool whose from..to (MM-DD, wraps the new year if from > to) covers today goes into the draw; holiday pools count twice. Each scene needs day (scene) and night versions. Written by hand and by the daily script (WEEKLY_PROMPT.md section 8).",
+  "pools": [
+    { "id": "fall", "label": "Fall", "from": "09-22", "to": "11-30", "scenes": [
+      { "id": "autumn-valley", "name": "Autumn valley",
+        "scene": { "file": "reference/autumn-valley.js", "fn": "fallArt", "opts": {} },
+        "fx": [{ "leaves": [1000, 160, 1500, 520] }] },
+      { "id": "covered-bridge-creek", "name": "Covered bridge creek",
+        "scene": { "file": "scenes/covered-bridge-creek.js", "fn": "coveredBridgeCreekArt", "opts": {} },
+        "night": { "file": "scenes/covered-bridge-creek.js", "fn": "coveredBridgeCreekArt", "opts": { "time": "night" } },
+        "fx": [{ "leaves": [460, 280, 660, 440] }] }
+    ] },
+    { "id": "halloween", "label": "Halloween", "holiday": true, "from": "10-10", "to": "11-01", "scenes": [] },
+    { "id": "thanksgiving", "label": "Thanksgiving", "holiday": true, "from": "11-14", "to": "11-29", "scenes": [] },
+    { "id": "christmas-season", "label": "Christmas season", "holiday": true, "from": "11-28", "to": "12-23", "scenes": [] },
+    { "id": "christmas-week", "label": "Christmas", "holiday": true, "from": "12-20", "to": "12-26", "scenes": [] },
+    { "id": "new-year", "label": "New Year", "holiday": true, "from": "12-27", "to": "01-03", "scenes": [] },
+    { "id": "winter", "label": "Winter", "from": "12-01", "to": "03-19", "scenes": [] },
+    { "id": "valentines", "label": "Valentine's", "holiday": true, "from": "02-07", "to": "02-14", "scenes": [] },
+    { "id": "spring", "label": "Spring", "from": "03-20", "to": "06-20", "scenes": [] },
+    { "id": "july-4", "label": "Fourth of July", "holiday": true, "from": "06-28", "to": "07-05", "scenes": [] },
+    { "id": "summer", "label": "Summer", "from": "06-21", "to": "09-21", "scenes": [
+      { "id": "covered-bridge-creek", "name": "Covered bridge creek",
+        "scene": { "file": "scenes/covered-bridge-creek.js", "fn": "coveredBridgeCreekArt", "opts": {} },
+        "night": { "file": "scenes/covered-bridge-creek.js", "fn": "coveredBridgeCreekArt", "opts": { "time": "night" } } }
+    ] }
+  ]
+}

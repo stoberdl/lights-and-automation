@@ -26,13 +26,49 @@ const FALLBACK = {
   fx: ["leaves"],
 };
 
-/* The plain day/night background, for when today's special scene is not
-   wanted: one place, drawn by day and by night, following the sun. */
-const CYCLE = {
+/* The default day/night background, for when today's special scene is not
+   wanted. daily/cycle.json groups scenes into pools by time of year (a season,
+   or the weeks around a holiday); every pool that covers today goes into the
+   draw, and each tap of the background button draws again. This one is only
+   the last resort if cycle.json is missing or empty. */
+const CYCLE_DEFAULT = {
+  id: "covered-bridge-creek", name: "Covered bridge creek", pool: "",
   scene: { file: "scenes/covered-bridge-creek.js", fn: "coveredBridgeCreekArt", opts: {} },
   night: { file: "scenes/covered-bridge-creek.js", fn: "coveredBridgeCreekArt", opts: { time: "night" } },
   fx: [], nightFx: [],
 };
+let CYCLE = CYCLE_DEFAULT;
+/* "MM-DD" windows; one whose start is after its end wraps the new year. */
+function inWindow(md, from, to){ return from <= to ? (md >= from && md <= to) : (md >= from || md <= to); }
+async function cyclePool(){
+  let cfg = null;
+  try { cfg = await (await fetch("/daily/cycle.json", {cache: "no-store"})).json(); } catch {}
+  const now = new Date();
+  const md = String(now.getMonth() + 1).padStart(2, "0") + "-" + String(now.getDate()).padStart(2, "0");
+  const out = [];
+  for(const p of (cfg && cfg.pools) || []){
+    if(!inWindow(md, p.from, p.to)) continue;
+    // Holiday pools count twice, so the weeks around one actually feel like it.
+    for(const s of p.scenes || []) for(let i = 0; i < (p.holiday ? 2 : 1); i++)
+      out.push(Object.assign({fx: [], nightFx: []}, s, {pool: p.label || p.id}));
+  }
+  return out;
+}
+/* Draw a background. reroll: a tap, so never the one already showing. */
+async function pickCycle(reroll){
+  const pool = await cyclePool();
+  if(!pool.length){ CYCLE = CYCLE_DEFAULT; return; }
+  let saved = null; try { saved = JSON.parse(store.get("win-cycle") || "null"); } catch {}
+  const today = dateKey(new Date());
+  if(!reroll && saved && saved.date === today){
+    const keep = pool.find(s => s.id === saved.id);
+    if(keep){ CYCLE = keep; return; }
+  }
+  const others = pool.filter(s => s.id !== (saved && saved.id));
+  const from = others.length ? others : pool;
+  CYCLE = from[Math.floor(Math.random() * from.length)];
+  store.set("win-cycle", JSON.stringify({date: today, id: CYCLE.id}));
+}
 const store = { get(k){ try { return localStorage.getItem(k); } catch { return null; } },
                 set(k, v){ try { localStorage.setItem(k, v); } catch {} } };
 
@@ -297,6 +333,7 @@ async function loadDay(){
   try { days = await (await fetch("/daily/days.json", {cache: "no-store"})).json(); } catch {}
   WS.day = Object.assign({}, FALLBACK, days[key] || {});
   WS.key = key; WS.shown = "";
+  await pickCycle(false);
   paintToday();
   await paintScene();
 }
@@ -745,12 +782,14 @@ function windowLayout(){
     bg.innerHTML = WS.cycle ? ICON_CYCLE : ICON_TODAY;
     const label = WS.cycle ? "Background: day/night cycle" : "Background: today's scene";
     bg.title = label + " (tap to switch)"; bg.setAttribute("aria-label", label + ", tap to switch");
-    tip.textContent = WS.cycle ? "Day/night cycle" : "Today's scene";
+    tip.textContent = WS.cycle ? (CYCLE.name ? CYCLE.name + (CYCLE.pool ? " · " + CYCLE.pool : "") : "Day/night cycle") : "Today's scene";
   };
   let tipT = null;
-  bg.onclick = e => {
+  // Today -> a fresh random default; default -> back to today's scene.
+  bg.onclick = async e => {
     e.stopPropagation();
     WS.cycle = !WS.cycle; store.set("win-bg", WS.cycle ? "cycle" : "today");
+    if(WS.cycle) await pickCycle(true);
     paintBg(); WS.shown = ""; paintScene();
     tip.classList.add("on"); clearTimeout(tipT); tipT = setTimeout(() => tip.classList.remove("on"), 1800);
   };
