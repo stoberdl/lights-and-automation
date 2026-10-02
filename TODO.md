@@ -71,6 +71,16 @@
       harbor-lighthouse-fall (top-down rock point, dock angle, boat sizes,
       offset reflections), marblehead-lighthouse, then every other scene in
       cycle.json.
+- 2026-10-02: user: "all of them, really off and not natural, mountains, dock
+  completely" — redoing all now, one agent at a time, brief in
+  daily/FIX_BRIEF.md. Queue (tick as done): harbor-lighthouse-fall,
+  golden-aspen-lake, covered-bridge-creek, hunters-moon-lake,
+  marblehead-lighthouse, perkins-observatory, haunted-hill-manor,
+  pumpkin-patch-farm, bayou-witch-cottage, trick-or-treat-lane,
+  halloween-hollow, harvest-farm-thanksgiving, christmas-market-square,
+  tree-farm-snow, city-ice-rink, christmas-eve-rooftops,
+  christmas-morning-farm, new-years-skyline, winter-aurora-cabin,
+  frozen-falls-pass. If a session stops partway, the 4am run continues it.
 - [ ] Weighed foods (foodList) kcal formula only checked on quick-add days —
       compare a weighed day against the app.
 - Note 2026-10-02: the 4am daily run now adds one scene a day to the current

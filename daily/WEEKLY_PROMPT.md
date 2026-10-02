@@ -151,6 +151,17 @@ depth carried by size, haze and overlap, not by drawn perspective. Rules:
   the object's own waterline, compressed slightly, darker and fading. Never
   offset sideways.
 - **Draw back to front**, by baseline y, so nearer things overlap farther ones.
+- **Mountains look like terrain, not paper triangles.** Each range is an
+  irregular ridgeline (many peaks of different heights, saddles, shoulders,
+  no symmetric cones), sitting on the horizon with its base hidden by haze or
+  the next band. Two to four ranges, each farther one paler, bluer, lower
+  contrast and smaller. Light comes from one side: faces turned to the sun
+  are lighter, the others in shadow, split along ridges and gullies that run
+  from the peaks down. Snow follows the terrain (thicker on shaded faces and
+  in gullies, ragged lower edge), never a flat cap.
+- **Nothing looks pasted on.** Every object sits in its band: a contact
+  shadow or grass/water line at its base, the same light direction, and the
+  same haze as its distance.
 - In section 6 checks, add a line: "Perspective: one eye level, sizes follow
   baselines, reflections aligned, no top-down planes." Fail the scene if not.
 
