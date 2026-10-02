@@ -48,5 +48,11 @@
 - [x] 2026-10-02 — trick-or-treat-lane, harvest-farm-thanksgiving reviewed: OK.
 - [ ] frozen-falls-pass is below standard (blocky cliff, flat front-on bridge,
       empty foreground). Pulled from pools; redo, then add back to winter.
+- [x] 2026-10-02 — VeSync login saved; body scale weigh-ins sync
+      (`vesync_sync.py` → `vesync_weights.json`, 235 rows, last 2026-01-09).
+- [ ] Calories: food-log endpoints are not public. Options: (a) Apple Health
+      bridge (VeSync → Health → "Health Auto Export" app POSTs to serve.py),
+      (b) capture the VeSync app's traffic once to find the diary endpoint.
+- [ ] Show weight (and calories) on the dashboard — decide where.
 - Note 2026-10-02: the 4am daily run now adds one scene a day to the current
   default pool and works these items itself (WEEKLY_PROMPT 8b/8c).

@@ -30,3 +30,4 @@ daily/calendar/*.png
 .vesync.cred
 .vesync.ok
 .vesync.token.json
+vesync_*.json
