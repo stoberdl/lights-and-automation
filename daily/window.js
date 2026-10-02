@@ -718,7 +718,7 @@ function windowLayout(){
     };
     hold(minus, -1); hold(plus, 1);
     // Keep the figure current even when nobody is touching it.
-    const showV = () => { const v = q("#media-vol-v"); if(v && !vol.matches(":active")) v.textContent = vol.value + "%"; };
+    const showV = () => { const v = q("#media-vol-v"); if(v && !vol.matches(":active")) v.textContent = vol.dataset.unknown ? "—" : vol.value + "%"; };
     setInterval(showV, 1000); showV();
   }
   // paintMedia marks the column with has-art; mirror it into the card class

@@ -7370,8 +7370,14 @@ async function haMedia(){
     kind:"ha", entity:p.entity_id, src:p.name,
     title:p.title || p.app || "Playing", by:p.artist || p.app || p.source || "",
     playing:!!p.playing,
-    can:{play:has("play"), pause:has("pause"), next:has("next"), previous:has("previous")},
-    volume:p.volume == null ? null : Math.round(p.volume * 100),
+    can:{play:has("play"), pause:has("pause"),
+         next:has("next") || has("next_track"), previous:has("previous") || has("previous_track")},
+    // A Google TV over Cast reports a volume of 0 until something sets it
+    // through Cast; turning it up with the TV remote never reaches Cast. Sound
+    // playing, not muted and "0" is that stale number, not the real level, so
+    // the widget says it does not know rather than showing a confident 0.
+    volume:p.volume == null || (p.volume === 0 && p.playing && !p.muted) ? null
+           : Math.round(p.volume * 100),
     muted:!!p.muted, canVolume:has("volume_set"), dev:p.device_class || "",
     // Home Assistant serves the cover art from its own host, so this is a
     // path on HA, not on us - absolute already when it is a full URL. Plenty
@@ -7650,6 +7656,7 @@ function paintMedia(m){
     v.value = m.volume;
     v.style.setProperty("--fill", m.volume + "%");
   }
+  if(!MEDIA.dragging) v.dataset.unknown = m.volume == null ? "1" : "";
 }
 async function loadMedia(){
   // ?media=demo|art - the four-column layout, on demand. Whether this column
@@ -7710,7 +7717,7 @@ async function mediaDo(action, value){
   const grab = ()=>{ MEDIA.dragging = true; showVol(); };
   const drop = ()=>{ MEDIA.dragging = false; showVol(); mediaDo("volume", Number(v.value)); };
   v.addEventListener("pointerdown", grab);
-  v.addEventListener("input", ()=>{ MEDIA.dragging = true;
+  v.addEventListener("input", ()=>{ MEDIA.dragging = true; v.dataset.unknown = "";
                                     v.style.setProperty("--fill", v.value + "%");
                                     showVol(); });
   v.addEventListener("change", drop);
