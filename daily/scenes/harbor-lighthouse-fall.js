@@ -397,7 +397,7 @@ function harborLighthouseFallArt(opts = {}) {
   vit.sort((a, b) => a[0] - b[0]);
   vit.forEach(([, f]) => vg += f());
   // seawall of granite blocks along the village shore
-  for (let x = -20; x < 980; ) { const w = 30 + r() * 34; vg += boulder(x + w / 2, wlL(x) + 3, w, 10 + r() * 10); x += w * (.6 + r() * .3); }
+  for (let x = -20; x < 980; ) { const w = 30 + r() * 34; if (x + w > 540 && x < 1016) { x += w * .7; continue; } vg += boulder(x + w / 2, wlL(x) + 3, w, 10 + r() * 10); x += w * (.6 + r() * .3); }
   vg += `<path d="M0,${F(wlL(0) + 1)} L1080,${F(wlL(1080) + 1)}" stroke="${T("#3a3424")}" stroke-width="4" opacity=".6"/>`;
 
   /* reflections of the point and the village, then the shores themselves */
@@ -475,18 +475,14 @@ function harborLighthouseFallArt(opts = {}) {
     g += `<rect x="984" y="500" width="6" height="9" rx="2" fill="${T("#2a2a2e")}"/><ellipse cx="968" cy="507.5" rx="7" ry="2.2" fill="none" stroke="${T("#c8b080")}" stroke-width="2.2"/>`;
     g += `<rect x="1001" y="462" width="3" height="46" fill="${T("#2a2a2e")}"/><path d="M997,462 h11 l-2,-8 h-7Z" fill="${NIGHT ? LAMP : T("#3a3a40")}"/>`;
     g += perch(X0 + 7 + 26 * 17, DT - 7, .8) + perch(712, 509, .7);
-    return { g: `<g transform="translate(0,40)">${g}</g>`, WL: WL + 40 };
+    return { g: `<g transform="translate(0,-5)">${g}</g>`, WL: WL - 5 };
   };
   const SC = y => (y - WY) * .0058;   // scale = (baseY - horizon) / (refY - horizon), ref row y 618 = scale 1
   const fleet = [[1175, 469, -1, "#f2efe8"], [1118, 510, 1, "#f2efe8"], [1800, 521, -1, "#2e5a4a"], [1330, 552, -1, "#f2efe8"], [760, 600, 1, "#2a3e5e"], [1080, 624, 1, "#f2efe8"]];
   const front = fleet.map(([x, y, d, c]) => [y, () => boat(x, y, SC(y), d, c)]);
-  front.push([574, () => { const { g, WL } = wharf();
-    // gangway from the village shore down to the deck, with a handrail
-    const gw = `<path d="M584,499 L662,541 L662,546 L584,504Z" fill="${T("#6a5440")}"/><path d="M584,499 L662,541" stroke="${T("#b09474")}" stroke-width="1.4"/>` +
-      `<path d="M584,487 L662,529" stroke="${T("#4a3828")}" stroke-width="1.8"/>` + [0, .33, .66, 1].map(t => `<rect x="${F(584 + 78 * t - 1)}" y="${F(487 + 42 * t)}" width="2" height="12" fill="${T("#4a3828")}"/>`).join("") +
-      `<rect x="582" y="497" width="5" height="10" fill="${T("#4a3828")}"/>`;
-    let o = `<g transform="matrix(1,0,0,-.88,0,${F(WL * 1.88)})" opacity=".32" filter="url(#hlRipple)">${g}</g>${gw}${g}`;
-    if (NIGHT) o += `<circle cx="1002" cy="500" r="60" fill="url(#hlGlow)" opacity=".7"/><ellipse cx="1002" cy="640" rx="16" ry="60" fill="${LAMP}" opacity=".18" filter="url(#hlRipple)"/>`;
+  front.push([529, () => { const { g, WL } = wharf();
+    let o = `<g transform="matrix(1,0,0,-.88,0,${F(WL * 1.88)})" opacity=".32" filter="url(#hlRipple)">${g}</g>${g}`;
+    if (NIGHT) o += `<circle cx="1002" cy="455" r="60" fill="url(#hlGlow)" opacity=".7"/><ellipse cx="1002" cy="590" rx="16" ry="60" fill="${LAMP}" opacity=".18" filter="url(#hlRipple)"/>`;
     return o; }]);
   front.sort((a, b) => a[0] - b[0]);
   front.forEach(([, f]) => s += f());
