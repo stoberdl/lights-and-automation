@@ -126,6 +126,34 @@ and the reasons are the rules below.
 - **Rain or snow drawn into the scene.** Weather is a separate animated layer on the page; scenes are always drawn dry.
 - **People.** Landscapes, buildings, objects and animals only.
 
+### Depth and perspective (every scene so far has gotten this wrong)
+The user's standing complaint is that the "3D" looks off. The autumn valley
+works because it is **layered 2.5D**: flat elevations stacked in bands, with
+depth carried by size, haze and overlap, not by drawn perspective. Rules:
+- **One camera, at eye level.** The horizon line is the eye line. Never mix a
+  top-down view (tiled rock shelves, docks or roads seen from above) with
+  eye-level buildings in the same picture.
+- **Objects are elevations.** Draw buildings, lighthouses, boats and trees
+  front-on. A building may show one narrow side wall only toward the centre
+  vanishing point: left of centre shows its right side, right of centre its
+  left side, never both ways in one scene, and the side never wider than
+  about a quarter of the front.
+- **Size follows the baseline.** Anything standing on the ground or water is
+  scaled by how far its base is below the horizon:
+  `scale = (baseY - horizonY) / (refY - horizonY)`, with refY the foreground
+  reference row. Two boats at different depths must differ in size by that
+  ratio; a far shore's houses are a fraction of the near ones.
+- **Ground planes foreshorten.** A dock, road or shoreline recedes by getting
+  thinner vertically and narrower toward the horizon, its side edges aimed at
+  one vanishing point on the horizon. If that is hard, keep it parallel to
+  the horizon (a pier seen side-on) instead of angled.
+- **Reflections sit directly below** what they mirror: same x, flipped about
+  the object's own waterline, compressed slightly, darker and fading. Never
+  offset sideways.
+- **Draw back to front**, by baseline y, so nearer things overlap farther ones.
+- In section 6 checks, add a line: "Perspective: one eye level, sizes follow
+  baselines, reflections aligned, no top-down planes." Fail the scene if not.
+
 ### Composition: the bar's text and controls sit on top
 The canvas is 2560×720.
 - **Top-left**, x 0–900, y 0–260: the temperature. Keep it calm (sky or distant hills).

@@ -64,6 +64,13 @@
       syncTimestamp} (decoded from the app). `vesync_history.py`, 220 days.
 - [x] 2026-10-02 — Bar: kcal line + weekly weight arrow beside the clock;
       evening flash (FOOD_WEEKDAY / FOOD_WEEKEND in daily/window.js).
+- [ ] Perspective pass (user, 2026-10-02: "the 3D effect is off on all of
+      them"; likes the harbor lighthouse otherwise). Redraw to the new
+      "Depth and perspective" rules in WEEKLY_PROMPT section 5, keeping each
+      scene's subject and palette. One per run, in this order:
+      harbor-lighthouse-fall (top-down rock point, dock angle, boat sizes,
+      offset reflections), marblehead-lighthouse, then every other scene in
+      cycle.json.
 - [ ] Weighed foods (foodList) kcal formula only checked on quick-add days —
       compare a weighed day against the app.
 - Note 2026-10-02: the 4am daily run now adds one scene a day to the current
