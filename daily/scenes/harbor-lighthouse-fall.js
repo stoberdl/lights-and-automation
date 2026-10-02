@@ -450,22 +450,23 @@ function harborLighthouseFallArt(opts = {}) {
     return b;
   };
   const wharf = () => {
-    const X0 = 548, X1 = 1012, DT = 503, DF = 511, FB = 518, WL = 534;   // deck back edge, deck front edge, fascia bottom, waterline
+    const X0 = 548, X1 = 1012, DT = 508, DF = 511, FB = 518, WL = 536;   // deck back edge, deck front edge, fascia bottom, waterline
     const wood = T("#7a6048"), woodD = T("#4a3828"), woodL = T("#b09474");
     let g = "";
-    // back row of pilings (behind the fascia, darker), then the front row with braces
+    // the dark under the deck, then back pilings, braces, front pilings
+    g += `<rect x="${X0}" y="${FB}" width="${X1 - X0 + 2}" height="${WL - FB}" fill="${T("#1c2622")}" opacity=".88"/>`;
     for (let x = X0 + 20; x < X1; x += 26) g += `<rect x="${F(x - 2)}" y="${FB}" width="4" height="${WL - FB}" fill="${mix(woodD, "#000000", .3)}"/>`;
-    for (let x = X0 + 7; x < X1 - 20; x += 26) g += `<path d="M${F(x + 3)},${FB + 1} L${F(x + 23)},${WL - 3} M${F(x + 23)},${FB + 1} L${F(x + 3)},${WL - 3}" stroke="${woodD}" stroke-width="1.6" opacity=".8"/>`;
+    for (let x = X0 + 7; x < X1 - 20; x += 26) g += `<path d="M${F(x + 3)},${FB + 1} L${F(x + 23)},${WL - 3} M${F(x + 23)},${FB + 1} L${F(x + 3)},${WL - 3}" stroke="${mix(woodD, "#000000", .4)}" stroke-width="1.4" opacity=".7"/>`;
     // deck top: a thin foreshortened strip, plank seams leaning toward the centre vanishing point
     g += `<path d="${poly([[X0, DT], [X1, DT], [X1 + 2, DF], [X0, DF]])}" fill="${woodL}"/>`;
     for (let x = X0 + 4; x < X1; x += 7) g += `<path d="M${F(x)},${DF} L${F(x + (W / 2 - x) * .012)},${DT}" stroke="${mix(woodL, "#000000", .25)}" stroke-width=".7"/>`;
     g += `<rect x="${X0}" y="${DF}" width="${X1 - X0 + 2}" height="${FB - DF}" fill="${wood}"/><rect x="${X0}" y="${DF}" width="${X1 - X0 + 2}" height="1.3" fill="${RIM}" opacity=".45"/>`;
     for (let x = X0 + 7; x <= X1; x += 26) {
-      g += `<rect x="${F(x - 3)}" y="${DT - 7}" width="6" height="${WL - DT + 7}" fill="${wood}"/><rect x="${F(x - 3)}" y="${DT - 7}" width="2" height="${WL - DT + 7}" fill="${woodL}" opacity=".7"/><rect x="${F(x + 1.5)}" y="${DT - 7}" width="1.5" height="${WL - DT + 7}" fill="#000" opacity=".25"/>`;
+      g += `<rect x="${F(x - 3)}" y="${FB}" width="6" height="${WL - FB}" fill="${wood}"/><rect x="${F(x - 3)}" y="${FB}" width="2" height="${WL - FB}" fill="${woodL}" opacity=".5"/><rect x="${F(x + 1.5)}" y="${FB}" width="1.5" height="${WL - FB}" fill="#000" opacity=".3"/>`;
       g += `<rect x="${F(x - 3)}" y="${WL - 7}" width="6" height="7" fill="${T("#2e3a24")}" opacity=".8"/>`; }
     g += `<rect x="${X0}" y="${WL - 2}" width="${X1 - X0 + 4}" height="2" fill="${T("#2a2a1c")}" opacity=".5"/>`;
     // the fish shack on the deck, hung with buoys
-    g += house(872, 508, .72, { wall: "#9a3a2a", roof: "#3a3a40", trim: "#e8e0d0", gw: 52, sw: 84, h: 40, rh: 24, du: .2, wins: [.84], extra: (Fr) => {
+    g += house(872, 508, 1, { wall: "#9a3a2a", roof: "#3a3a40", trim: "#e8e0d0", gw: 52, sw: 84, h: 40, rh: 24, du: .2, wins: [.84], extra: (Fr) => {
       let e = "";
       for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) { const u = .36 + i * .13 + (j % 2) * .04, v = .82 - j * .27, c = Fr(u, v), bc = BUOY[(i * 3 + j * 2) % BUOY.length], bc2 = BUOY[(i + j + 3) % BUOY.length];
         e += `<path d="M${F(c[0])},${F(c[1] - 6)} v-3" stroke="${T("#2a2a2a")}" stroke-width=".8"/><rect x="${F(c[0] - 3)}" y="${F(c[1] - 6)}" width="6" height="13" rx="3" fill="${T(bc)}"/><rect x="${F(c[0] - 3)}" y="${F(c[1] - 1)}" width="6" height="3" fill="${T(bc2)}"/><rect x="${F(c[0] - 3)}" y="${F(c[1] - 6)}" width="2" height="13" rx="1" fill="#fff" opacity=".35"/>`; }
