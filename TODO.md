@@ -31,3 +31,16 @@
 
 - [x] 2026-10-01 — Daily 4am scheduled task "Lights Daily Scene" (5366b1e).
 - [x] 2026-10-02 — TV volume stale 0 shown as "—"; next/previous on Cast (76de8d5).
+
+## Added 2026-10-02 — seasonal default backgrounds (agents hit the usage limit)
+
+- [ ] `scenes/new-years-skyline.js` has a syntax error — fix, then add to the
+      `new-year` pool in cycle.json.
+- [ ] Not written yet: `first-sunrise-lake` (New Year), `snowy-pines-lodge`
+      (Christmas season), `village-skating-pond` (Winter),
+      `main-street-thanksgiving` (Thanksgiving — pool has only 1 scene).
+      The daily script also tops up thin pools 21 days ahead (WEEKLY_PROMPT 8b).
+- [ ] frozen-falls-pass, trick-or-treat-lane, harvest-farm-thanksgiving were
+      cut off mid-review — look them over.
+- [ ] Spring / summer / Valentine's / July 4 pools are empty (script fills later).
+- [x] 2026-10-02 — Daily build exit code: 4am run exited 0; resolved.

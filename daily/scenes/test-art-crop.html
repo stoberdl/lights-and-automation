@@ -1,0 +1,15 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>official art crop test</title>
+<style>html,body{margin:0;padding:0;background:#000;overflow:hidden}
+img{width:2560px;height:720px;object-fit:cover;display:block}
+.z{position:absolute;border:3px dashed rgba(255,60,60,.8)}</style>
+</head><body>
+<img id="a" alt="">
+<div class="z" style="left:0;top:0;width:900px;height:260px"></div>
+<div class="z" style="left:1500px;top:0;width:1054px;height:260px"></div>
+<script>
+  // ?src=../art/x.jpg&focus=center%2012%25  -> the art as the bar crops it, text corners outlined
+  const q = new URLSearchParams(location.search), a = document.getElementById("a");
+  a.src = q.get("src"); a.style.objectPosition = q.get("focus") || "center";
+</script>
+</body></html>

@@ -3,9 +3,13 @@
    a sled and a deer. One light source: a small moon upper left of centre,
    with the aurora adding green to the lit snow. Snow is drawn lying on the
    ground and trees only; falling snow belongs to the page's weather layer.
+   opts.time === "day" draws the same clearing on a clear, cold sunny day:
+   deep blue sky, the sun where the moon is, bright snow with blue shadows,
+   no aurora, unlit windows. Unset/"night" = the aurora night.
    Same shape as reference/autumn-valley.js. Needs rng() and mix() from
    reference/scene-helpers.js. opts.part = "sky" | "clouds" | "land".   */
 function winterAuroraCabinArt(opts = {}) {
+  const DAY = opts.time === "day", K = (n, d) => DAY ? d : n;
   const r = rng(opts.seed || 1221);
   const W = 2560, H = 720, F = v => (+v).toFixed(1);
   const MX = 930, MY = 105, MR = 30;                        // the moon
@@ -95,20 +99,97 @@ function winterAuroraCabinArt(opts = {}) {
     return g;
   };
 
-  const SKY_H = "#2c5c72", HAZE = "#3a6a80";
-  const SNOW = { lit: "#dfeaf6", mid: "#a8bcd6", dark: "#6c82a8", deep: "#4a5c84" };
+  /* near spruce for the foreground: every tier is a fan of drooping branches,
+     each branch built from many small serrated needle sprays, shaded by side
+     (toward / away from the light) and by depth (back branches darker), with
+     lumpy snow pillows resting on top of the branches and a tapered, barked
+     trunk that shows between tiers. Uses its own random stream. */
+  const nearSpruce = (x, y, h, o) => {
+    const rn = rng(Math.round(x * 13 + h * 7)), s = o.lx < x ? -1 : 1, k = h / 380;
+    const ramp = [mix(o.dark, "#000", .4), o.dark, mix(o.dark, o.mid, .5), o.mid, mix(o.mid, o.lit, .5), o.lit, mix(o.lit, o.hl, .3), mix(o.lit, o.hl, .55)];
+    const sprig = (px, py, a, L, wd, col) => {
+      const ca = Math.cos(a), sa = Math.sin(a), nx = -sa, ny = ca, l = [], rr = [], n = 5;
+      for (let i = 1; i <= n; i++) { const t = i / n, ww = wd * (1 - t * .65) * (i % 2 ? 1 : .4), cx = px + ca * L * t * .92, cy = py + sa * L * t * .92;
+        l.push([cx + nx * ww - ca * L * .1, cy + ny * ww - sa * L * .1]); rr.push([cx - nx * ww - ca * L * .1, cy - ny * ww - sa * L * .1]); }
+      return `<path d="${poly([[px, py], ...l, [px + ca * L, py + sa * L], ...rr.reverse()])}" fill="${col}"/>`;
+    };
+    const tw = h * .042, top = y - h, bot = y - h * .2, tiers = Math.max(5, Math.round(h / 36));
+    const lump = (cx, cy, rx, ry, a, col) => { const n = 7, pts = [];
+      for (let i = 0; i < n; i++) { const t = i / n * Math.PI * 2, q = .78 + rn() * .3, ex = Math.cos(t) * rx * q, ey = Math.sin(t) * ry * q * (Math.sin(t) > 0 ? .7 : 1.1);
+        pts.push([cx + ex * Math.cos(a) - ey * Math.sin(a), cy + ex * Math.sin(a) + ey * Math.cos(a)]); }
+      return `<path d="${poly(pts)}" fill="${col}"/>`; };
+    let back = "", front = "";
+    for (let t = 0; t < tiers; t++) {
+      const u = t / (tiers - 1), yb = bot - (bot - top - h * .04) * Math.pow(u, .92), w = h * .4 * Math.pow(1 - u, .85) + h * .035;
+      const droop = w * .36, nb = Math.max(3, Math.round(w / 13)), lift = h * .05 * (1 - u * .5);
+      // shaded mass under the tier, so it reads solid
+      const mass = [[x, yb - lift - h * .02]];
+      for (let i = 0; i <= 14; i++) { const q = -1 + 2 * i / 14, px = x + q * w * .92, py = yb + h * .005 + Math.abs(q) * droop * .85 + (i % 2 ? -droop * .3 * Math.abs(q) : rn() * 3);
+        mass.push([px, py]); }
+      back += `<path d="${poly(mass)}" fill="${ramp[0]}" opacity=".92"/>`;
+      // the tier above throws a soft dark band over the top of the tier below it
+      if (t > 0) front += `<path d="${poly(mass)}" fill="${ramp[0]}" opacity=".55" transform="translate(${F(-s * 3 * k)},${F(9 * k)})"/>`;
+      // inner foliage filling the body of the tier, darker toward the shaded side and underneath
+      for (let i = 0; i < w * .9; i++) {
+        const q = (rn() * 2 - 1) * .9, px = x + q * w * .85, yTop = yb - lift + Math.abs(q) * droop * .25, yBot = yb + Math.abs(q) * droop * .75 - 2 * k;
+        const py = yTop + rn() * Math.max(2, yBot - yTop), toward = Math.sign(q) === s, a = Math.PI / 2 - Math.sign(q || 1) * (.9 + rn() * .5);
+        const v = (toward ? .4 : .14) + (1 - (py - yTop) / Math.max(1, yBot - yTop)) * .2 + (rn() - .5) * .2;
+        front += sprig(px, py, a, (10 + rn() * 8) * k, (4 + rn() * 2) * k, ramp[Math.max(1, Math.min(6, Math.floor(v * 8)))]);
+      }
+      for (const pass of [0, 1]) for (const side of [-1, 1]) for (let b = 0; b < nb; b++) {
+        if ((b + pass) % 2) continue;
+        const isFront = pass === 1, toward = side === s;
+        const len = w * (isFront ? .55 + rn() * .45 : .7 + rn() * .3), x0 = x + side * tw * .4, y0 = yb - lift - rn() * h * .02 + b * .5;
+        const x1 = x + side * len, y1 = yb - lift * .3 + droop * (len / w) * (.6 + rn() * .5) + (b / nb - .5) * droop * .5;
+        const qx = x + side * len * .55, qy = y0 - len * .06 - rn() * len * .05;
+        const at = q => { const m = 1 - q; return [m * m * x0 + 2 * m * q * qx + q * q * x1, m * m * y0 + 2 * m * q * qy + q * q * y1]; };
+        let g = `<path d="M${F(x0)},${F(y0)} Q${F(qx)},${F(qy)} ${F(x1)},${F(y1)}" stroke="${mix(o.trunk, "#000", .3)}" stroke-width="${F(2.2 * k)}" fill="none"/>`;
+        const steps = Math.max(4, Math.round(len / (7.5 * k)));
+        for (let i = 2; i <= steps; i++) {
+          const q = i / steps, [px, py] = at(q), [ax, ay] = at(Math.max(0, q - .05)), ang = Math.atan2(py - ay, px - ax);
+          const L = (11 + rn() * 9) * k * (.6 + q * .5), wd = (4 + rn() * 2) * k;
+          for (const off of [-.75, .45]) {
+            const a = ang + off + (rn() - .5) * .35;
+            let v = (toward ? .52 : .18) + q * (toward ? .28 : .1) + (off < 0 ? .12 : -.1) + (isFront ? .08 : -.18) + (1 - u) * -.04 + (rn() - .5) * .22;
+            g += sprig(px, py, a, L, wd, ramp[Math.max(1, Math.min(7, Math.floor(v * 8)))]);
+          }
+        }
+        if (isFront) for (let i = 2; i <= steps; i++) {
+          const q = i / steps; if (rn() < (q > .35 ? .15 : .75) || q > .97) continue;
+          const [px, py] = at(q), [ax, ay] = at(Math.max(0, q - .08)), a = Math.atan2(py - ay, Math.abs(px - ax) || 1) * .8;
+          const ang = side * a, rx = (6 + rn() * 7) * k * (1.2 - q * .45), ry = (2.8 + rn() * 2) * k;
+          const lit = toward ? (q > .2 || rn() < .6) : rn() < .22;
+          g += lump(px, py - ry * .2, rx * .95, ry * .7, ang, mix(o.snowDark, o.dark, .22));
+          g += lump(px, py - ry * .85, rx, ry, ang, lit ? o.snowLit : o.snowDark);
+          if (rn() < .5) g += lump(px + (rn() - .5) * rx, py - ry * 1.3, rx * .5, ry * .6, ang, lit ? "#ffffff" : mix(o.snowDark, o.snowLit, .4));
+        }
+        if (isFront) front += g; else back += g;
+      }
+    }
+    // trunk: tapered, bark lines, lit edge toward the light
+    let tr = `<path d="M${F(x - tw)},${F(y)} C${F(x - tw * .8)},${F(y - h * .4)} ${F(x - tw * .3)},${F(top + h * .3)} ${F(x)},${F(top + 4)} C${F(x + tw * .3)},${F(top + h * .3)} ${F(x + tw * .8)},${F(y - h * .4)} ${F(x + tw)},${F(y)}Z" fill="${o.trunk}"/>`;
+    tr += `<path d="M${F(x + s * tw * .95)},${F(y)} C${F(x + s * tw * .75)},${F(y - h * .4)} ${F(x + s * tw * .28)},${F(top + h * .3)} ${F(x)},${F(top + 6)} L${F(x + s * tw * .2)},${F(top + h * .3)} C${F(x + s * tw * .4)},${F(y - h * .4)} ${F(x + s * tw * .5)},${F(y - h * .2)} ${F(x + s * tw * .45)},${F(y)}Z" fill="${mix(o.trunk, o.hl, .4)}"/>`;
+    for (let i = 0; i < 26; i++) { const py = y - rn() * h * .8, wid = tw * (1 - (y - py) / h * .7), px = x + (rn() - .5) * wid * 1.2;
+      tr += `<path d="M${F(px)},${F(py)} q${F((rn() - .5) * 3)},${F(-6 - rn() * 8)} ${F((rn() - .5) * 2)},${F(-12 - rn() * 10)}" stroke="${mix(o.trunk, "#000", .4)}" stroke-width="1.3" fill="none" opacity=".7"/>`; }
+    // snow tuft on the leader
+    const tip = `<path d="M${F(x)},${F(top - 4)} q${F(-5 * k)},${F(8 * k)} ${F(-7 * k)},${F(14 * k)} q${F(7 * k)},${F(3 * k)} ${F(14 * k)},0 q${F(-3 * k)},${F(-6 * k)} ${F(-7 * k)},${F(-14 * k)}Z" fill="${o.snowLit}"/>`;
+    return `<path d="M${F(x - h * .3)},${F(y - 2)} L${F(x + h * .3)},${F(y - 2)}" stroke="${o.snowDark}" stroke-width="10" opacity=".5"/>` + tr + back + front + tip;
+  };
+
+  const SKY_H = K("#2c5c72", "#dce8f2"), HAZE = K("#3a6a80", "#c6d6e8");
+  const SNOW = K({ lit: "#dfeaf6", mid: "#a8bcd6", dark: "#6c82a8", deep: "#4a5c84" }, { lit: "#fbfdff", mid: "#d6e3f1", dark: "#9cb4d4", deep: "#7690b8" });
   let s = `<defs id="wadefs">
-    <linearGradient id="waSky" x1="0" y1="0" x2="0" y2="460" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#040a1c"/><stop offset=".4" stop-color="#0b1a38"/><stop offset=".78" stop-color="#153556"/><stop offset="1" stop-color="${SKY_H}"/></linearGradient>
-    <radialGradient id="waMoonG" cx="${MX}" cy="${MY}" r="700" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#f0f4ff" stop-opacity=".6"/><stop offset=".12" stop-color="#d0dcf8" stop-opacity=".25"/><stop offset=".5" stop-color="#9ab0e0" stop-opacity=".07"/><stop offset="1" stop-color="#9ab0e0" stop-opacity="0"/></radialGradient>
-    <radialGradient id="waAuroraG" cx="1300" cy="250" r="1000" gradientUnits="userSpaceOnUse" gradientTransform="translate(1300 250) scale(1 .45) translate(-1300 -250)"><stop offset="0" stop-color="#58f0b0" stop-opacity=".35"/><stop offset=".5" stop-color="#40c8a0" stop-opacity=".1"/><stop offset="1" stop-color="#40c8a0" stop-opacity="0"/></radialGradient>
+    <linearGradient id="waSky" x1="0" y1="0" x2="0" y2="460" gradientUnits="userSpaceOnUse">${K(`<stop offset="0" stop-color="#040a1c"/><stop offset=".4" stop-color="#0b1a38"/><stop offset=".78" stop-color="#153556"/>`, `<stop offset="0" stop-color="#2a62b4"/><stop offset=".4" stop-color="#5c98d6"/><stop offset=".78" stop-color="#a6cae8"/>`)}<stop offset="1" stop-color="${SKY_H}"/></linearGradient>
+    <radialGradient id="waMoonG" cx="${MX}" cy="${MY}" r="700" gradientUnits="userSpaceOnUse">${K(`<stop offset="0" stop-color="#f0f4ff" stop-opacity=".6"/><stop offset=".12" stop-color="#d0dcf8" stop-opacity=".25"/><stop offset=".5" stop-color="#9ab0e0" stop-opacity=".07"/><stop offset="1" stop-color="#9ab0e0" stop-opacity="0"/>`, `<stop offset="0" stop-color="#fffaf0" stop-opacity=".9"/><stop offset=".16" stop-color="#fff4dc" stop-opacity=".42"/><stop offset=".5" stop-color="#ffeccc" stop-opacity=".1"/><stop offset="1" stop-color="#ffeccc" stop-opacity="0"/>`)}</radialGradient>
+    <radialGradient id="waAuroraG" cx="1300" cy="250" r="1000" gradientUnits="userSpaceOnUse" gradientTransform="translate(1300 250) scale(1 .45) translate(-1300 -250)"><stop offset="0" stop-color="#58f0b0" stop-opacity="${K(".35", "0")}"/><stop offset=".5" stop-color="#40c8a0" stop-opacity="${K(".1", "0")}"/><stop offset="1" stop-color="#40c8a0" stop-opacity="0"/></radialGradient>
     <linearGradient id="waRay" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#b8ffd8" stop-opacity=".95"/><stop offset=".08" stop-color="#62f5b4" stop-opacity=".8"/><stop offset=".35" stop-color="#34d49a" stop-opacity=".35"/><stop offset=".7" stop-color="#3a8aa0" stop-opacity=".12"/><stop offset=".88" stop-color="#b070e0" stop-opacity=".14"/><stop offset="1" stop-color="#b070e0" stop-opacity="0"/></linearGradient>
-    <radialGradient id="waGlow"><stop offset="0" stop-color="#ffc060" stop-opacity=".85"/><stop offset=".35" stop-color="#ffb050" stop-opacity=".3"/><stop offset="1" stop-color="#ffb050" stop-opacity="0"/></radialGradient>
-    <radialGradient id="waPane" cx=".5" cy=".6" r=".7"><stop offset="0" stop-color="#fff2b0"/><stop offset=".6" stop-color="#ffc35a"/><stop offset="1" stop-color="#e8862a"/></radialGradient>
+    <radialGradient id="waGlow"><stop offset="0" stop-color="#ffc060" stop-opacity="${K(".85", "0")}"/><stop offset=".35" stop-color="#ffb050" stop-opacity="${K(".3", "0")}"/><stop offset="1" stop-color="#ffb050" stop-opacity="0"/></radialGradient>
+    <radialGradient id="waPane" cx=".5" cy=".6" r=".7">${K(`<stop offset="0" stop-color="#fff2b0"/><stop offset=".6" stop-color="#ffc35a"/><stop offset="1" stop-color="#e8862a"/>`, `<stop offset="0" stop-color="#b4d0e4"/><stop offset=".6" stop-color="#6a8aa6"/><stop offset="1" stop-color="#3e5672"/>`)}</radialGradient>
     <linearGradient id="waHaze" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${HAZE}" stop-opacity="0"/><stop offset=".6" stop-color="${HAZE}" stop-opacity=".6"/><stop offset="1" stop-color="${HAZE}" stop-opacity="0"/></linearGradient>
-    <linearGradient id="waHill1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8aa2c2"/><stop offset="1" stop-color="#6a82a6"/></linearGradient>
-    <linearGradient id="waHill2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9cb2d0"/><stop offset="1" stop-color="#7890b4"/></linearGradient>
-    <linearGradient id="waField" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c8d8ec"/><stop offset=".45" stop-color="${SNOW.mid}"/><stop offset="1" stop-color="${SNOW.dark}"/></linearGradient>
-    <linearGradient id="waWall" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7a5840"/><stop offset=".5" stop-color="#5e4230"/><stop offset="1" stop-color="#3e2c22"/></linearGradient>
+    <linearGradient id="waHill1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${K("#8aa2c2", "#c6d6e8")}"/><stop offset="1" stop-color="${K("#6a82a6", "#a8bcd6")}"/></linearGradient>
+    <linearGradient id="waHill2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${K("#9cb2d0", "#dae6f2")}"/><stop offset="1" stop-color="${K("#7890b4", "#b6cae0")}"/></linearGradient>
+    <linearGradient id="waField" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${K("#c8d8ec", "#f6f9fd")}"/><stop offset=".45" stop-color="${SNOW.mid}"/><stop offset="1" stop-color="${SNOW.dark}"/></linearGradient>
+    <linearGradient id="waWall" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${K("#7a5840", "#9a7050")}"/><stop offset=".5" stop-color="${K("#5e4230", "#7a5638")}"/><stop offset="1" stop-color="${K("#3e2c22", "#5a3e2a")}"/></linearGradient>
     <filter id="waLeafy" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".09" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="7" xChannelSelector="R" yChannelSelector="G"/></filter>
     <filter id="waLeafyS" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".2" numOctaves="1" seed="3" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="3.5" xChannelSelector="R" yChannelSelector="G"/></filter>
     <filter id="waCloudy" x="-20%" y="-40%" width="140%" height="180%"><feTurbulence type="fractalNoise" baseFrequency=".018" numOctaves="3" seed="11" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="30" xChannelSelector="R" yChannelSelector="G" result="d"/><feGaussianBlur in="d" stdDeviation="2.4"/></filter>
@@ -120,7 +201,9 @@ function winterAuroraCabinArt(opts = {}) {
   </defs>
   <rect width="${W}" height="${H}" fill="url(#waSky)"/>`;
 
-  /* stars: dense, thinning toward the horizon and under the aurora */
+  /* stars: dense, thinning toward the horizon and under the aurora. By day the
+     night sky is still generated (same random draws, same layout) but not drawn. */
+  const s0 = s;
   for (let i = 0; i < 700; i++) { const x = r() * W, y = Math.pow(r(), 1.3) * 420;
     s += `<circle cx="${F(x)}" cy="${F(y)}" r="${r() < .06 ? 1.8 : .5 + r() * .7}" fill="${r() < .15 ? "#fff0d8" : "#e6eeff"}" opacity="${F(.2 + r() * .7 * (1 - y / 480))}"/>`; }
   /* moon */
@@ -149,6 +232,13 @@ function winterAuroraCabinArt(opts = {}) {
   for (let k = 0; k < 7; k++) { const a = .55 + k * .3, L = 800;
     s += `<path d="M${MX},${MY} L${F(MX + Math.cos(a - .035) * L)},${F(MY + Math.sin(a - .035) * L)} L${F(MX + Math.cos(a + .035) * L)},${F(MY + Math.sin(a + .035) * L)}Z" fill="#eef4ff"/>`; }
   s += `</g>`;
+  if (DAY) {
+    s = s0 + `<rect width="${W}" height="${H}" fill="url(#waMoonG)"/><circle cx="${MX}" cy="${MY}" r="50" fill="#fff6dc" opacity=".35"/><circle cx="${MX}" cy="${MY}" r="38" fill="#fffcf0"/>`;
+    s += `<g class="rays" opacity=".12" filter="url(#waSoft)">`;
+    for (let k = 0; k < 7; k++) { const a = .55 + k * .3, L = 900;
+      s += `<path d="M${MX},${MY} L${F(MX + Math.cos(a - .04) * L)},${F(MY + Math.sin(a - .04) * L)} L${F(MX + Math.cos(a + .04) * L)},${F(MY + Math.sin(a + .04) * L)}Z" fill="#fff"/>`; }
+    s += `</g>`;
+  }
   const DEFS = s.slice(0, s.indexOf("</defs>") + 7);
   const skyPart = s; s = DEFS;
 
@@ -158,6 +248,13 @@ function winterAuroraCabinArt(opts = {}) {
     const lobes = [], lean = x < MX ? 1 : -1;
     for (let k = 0; k < 14; k++) { const t = r(); lobes.push([x + (t - .5) * w, y - Math.sin(t * Math.PI) * w * .05 * (.4 + r() * 1.2) + (r() - .5) * w * .03, w * (.03 + r() * .06)]); }
     lobes.sort((a, b) => a[0] - b[0]);
+    if (DAY) {
+      c += `<ellipse cx="${x}" cy="${F(y + w * .01)}" rx="${F(w * .5)}" ry="${F(w * .03)}" fill="#bccce0"/>`;
+      lobes.forEach(([lx, ly, R]) => c += `<ellipse cx="${F(lx)}" cy="${F(ly)}" rx="${F(R * 1.8)}" ry="${F(R * .6)}" fill="#cad8e8"/>`);
+      lobes.forEach(([lx, ly, R]) => c += `<ellipse cx="${F(lx)}" cy="${F(ly - R * .25)}" rx="${F(R * 1.4)}" ry="${F(R * .55)}" fill="#f2f6fb"/>`);
+      lobes.forEach(([lx, ly, R]) => c += `<ellipse cx="${F(lx + lean * R * .3)}" cy="${F(ly - R * .5)}" rx="${F(R * .7)}" ry="${F(R * .3)}" fill="#ffffff"/>`);
+      return c + `</g></g>`;
+    }
     c += `<ellipse cx="${x}" cy="${F(y + w * .01)}" rx="${F(w * .5)}" ry="${F(w * .025)}" fill="#1c2c4c"/>`;
     lobes.forEach(([lx, ly, R]) => c += `<ellipse cx="${F(lx)}" cy="${F(ly + R * .2)}" rx="${F(R * 2)}" ry="${F(R * .45)}" fill="#1c2c4c"/>`);
     lobes.forEach(([lx, ly, R]) => c += `<ellipse cx="${F(lx)}" cy="${F(ly)}" rx="${F(R * 1.5)}" ry="${F(R * .34)}" fill="#34486e"/>`);
@@ -169,9 +266,9 @@ function winterAuroraCabinArt(opts = {}) {
   const cloudPart = s; s = DEFS;
 
   /* snowy mountains, two ranges, with haze between */
-  s += mountains({ base: 432, hi: 285, lo: 360, step: 175, lx: MX, lit: "#7a92b8", mid: "#5a7098", dark: "#3e5078", snow: .5, snowLit: "#d6e4f4", snowDark: "#8ea4c8" });
+  s += mountains({ base: 432, hi: 285, lo: 360, step: 175, lx: MX, lit: K("#7a92b8", "#a2b6d2"), mid: K("#5a7098", "#8298bc"), dark: K("#3e5078", "#667ca4"), snow: .5, snowLit: K("#d6e4f4", "#ffffff"), snowDark: K("#8ea4c8", "#b8c8e0") });
   s += `<rect x="0" y="340" width="${W}" height="120" fill="url(#waHaze)" opacity=".75"/>`;
-  s += mountains({ base: 458, hi: 368, lo: 420, step: 110, lx: MX, lit: "#6a84aa", mid: "#4e6690", dark: "#344a72", snow: .42, snowLit: "#c8d8ec", snowDark: "#7a92b8" });
+  s += mountains({ base: 458, hi: 368, lo: 420, step: 110, lx: MX, lit: K("#6a84aa", "#90a8c8"), mid: K("#4e6690", "#728cb2"), dark: K("#344a72", "#56709a"), snow: .42, snowLit: K("#c8d8ec", "#f8fbff"), snowDark: K("#7a92b8", "#a8bcd8") });
   s += `<rect x="0" y="410" width="${W}" height="80" fill="url(#waHaze)" opacity=".8"/>`;
 
   /* forest bands of little snowy spruces */
@@ -181,8 +278,8 @@ function winterAuroraCabinArt(opts = {}) {
       if (r() < .12) continue;
       trees.push([x + r() * size * .4, fn(x) + row * size * .55 + size * .5 + r() * size * .3, size * conSize * (.7 + r() * .6)]); }
     trees.sort((a, b) => a[1] - b[1]);
-    trees.forEach(([x, y, h]) => f += spruce(x, y, h, { lx: MX, trunk: mix("#2a2024", HAZE, haze), dark: mix("#0e1a26", HAZE, haze), mid: mix("#18303a", HAZE, haze), lit: mix("#2e4e54", HAZE, haze * .8),
-      snowLit: mix("#e8f0fa", HAZE, haze * .4), snowDark: mix("#8aa0c4", HAZE, haze * .5) }));
+    trees.forEach(([x, y, h]) => f += spruce(x, y, h, { lx: MX, trunk: mix(K("#2a2024", "#4a3428"), HAZE, haze), dark: mix(K("#0e1a26", "#1a3a36"), HAZE, haze), mid: mix(K("#18303a", "#2a5048"), HAZE, haze), lit: mix(K("#2e4e54", "#4a7a64"), HAZE, haze * .8),
+      snowLit: mix(K("#e8f0fa", "#ffffff"), HAZE, haze * .4), snowDark: mix(K("#8aa0c4", "#a8bcd8"), HAZE, haze * .5) }));
     return f;
   };
   const h1 = wave([2, 4, 0], [300, 130, 55], [16, 7, 3]), h2 = wave([5, 1, 3], [380, 160, 70], [22, 9, 4]);
@@ -209,7 +306,7 @@ function winterAuroraCabinArt(opts = {}) {
     for (let j = 0; j < 4; j++) s += `<path d="M${F(x + j * 2.5)},${F(y)} q${F((r() - .5) * 4)},${F(-h * .6)} ${F((r() - .5) * 8)},${F(-h)}" stroke="${j % 2 ? "#6a5a4a" : "#9a8468"}" stroke-width="1.3" fill="none"/>`; }
   for (let k = 0; k < 10; k++) { const x = 60 + r() * 2440, y = field(x) + 30 + r() * 110, R = 10 + r() * 16;
     if (Math.abs(x - 1300) < 200) continue;
-    s += `<path d="${blobP(x, y, R, R * .5, 7)}" fill="#4a5470"/><path d="${blobP(x - R * .25, y - R * .15, R * .55, R * .28, 6)}" fill="#7a86a4"/><path d="${blobP(x + R * .1, y - R * .38, R * .85, R * .2, 7)}" fill="${SNOW.lit}"/>`; }
+    s += `<path d="${blobP(x, y, R, R * .5, 7)}" fill="${K("#4a5470", "#5a6070")}"/><path d="${blobP(x - R * .25, y - R * .15, R * .55, R * .28, 6)}" fill="${K("#7a86a4", "#8e94a4")}"/><path d="${blobP(x + R * .1, y - R * .38, R * .85, R * .2, 7)}" fill="${SNOW.lit}"/>`; }
   /* long cool shadows cast by the flanking spruces, away from the moon */
   [[1560, 300], [1650, 210], [1040, 320], [960, 190]].forEach(([x, h]) => { const y = field(x) + 8;
     s += `<path d="M${x - 30},${F(y)} L${F(x + h * .9)},${F(y + 26)} L${F(x + h * .8)},${F(y + 34)} L${x - 36},${F(y + 6)}Z" fill="${SNOW.deep}" opacity=".3" filter="url(#waSoft3)"/>`; });
@@ -221,20 +318,21 @@ function winterAuroraCabinArt(opts = {}) {
     const L = cx - 115, R = cx + 115, wt = yb - 100;
     c += `<ellipse cx="${cx + 20}" cy="${yb + 4}" rx="190" ry="14" fill="${SNOW.deep}" opacity=".5"/>`;
     // side gable wall (lit, facing the moon) and front log wall
-    c += `<path d="${poly([[L - 44, yb - 8], [L - 44, wt - 8], [L - 22, wt - 52], [L, wt], [L, yb]])}" fill="#8a6446"/>`;
+    c += `<path d="${poly([[L - 44, yb - 8], [L - 44, wt - 8], [L - 22, wt - 52], [L, wt], [L, yb]])}" fill="${K("#8a6446", "#a87c58")}"/>`;
     for (let y = wt; y < yb; y += 10) c += `<path d="M${L - 44},${y - 8 + (y - wt) * .0} L${L},${y}" stroke="#4a3222" stroke-width="2" opacity=".5"/>`;
     c += `<rect x="${L}" y="${wt}" width="${R - L}" height="${yb - wt}" fill="url(#waWall)"/>`;
     for (let y = wt + 2, k = 0; y < yb; y += 11, k++) {
-      c += `<rect x="${L - 6}" y="${y}" width="${R - L + 12}" height="10" rx="5" fill="${k % 2 ? "#6a4a34" : "#72503a"}" opacity=".9"/><rect x="${L - 6}" y="${y + 1}" width="${(R - L) * .4}" height="3" rx="1.5" fill="#a07a58" opacity=".55"/><rect x="${L - 6}" y="${y + 7}" width="${R - L + 12}" height="3" fill="#2a1c14" opacity=".45"/>`;
+      c += `<rect x="${L - 6}" y="${y}" width="${R - L + 12}" height="10" rx="5" fill="${k % 2 ? K("#6a4a34", "#86603f") : K("#72503a", "#906a48")}" opacity=".9"/><rect x="${L - 6}" y="${y + 1}" width="${(R - L) * .4}" height="3" rx="1.5" fill="${K("#a07a58", "#c8a078")}" opacity=".55"/><rect x="${L - 6}" y="${y + 7}" width="${R - L + 12}" height="3" fill="#2a1c14" opacity=".45"/>`;
       c += `<circle cx="${L - 6}" cy="${y + 5}" r="5" fill="#b08a64"/><circle cx="${L - 6}" cy="${y + 5}" r="2.5" fill="#8a6446"/><circle cx="${R + 6}" cy="${y + 5}" r="5" fill="#5a4030"/>`; }
     c += `<rect x="${cx + 30}" y="${wt}" width="${R - cx - 30}" height="${yb - wt}" fill="#000" opacity=".12"/>`;
     // windows and door, warm
     [[L + 34, wt + 28], [cx + 52, wt + 28]].forEach(([x, y]) => {
       c += `<circle cx="${x + 18}" cy="${y + 18}" r="62" fill="url(#waGlow)" opacity=".55"/><rect x="${x - 4}" y="${y - 4}" width="44" height="44" fill="#3a2618"/><rect x="${x}" y="${y}" width="36" height="36" fill="url(#waPane)"/>
-        <path d="M${x + 18},${y} v36 M${x},${y + 18} h36" stroke="#3a2618" stroke-width="3"/><path d="M${x - 6},${y + 40} h48" stroke="#eef4fc" stroke-width="5" stroke-linecap="round"/>`; });
+        <path d="M${x + 18},${y} v36 M${x},${y + 18} h36" stroke="#3a2618" stroke-width="3"/><path d="M${x - 6},${y + 40} h48" stroke="#eef4fc" stroke-width="5" stroke-linecap="round"/>`;
+      if (DAY) c += `<path d="M${x + 3},${y + 14} L${x + 14},${y + 3} M${x + 21},${y + 32} L${x + 33},${y + 20}" stroke="#eaf4fa" stroke-width="3" opacity=".5"/>`; });
     c += `<rect x="${cx - 26}" y="${yb - 62}" width="40" height="62" fill="#3a2618"/><rect x="${cx - 22}" y="${yb - 58}" width="32" height="58" fill="#5a3a24"/><rect x="${cx - 16}" y="${yb - 52}" width="20" height="14" fill="url(#waPane)"/><circle cx="${cx + 4}" cy="${yb - 28}" r="2" fill="#ffd070"/>`;
     // lantern by the door
-    c += `<circle cx="${cx + 24}" cy="${yb - 50}" r="40" fill="url(#waGlow)" opacity=".75"/><rect x="${cx + 19}" y="${yb - 58}" width="10" height="15" rx="2" fill="#ffd070"/><path d="M${cx + 17},${yb - 58} h14 l-7,-6Z" fill="#2a1c14"/>`;
+    c += `<circle cx="${cx + 24}" cy="${yb - 50}" r="40" fill="url(#waGlow)" opacity=".75"/><rect x="${cx + 19}" y="${yb - 58}" width="10" height="15" rx="2" fill="${K("#ffd070", "#c8d2d8")}"/><path d="M${cx + 17},${yb - 58} h14 l-7,-6Z" fill="#2a1c14"/>`;
     // roof: shaded front plane, snow blanket with lit top, overhang and icicles
     c += `<path d="${poly([[L - 30, wt + 4], [L - 6, wt - 72], [R + 20, wt - 72], [R + 40, wt + 4]])}" fill="#3a2a24"/>`;
     const sn = [[L - 36, wt + 2]]; for (let k = 0; k <= 16; k++) { const x = L - 36 + (R - L + 80) * k / 16; sn.push([x, wt + 8 + (k % 2 ? 4 + r() * 4 : 0)]); }
@@ -269,10 +367,11 @@ function winterAuroraCabinArt(opts = {}) {
   };
 
   /* big spruces flanking the cabin, behind it */
-  const bigT = { lx: MX, trunk: "#3a2820", dark: "#0c1a22", mid: "#173236", lit: "#2c5454", snowLit: "#eef4fc", snowDark: "#94aacc" };
+  const bigT = K({ lx: MX, trunk: "#3a2820", dark: "#0c1a22", mid: "#173236", lit: "#2c5454", snowLit: "#eef4fc", snowDark: "#94aacc" },
+    { lx: MX, trunk: "#5a3c2a", dark: "#143830", mid: "#245242", lit: "#44805e", snowLit: "#ffffff", snowDark: "#a8bedc" });
   s += `<g filter="url(#waLeafyS)">${spruce(1560, field(1560) + 6, 300, bigT)}${spruce(1650, field(1650) + 10, 210, bigT)}${spruce(1040, field(1040) + 6, 320, bigT)}${spruce(960, field(960) + 12, 190, bigT)}</g>`;
   s += cabin(CX, CY);
-  s += `<g class="smoke" opacity=".5">${[0, 1, 2, 3, 4].map(k => `<circle cx="${F(1382 + k * 8)}" cy="${F(CY - 250 - k * 20)}" r="${6 + k * 4}" fill="#c8d0e0" opacity="${F(.55 - k * .1)}"/>`).join("")}</g>`;
+  s += `<g class="smoke" opacity=".5">${[0, 1, 2, 3, 4].map(k => `<circle cx="${F(1382 + k * 8)}" cy="${F(CY - 250 - k * 20)}" r="${6 + k * 4}" fill="${K("#c8d0e0", "#eef2f6")}" opacity="${F(.55 - k * .1)}"/>`).join("")}</g>`;
 
   /* trail from the door toward us, with footprints and fence posts */
   s += `<path d="M1270,${F(CY + 2)} C1250,600 1330,630 1250,720 L1330,720 C1400,630 1320,600 1310,${F(CY + 2)}Z" fill="${SNOW.dark}" opacity=".55"/>`;
@@ -306,14 +405,15 @@ function winterAuroraCabinArt(opts = {}) {
   s += deer(1880, field(1880) + 26, 1.25);
 
   /* foreground: near spruces at the edges, snowy shrubs, drift lips */
-  const nearT = { lx: MX, trunk: "#3a2820", dark: "#08141a", mid: "#12282c", lit: "#244a4a", snowLit: "#f2f7fd", snowDark: "#8ea4c8" };
-  s += `<g filter="url(#waLeafyS)">${spruce(70, 740, 380, nearT)}${spruce(2490, 740, 400, nearT)}${spruce(2380, 735, 230, nearT)}</g>`;
+  const nearT = K({ lx: MX, trunk: "#3a2820", hl: "#9aa8c8", dark: "#08141a", mid: "#12282c", lit: "#2a5250", snowLit: "#f2f7fd", snowDark: "#8ea4c8" },
+    { lx: MX, trunk: "#5a3a26", hl: "#e8d8b0", dark: "#0e2a24", mid: "#1e4a3c", lit: "#3e7a58", snowLit: "#ffffff", snowDark: "#a4bad8" });
+  s += `<g filter="url(#waLeafyS)">${nearSpruce(2380, 735, 230, nearT)}${nearSpruce(70, 740, 380, nearT)}${nearSpruce(2490, 740, 400, nearT)}</g>`;
   const shrub = (x, y, R) => { let b = ""; const pts = [];
     for (let k = 0; k < 80; k++) { const a = r() * Math.PI, d = Math.sqrt(r()), px = x + Math.cos(a) * d * R * 1.1, py = y - Math.sin(a) * d * R * .7;
       pts.push([px, py, ((MX - px) / 2400 + (y - py) / R) * .5 + r() * .35]); }
     pts.sort((a, b) => a[2] - b[2]);
-    const BR = ["#0e1a20", "#16262c", "#1e3438", "#2a4446", "#6c82a8", "#a8bcd6", "#dfeaf6"];
-    b += `<path d="${blobP(x, y + 6, R * 1.15, R * .45)}" fill="#0c161c"/>`;
+    const BR = K(["#0e1a20", "#16262c", "#1e3438", "#2a4446", "#6c82a8", "#a8bcd6", "#dfeaf6"], ["#1a3028", "#24403a", "#30544a", "#406a58", "#9cb4d4", "#d6e3f1", "#ffffff"]);
+    b += `<path d="${blobP(x, y + 6, R * 1.15, R * .45)}" fill="${K("#0c161c", "#14261e")}"/>`;
     pts.forEach(([px, py, v]) => b += `<path d="${blobP(px, py, 8 + r() * 7, 6 + r() * 5, 6)}" fill="${BR[Math.max(0, Math.min(6, Math.floor(v * 7)))]}"/>`);
     return `<g filter="url(#waLeafy)">${b}</g>`; };
   s += shrub(200, 725, 80) + shrub(2280, 728, 70) + shrub(700, 712, 40) + shrub(1900, 716, 44);

@@ -5,7 +5,9 @@
 <script src="hunters-moon-lake.js"></script>
 </head><body><div id="s"></div>
 <script>
-  const part = new URLSearchParams(location.search).get("part") || undefined;
-  document.getElementById("s").innerHTML = huntersMoonLakeArt({ part });
+  const q = new URLSearchParams(location.search);
+  const part = q.get("part") || undefined, time = q.get("time") || undefined;
+  try { document.getElementById("s").innerHTML = huntersMoonLakeArt({ part, time }); }
+  catch (e) { document.body.style.background = "#fff"; document.body.textContent = "ERROR: " + e.message + "\n" + e.stack; }
 </script>
 </body></html>

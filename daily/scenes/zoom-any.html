@@ -1,0 +1,17 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>scene zoom (any)</title>
+<style>html,body{margin:0;padding:0;background:#000;overflow:hidden}#s{width:2560px;height:720px;transform-origin:0 0}</style>
+<script src="../reference/scene-helpers.js"></script>
+</head><body><div id="s"></div>
+<script>
+  // ?src=winter-aurora-cabin.js&fn=winterAuroraCabinArt&time=day&x=0&y=300&k=2
+  const q = new URLSearchParams(location.search);
+  const sc = document.createElement("script"); sc.src = q.get("src");
+  sc.onload = () => {
+    const x = +q.get("x") || 0, y = +q.get("y") || 0, k = +q.get("k") || 2, el = document.getElementById("s");
+    el.innerHTML = window[q.get("fn")]({ time: q.get("time") || undefined });
+    el.style.transform = `scale(${k}) translate(${-x}px,${-y}px)`;
+  };
+  document.head.appendChild(sc);
+</script>
+</body></html>

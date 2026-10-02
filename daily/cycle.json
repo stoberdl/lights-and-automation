@@ -1,28 +1,626 @@
 {
-  "about": "Default day/night backgrounds by time of year. Every pool whose from..to (MM-DD, wraps the new year if from > to) covers today goes into the draw; holiday pools count twice. Each scene needs day (scene) and night versions. Written by hand and by the daily script (WEEKLY_PROMPT.md section 8).",
-  "pools": [
-    { "id": "fall", "label": "Fall", "from": "09-22", "to": "11-30", "scenes": [
-      { "id": "autumn-valley", "name": "Autumn valley",
-        "scene": { "file": "reference/autumn-valley.js", "fn": "fallArt", "opts": {} },
-        "fx": [{ "leaves": [1000, 160, 1500, 520] }] },
-      { "id": "covered-bridge-creek", "name": "Covered bridge creek",
-        "scene": { "file": "scenes/covered-bridge-creek.js", "fn": "coveredBridgeCreekArt", "opts": {} },
-        "night": { "file": "scenes/covered-bridge-creek.js", "fn": "coveredBridgeCreekArt", "opts": { "time": "night" } },
-        "fx": [{ "leaves": [460, 280, 660, 440] }] }
-    ] },
-    { "id": "halloween", "label": "Halloween", "holiday": true, "from": "10-10", "to": "11-01", "scenes": [] },
-    { "id": "thanksgiving", "label": "Thanksgiving", "holiday": true, "from": "11-14", "to": "11-29", "scenes": [] },
-    { "id": "christmas-season", "label": "Christmas season", "holiday": true, "from": "11-28", "to": "12-23", "scenes": [] },
-    { "id": "christmas-week", "label": "Christmas", "holiday": true, "from": "12-20", "to": "12-26", "scenes": [] },
-    { "id": "new-year", "label": "New Year", "holiday": true, "from": "12-27", "to": "01-03", "scenes": [] },
-    { "id": "winter", "label": "Winter", "from": "12-01", "to": "03-19", "scenes": [] },
-    { "id": "valentines", "label": "Valentine's", "holiday": true, "from": "02-07", "to": "02-14", "scenes": [] },
-    { "id": "spring", "label": "Spring", "from": "03-20", "to": "06-20", "scenes": [] },
-    { "id": "july-4", "label": "Fourth of July", "holiday": true, "from": "06-28", "to": "07-05", "scenes": [] },
-    { "id": "summer", "label": "Summer", "from": "06-21", "to": "09-21", "scenes": [
-      { "id": "covered-bridge-creek", "name": "Covered bridge creek",
-        "scene": { "file": "scenes/covered-bridge-creek.js", "fn": "coveredBridgeCreekArt", "opts": {} },
-        "night": { "file": "scenes/covered-bridge-creek.js", "fn": "coveredBridgeCreekArt", "opts": { "time": "night" } } }
-    ] }
-  ]
+    "about":  "Default day/night backgrounds by time of year. Every pool whose from..to (MM-DD, wraps the new year if from \u003e to) covers today goes into the draw; holiday pools count twice. Each scene needs day (scene) and night versions. Written by hand and by the daily script (WEEKLY_PROMPT.md section 8).",
+    "pools":  [
+                  {
+                      "id":  "fall",
+                      "label":  "Fall",
+                      "from":  "09-22",
+                      "to":  "11-30",
+                      "scenes":  [
+                                     {
+                                         "id":  "autumn-valley",
+                                         "name":  "Autumn valley",
+                                         "scene":  {
+                                                       "file":  "reference/autumn-valley.js",
+                                                       "fn":  "fallArt",
+                                                       "opts":  {
+
+                                                                }
+                                                   },
+                                         "fx":  [
+                                                    {
+                                                        "leaves":  [
+                                                                       1000,
+                                                                       160,
+                                                                       1500,
+                                                                       520
+                                                                   ]
+                                                    }
+                                                ]
+                                     },
+                                     {
+                                         "id":  "covered-bridge-creek",
+                                         "name":  "Covered bridge creek",
+                                         "scene":  {
+                                                       "file":  "scenes/covered-bridge-creek.js",
+                                                       "fn":  "coveredBridgeCreekArt",
+                                                       "opts":  {
+
+                                                                }
+                                                   },
+                                         "night":  {
+                                                       "file":  "scenes/covered-bridge-creek.js",
+                                                       "fn":  "coveredBridgeCreekArt",
+                                                       "opts":  {
+                                                                    "time":  "night"
+                                                                }
+                                                   },
+                                         "fx":  [
+                                                    {
+                                                        "leaves":  [
+                                                                       460,
+                                                                       280,
+                                                                       660,
+                                                                       440
+                                                                   ]
+                                                    }
+                                                ]
+                                     },
+                                     {
+                                         "id":  "harbor-lighthouse-fall",
+                                         "name":  "Harbor lighthouse",
+                                         "scene":  {
+                                                       "file":  "scenes/harbor-lighthouse-fall.js",
+                                                       "fn":  "harborLighthouseFallArt",
+                                                       "opts":  {
+
+                                                                }
+                                                   },
+                                         "night":  {
+                                                       "file":  "scenes/harbor-lighthouse-fall.js",
+                                                       "fn":  "harborLighthouseFallArt",
+                                                       "opts":  {
+                                                                    "time":  "night"
+                                                                }
+                                                   },
+                                         "fx":  [
+                                                    "leaves"
+                                                ],
+                                         "nightFx":  [
+
+                                                     ]
+                                     },
+                                     {
+                                         "id":  "golden-aspen-lake",
+                                         "name":  "Golden aspen lake",
+                                         "scene":  {
+                                                       "file":  "scenes/golden-aspen-lake.js",
+                                                       "fn":  "goldenAspenLakeArt",
+                                                       "opts":  {
+
+                                                                }
+                                                   },
+                                         "night":  {
+                                                       "file":  "scenes/golden-aspen-lake.js",
+                                                       "fn":  "goldenAspenLakeArt",
+                                                       "opts":  {
+                                                                    "time":  "night"
+                                                                }
+                                                   },
+                                         "fx":  [
+                                                    "leaves"
+                                                ],
+                                         "nightFx":  [
+
+                                                     ]
+                                     },
+                                     {
+                                         "id":  "hunters-moon-lake",
+                                         "name":  "Hunter\u0027s moon lake",
+                                         "scene":  {
+                                                       "file":  "scenes/hunters-moon-lake.js",
+                                                       "fn":  "huntersMoonLakeArt",
+                                                       "opts":  {
+                                                                    "time":  "day"
+                                                                }
+                                                   },
+                                         "night":  {
+                                                       "file":  "scenes/hunters-moon-lake.js",
+                                                       "fn":  "huntersMoonLakeArt",
+                                                       "opts":  {
+
+                                                                }
+                                                   },
+                                         "fx":  [
+
+                                                ],
+                                         "nightFx":  [
+
+                                                     ]
+                                     }
+                                 ]
+                  },
+                  {
+                      "id":  "halloween",
+                      "label":  "Halloween",
+                      "holiday":  true,
+                      "from":  "10-10",
+                      "to":  "11-01",
+                      "scenes":  [
+                                     {
+                                         "id":  "haunted-hill-manor",
+                                         "name":  "Haunted hill manor",
+                                         "scene":  {
+                                                       "file":  "scenes/haunted-hill-manor.js",
+                                                       "fn":  "hauntedHillManorArt",
+                                                       "opts":  {
+
+                                                                }
+                                                   },
+                                         "night":  {
+                                                       "file":  "scenes/haunted-hill-manor.js",
+                                                       "fn":  "hauntedHillManorArt",
+                                                       "opts":  {
+                                                                    "time":  "night"
+                                                                }
+                                                   },
+                                         "fx":  [
+
+                                                ],
+                                         "nightFx":  [
+
+                                                     ]
+                                     },
+                                     {
+                                         "id":  "pumpkin-patch-farm",
+                                         "name":  "Pumpkin patch farm",
+                                         "scene":  {
+                                                       "file":  "scenes/pumpkin-patch-farm.js",
+                                                       "fn":  "pumpkinPatchFarmArt",
+                                                       "opts":  {
+
+                                                                }
+                                                   },
+                                         "night":  {
+                                                       "file":  "scenes/pumpkin-patch-farm.js",
+                                                       "fn":  "pumpkinPatchFarmArt",
+                                                       "opts":  {
+                                                                    "time":  "night"
+                                                                }
+                                                   },
+                                         "fx":  [
+                                                    "leaves"
+                                                ],
+                                         "nightFx":  [
+
+                                                     ]
+                                     },
+                                     {
+                                         "id":  "bayou-witch-cottage",
+                                         "name":  "Bayou witch cottage",
+                                         "scene":  {
+                                                       "file":  "scenes/bayou-witch-cottage.js",
+                                                       "fn":  "bayouWitchCottageArt",
+                                                       "opts":  {
+
+                                                                }
+                                                   },
+                                         "night":  {
+                                                       "file":  "scenes/bayou-witch-cottage.js",
+                                                       "fn":  "bayouWitchCottageArt",
+                                                       "opts":  {
+                                                                    "time":  "night"
+                                                                }
+                                                   },
+                                         "fx":  [
+
+                                                ],
+                                         "nightFx":  [
+
+                                                     ]
+                                     },
+                                     {
+                                         "id":  "trick-or-treat-lane",
+                                         "name":  "Trick-or-treat lane",
+                                         "scene":  {
+                                                       "file":  "scenes/trick-or-treat-lane.js",
+                                                       "fn":  "trickOrTreatLaneArt",
+                                                       "opts":  {
+
+                                                                }
+                                                   },
+                                         "night":  {
+                                                       "file":  "scenes/trick-or-treat-lane.js",
+                                                       "fn":  "trickOrTreatLaneArt",
+                                                       "opts":  {
+                                                                    "time":  "night"
+                                                                }
+                                                   },
+                                         "fx":  [
+                                                    "leaves"
+                                                ],
+                                         "nightFx":  [
+
+                                                     ]
+                                     },
+                                     {
+                                         "id":  "halloween-hollow",
+                                         "name":  "Halloween hollow",
+                                         "scene":  {
+                                                       "file":  "scenes/halloween-hollow.js",
+                                                       "fn":  "halloweenHollowArt",
+                                                       "opts":  {
+                                                                    "time":  "day"
+                                                                }
+                                                   },
+                                         "night":  {
+                                                       "file":  "scenes/halloween-hollow.js",
+                                                       "fn":  "halloweenHollowArt",
+                                                       "opts":  {
+
+                                                                }
+                                                   },
+                                         "fx":  [
+
+                                                ],
+                                         "nightFx":  [
+
+                                                     ]
+                                     }
+                                 ]
+                  },
+                  {
+                      "id":  "thanksgiving",
+                      "label":  "Thanksgiving",
+                      "holiday":  true,
+                      "from":  "11-14",
+                      "to":  "11-29",
+                      "scenes":  [
+                                     {
+                                         "id":  "harvest-farm-thanksgiving",
+                                         "name":  "Harvest farm",
+                                         "scene":  {
+                                                       "file":  "scenes/harvest-farm-thanksgiving.js",
+                                                       "fn":  "harvestFarmThanksgivingArt",
+                                                       "opts":  {
+
+                                                                }
+                                                   },
+                                         "night":  {
+                                                       "file":  "scenes/harvest-farm-thanksgiving.js",
+                                                       "fn":  "harvestFarmThanksgivingArt",
+                                                       "opts":  {
+                                                                    "time":  "night"
+                                                                }
+                                                   },
+                                         "fx":  [
+                                                    "leaves"
+                                                ],
+                                         "nightFx":  [
+
+                                                     ]
+                                     }
+                                 ]
+                  },
+                  {
+                      "id":  "christmas-season",
+                      "label":  "Christmas season",
+                      "holiday":  true,
+                      "from":  "11-28",
+                      "to":  "12-23",
+                      "scenes":  [
+                                     {
+                                         "id":  "christmas-market-square",
+                                         "name":  "Christmas market",
+                                         "scene":  {
+                                                       "file":  "scenes/christmas-market-square.js",
+                                                       "fn":  "christmasMarketSquareArt",
+                                                       "opts":  {
+
+                                                                }
+                                                   },
+                                         "night":  {
+                                                       "file":  "scenes/christmas-market-square.js",
+                                                       "fn":  "christmasMarketSquareArt",
+                                                       "opts":  {
+                                                                    "time":  "night"
+                                                                }
+                                                   },
+                                         "fx":  [
+
+                                                ],
+                                         "nightFx":  [
+
+                                                     ]
+                                     },
+                                     {
+                                         "id":  "tree-farm-snow",
+                                         "name":  "Tree farm in snow",
+                                         "scene":  {
+                                                       "file":  "scenes/tree-farm-snow.js",
+                                                       "fn":  "treeFarmSnowArt",
+                                                       "opts":  {
+
+                                                                }
+                                                   },
+                                         "night":  {
+                                                       "file":  "scenes/tree-farm-snow.js",
+                                                       "fn":  "treeFarmSnowArt",
+                                                       "opts":  {
+                                                                    "time":  "night"
+                                                                }
+                                                   },
+                                         "fx":  [
+
+                                                ],
+                                         "nightFx":  [
+
+                                                     ]
+                                     },
+                                     {
+                                         "id":  "city-ice-rink",
+                                         "name":  "City ice rink",
+                                         "scene":  {
+                                                       "file":  "scenes/city-ice-rink.js",
+                                                       "fn":  "cityIceRinkArt",
+                                                       "opts":  {
+
+                                                                }
+                                                   },
+                                         "night":  {
+                                                       "file":  "scenes/city-ice-rink.js",
+                                                       "fn":  "cityIceRinkArt",
+                                                       "opts":  {
+                                                                    "time":  "night"
+                                                                }
+                                                   },
+                                         "fx":  [
+
+                                                ],
+                                         "nightFx":  [
+
+                                                     ]
+                                     }
+                                 ]
+                  },
+                  {
+                      "id":  "christmas-week",
+                      "label":  "Christmas",
+                      "holiday":  true,
+                      "from":  "12-20",
+                      "to":  "12-26",
+                      "scenes":  [
+                                     {
+                                         "id":  "christmas-eve-rooftops",
+                                         "name":  "Christmas Eve rooftops",
+                                         "scene":  {
+                                                       "file":  "scenes/christmas-eve-rooftops.js",
+                                                       "fn":  "christmasEveRooftopsArt",
+                                                       "opts":  {
+
+                                                                }
+                                                   },
+                                         "night":  {
+                                                       "file":  "scenes/christmas-eve-rooftops.js",
+                                                       "fn":  "christmasEveRooftopsArt",
+                                                       "opts":  {
+                                                                    "time":  "night"
+                                                                }
+                                                   },
+                                         "fx":  [
+
+                                                ],
+                                         "nightFx":  [
+
+                                                     ]
+                                     },
+                                     {
+                                         "id":  "christmas-morning-farm",
+                                         "name":  "Christmas morning farm",
+                                         "scene":  {
+                                                       "file":  "scenes/christmas-morning-farm.js",
+                                                       "fn":  "christmasMorningFarmArt",
+                                                       "opts":  {
+
+                                                                }
+                                                   },
+                                         "night":  {
+                                                       "file":  "scenes/christmas-morning-farm.js",
+                                                       "fn":  "christmasMorningFarmArt",
+                                                       "opts":  {
+                                                                    "time":  "night"
+                                                                }
+                                                   },
+                                         "fx":  [
+
+                                                ],
+                                         "nightFx":  [
+
+                                                     ]
+                                     }
+                                 ]
+                  },
+                  {
+                      "id":  "new-year",
+                      "label":  "New Year",
+                      "holiday":  true,
+                      "from":  "12-27",
+                      "to":  "01-03",
+                      "scenes":  [
+                                     {
+                                         "id":  "city-ice-rink",
+                                         "name":  "City ice rink",
+                                         "scene":  {
+                                                       "file":  "scenes/city-ice-rink.js",
+                                                       "fn":  "cityIceRinkArt",
+                                                       "opts":  {
+
+                                                                }
+                                                   },
+                                         "night":  {
+                                                       "file":  "scenes/city-ice-rink.js",
+                                                       "fn":  "cityIceRinkArt",
+                                                       "opts":  {
+                                                                    "time":  "night"
+                                                                }
+                                                   },
+                                         "fx":  [
+
+                                                ],
+                                         "nightFx":  [
+
+                                                     ]
+                                     },
+                                     {
+                                         "id":  "frozen-falls-pass",
+                                         "name":  "Frozen falls pass",
+                                         "scene":  {
+                                                       "file":  "scenes/frozen-falls-pass.js",
+                                                       "fn":  "frozenFallsPassArt",
+                                                       "opts":  {
+
+                                                                }
+                                                   },
+                                         "night":  {
+                                                       "file":  "scenes/frozen-falls-pass.js",
+                                                       "fn":  "frozenFallsPassArt",
+                                                       "opts":  {
+                                                                    "time":  "night"
+                                                                }
+                                                   },
+                                         "fx":  [
+
+                                                ],
+                                         "nightFx":  [
+
+                                                     ]
+                                     }
+                                 ]
+                  },
+                  {
+                      "id":  "winter",
+                      "label":  "Winter",
+                      "from":  "12-01",
+                      "to":  "03-19",
+                      "scenes":  [
+                                     {
+                                         "id":  "winter-aurora-cabin",
+                                         "name":  "Aurora cabin",
+                                         "scene":  {
+                                                       "file":  "scenes/winter-aurora-cabin.js",
+                                                       "fn":  "winterAuroraCabinArt",
+                                                       "opts":  {
+                                                                    "time":  "day"
+                                                                }
+                                                   },
+                                         "night":  {
+                                                       "file":  "scenes/winter-aurora-cabin.js",
+                                                       "fn":  "winterAuroraCabinArt",
+                                                       "opts":  {
+
+                                                                }
+                                                   },
+                                         "fx":  [
+
+                                                ],
+                                         "nightFx":  [
+
+                                                     ]
+                                     },
+                                     {
+                                         "id":  "frozen-falls-pass",
+                                         "name":  "Frozen falls pass",
+                                         "scene":  {
+                                                       "file":  "scenes/frozen-falls-pass.js",
+                                                       "fn":  "frozenFallsPassArt",
+                                                       "opts":  {
+
+                                                                }
+                                                   },
+                                         "night":  {
+                                                       "file":  "scenes/frozen-falls-pass.js",
+                                                       "fn":  "frozenFallsPassArt",
+                                                       "opts":  {
+                                                                    "time":  "night"
+                                                                }
+                                                   },
+                                         "fx":  [
+
+                                                ],
+                                         "nightFx":  [
+
+                                                     ]
+                                     },
+                                     {
+                                         "id":  "christmas-morning-farm",
+                                         "name":  "Snowy farm",
+                                         "scene":  {
+                                                       "file":  "scenes/christmas-morning-farm.js",
+                                                       "fn":  "christmasMorningFarmArt",
+                                                       "opts":  {
+
+                                                                }
+                                                   },
+                                         "night":  {
+                                                       "file":  "scenes/christmas-morning-farm.js",
+                                                       "fn":  "christmasMorningFarmArt",
+                                                       "opts":  {
+                                                                    "time":  "night"
+                                                                }
+                                                   },
+                                         "fx":  [
+
+                                                ],
+                                         "nightFx":  [
+
+                                                     ]
+                                     }
+                                 ]
+                  },
+                  {
+                      "id":  "valentines",
+                      "label":  "Valentine\u0027s",
+                      "holiday":  true,
+                      "from":  "02-07",
+                      "to":  "02-14",
+                      "scenes":  [
+
+                                 ]
+                  },
+                  {
+                      "id":  "spring",
+                      "label":  "Spring",
+                      "from":  "03-20",
+                      "to":  "06-20",
+                      "scenes":  [
+
+                                 ]
+                  },
+                  {
+                      "id":  "july-4",
+                      "label":  "Fourth of July",
+                      "holiday":  true,
+                      "from":  "06-28",
+                      "to":  "07-05",
+                      "scenes":  [
+
+                                 ]
+                  },
+                  {
+                      "id":  "summer",
+                      "label":  "Summer",
+                      "from":  "06-21",
+                      "to":  "09-21",
+                      "scenes":  [
+                                     {
+                                         "id":  "covered-bridge-creek",
+                                         "name":  "Covered bridge creek",
+                                         "scene":  {
+                                                       "file":  "scenes/covered-bridge-creek.js",
+                                                       "fn":  "coveredBridgeCreekArt",
+                                                       "opts":  {
+
+                                                                }
+                                                   },
+                                         "night":  {
+                                                       "file":  "scenes/covered-bridge-creek.js",
+                                                       "fn":  "coveredBridgeCreekArt",
+                                                       "opts":  {
+                                                                    "time":  "night"
+                                                                }
+                                                   }
+                                     }
+                                 ]
+                  }
+              ]
 }

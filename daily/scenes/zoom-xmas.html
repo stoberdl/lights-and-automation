@@ -1,0 +1,17 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>zoom</title>
+<style>html,body{margin:0;padding:0;background:#000;overflow:hidden}#s{width:2560px;height:720px;transform-origin:0 0}</style>
+<script src="file:///C:/Users/user/Desktop/Lights/daily/reference/scene-helpers.js"></script>
+<script>
+  const q = new URLSearchParams(location.search);
+  document.write('<script src="file:///C:/Users/user/Desktop/Lights/daily/scenes/' + q.get("f") + '.js"><\/script>');
+</script>
+</head><body><div id="s"></div>
+<script>
+  const x = +q.get("x") || 0, y = +q.get("y") || 0, k = +q.get("k") || 2;
+  const el = document.getElementById("s");
+  try { el.innerHTML = window[q.get("fn")]({ time: q.get("time") || undefined }); }
+  catch (e) { document.body.style.background = "#fff"; document.body.textContent = "ERROR: " + e.message + "\n" + e.stack; }
+  el.style.transform = `scale(${k}) translate(${-x}px,${-y}px)`;
+</script>
+</body></html>
