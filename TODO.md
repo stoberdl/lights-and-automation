@@ -54,5 +54,11 @@
       bridge (VeSync → Health → "Health Auto Export" app POSTs to serve.py),
       (b) capture the VeSync app's traffic once to find the diary endpoint.
 - [ ] Show weight (and calories) on the dashboard — decide where.
+- [x] 2026-10-02 — Calories found: `/cloud/v1/getDailyIntakeCalorieByApp`
+      (today only: kcal, goal, exercise, macros). Hourly task "Lights VeSync"
+      records each day into `vesync_calories.json`; weigh-ins sync too.
+      Calories item above superseded (no Apple Health).
+- [ ] Past-day calories: `/cloud/v1/deviceManaged/nutritionScale/getNutritionDailyRecord`
+      exists but its parameters are unknown (all guesses "illegal argument").
 - Note 2026-10-02: the 4am daily run now adds one scene a day to the current
   default pool and works these items itself (WEEKLY_PROMPT 8b/8c).
