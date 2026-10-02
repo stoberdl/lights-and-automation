@@ -12,6 +12,8 @@ Read first:
 - The scene file and its current renders in `scenes\_drafts\` (if any).
 
 Fix, in this order:
+**Rebuild the land with `world3d()` (the `scene-3d` skill)**: terrain, buildings, docks, boats and trees placed in world metres, one camera. Keep the 2D sky and clouds. `scenes/harbor-lighthouse-fall.js` is the worked example. The list below is what the result must satisfy.
+
 1. One eye-level camera. Anything drawn from above (tiled rock slabs, angled
    docks, roads seen from overhead) becomes an eye-level elevation, or a
    proper foreshortened plane toward one vanishing point on the horizon.

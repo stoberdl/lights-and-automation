@@ -237,3 +237,191 @@ function renderScene(S) {
         <rect width="${SW}" height="${SH}" filter="url(#grain)" opacity=".16"/>`;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${SW} ${SH}" width="${SW}" height="${SH}">${s}</svg>`;
 }
+
+/* ------------------------------------------------------------- 3D world
+   Real perspective for anything built, standing or lying in a scene, so depth
+   is computed instead of guessed. Units are metres: x right, y up, z away from
+   the viewer; sea level is y = 0. The camera stands at x = 0, z = 0, eye
+   height C.h, and looks level, so verticals stay vertical and the horizon is
+   the straight line y = C.hy on screen (a painter's two-point perspective).
+     const w = world3d({ h: 5, hy: 446, f: 2200, light: [-.6,.6,-.2], fog: "#ecd8b8", fogK: .0009, tone: c => c });
+     w.terrain({...}); w.house({...}); w.box({...}); w.cyl({...}); w.sprite({...});
+     w.draw()                 everything, back to front
+     w.draw({ mirror: true }) the same world flipped in the water, for reflections
+   Every solid takes x, z (ground position), y (base height, default 0) and yaw
+   (degrees; 0 = its front faces the viewer, + turns its right side away).
+   Faces are shaded from C.light, fogged by distance, then passed through
+   C.tone (night). glow faces (lit windows, lamps) skip shading and tone.    */
+function world3d(C) {
+  const f = C.f || 2200, cx = C.cx ?? SW / 2, hy = C.hy, eh = C.h, NEAR = C.near || 1;
+  const unit = v => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+  const L = unit(C.light || [-.6, .6, -.2]);
+  const tone = C.tone || (c => c), SHADOW = C.shadow || "#2a2438", RIM = C.rim || "#fff4d8";
+  const SHADE = C.shade ?? .5, HI = C.hi ?? .2, FOG = C.fog, FOGK = C.fogK || 0;
+  const objs = [], fx = v => (Math.round(v * 10) / 10).toString();
+  const proj = p => [cx + f * p[0] / p[2], hy + f * (eh - p[1]) / p[2]];
+  const clipBy = (P, d) => { const out = [];
+    for (let i = 0; i < P.length; i++) { const a = P[i], b = P[(i + 1) % P.length], da = d(a), db = d(b);
+      if (da >= 0) out.push(a);
+      if ((da >= 0) !== (db >= 0)) { const t = da / (da - db); out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]); } }
+    return out; };
+  const newell = P => { const n = [0, 0, 0];
+    for (let i = 0; i < P.length; i++) { const a = P[i], b = P[(i + 1) % P.length];
+      n[0] += (a[1] - b[1]) * (a[2] + b[2]); n[1] += (a[2] - b[2]) * (a[0] + b[0]); n[2] += (a[0] - b[0]) * (a[1] + b[1]); }
+    return unit(n); };
+  const mid = P => { const c = [0, 0, 0]; P.forEach(p => { c[0] += p[0]; c[1] += p[1]; c[2] += p[2]; }); return c.map(v => v / P.length); };
+  const fogAt = z => FOG ? 1 - Math.exp(-Math.max(0, z) * FOGK) : 0;
+  const flat = (c, z) => tone(FOG ? mix(c, FOG, fogAt(z)) : c);
+  const lit = (c, n, z, sh = SHADE) => { const l = Math.max(0, dot(n, L));
+    c = mix(c, SHADOW, (1 - l) * sh); if (l > .5) c = mix(c, RIM, (l - .5) * 2 * HI); return flat(c, z); };
+  const glowC = (c, z) => FOG ? mix(c, FOG, fogAt(z) * .4) : c;
+  const pathOf = (P, M, wet) => {
+    let Q = wet ? clipBy(P, p => p[1]) : P;
+    if (Q.length < 3) return null;
+    if (M) Q = Q.map(p => [p[0], -p[1], p[2]]);
+    Q = clipBy(Q, p => p[2] - NEAR);
+    if (Q.length < 3) return null;
+    return "M" + Q.map(p => { const s = proj(p); return fx(s[0]) + "," + fx(s[1]); }).join("L") + "Z"; };
+  const lineOf = (P, M) => { if (P.some(p => p[2] < NEAR)) return null;
+    return "M" + P.map(p => { const s = proj(M ? [p[0], -p[1], p[2]] : p); return fx(s[0]) + "," + fx(s[1]); }).join("L"); };
+  /* one face: { P, c, two, back, glow, op, wet, up, seam, ln (stroke width m), dec: [faces] } */
+  const drawLine = (F, M) => { const d = lineOf(F.P, M); if (!d) return "";
+    const z = mid(F.P)[2], wpx = Math.max(F.min ?? .6, F.ln * f / z);
+    return `<path d="${d}" stroke="${F.glow ? glowC(F.c, z) : flat(F.c, z)}" stroke-width="${fx(wpx)}" fill="none" stroke-linecap="round"${F.op ? ` opacity="${F.op}"` : ""}/>`; };
+  const drawFace = (F, M, oc) => {
+    if (F.ln) return drawLine(F, M);
+    const c = mid(F.P); let n = newell(F.P), col = F.c;
+    if (F.up) { if (n[1] < 0) n = n.map(v => -v); }
+    else if (oc && dot(n, sub(c, oc)) < 0) n = n.map(v => -v);
+    const cam = [0, M ? -eh : eh, 0], vis = dot(n, sub(cam, c)) > 0;
+    if (!vis && !F.two && !F.up) return "";
+    if (!vis && F.back) col = F.back;
+    if (!vis && !F.up) n = n.map(v => -v);
+    const d = pathOf(F.P, M, F.wet); if (!d) return "";
+    const fill = F.glow ? glowC(col, c[2]) : lit(col, n, c[2], F.sh);
+    let s = `<path d="${d}" fill="${fill}"${F.seam ? ` stroke="${fill}" stroke-width=".8" stroke-linejoin="round"` : ""}${F.op ? ` opacity="${F.op}"` : ""}/>`;
+    if (vis && F.dec) F.dec.forEach(D => {
+      if (D.ln) { s += drawLine(D, M); return; }
+      const dd = pathOf(D.P, M, D.wet); if (!dd) return;
+      s += `<path d="${dd}" fill="${D.glow ? glowC(D.c, c[2]) : lit(D.c, n, c[2])}"${D.op ? ` opacity="${D.op}"` : ""}/>`; });
+    return s; };
+  const drawObj = (o, M) => {
+    if (o.sprite) {
+      if (o.svg === undefined) { const s = proj(o.at); o.base = s; o.svg = o.sprite(s[0], s[1], f / o.at[2], fogAt(o.at[2])); }
+      if (!M) return o.svg;
+      const m = proj([o.at[0], -o.at[1], o.at[2]]);
+      return `<g transform="matrix(1,0,0,-1,0,${fx(o.base[1] + m[1])})">${o.svg}</g>`; }
+    const cam = [0, M ? -eh : eh, 0];
+    return o.faces.map(F => [F.first ? 1e9 : Math.hypot(...sub(mid(F.P), cam)) - (F.bias || 0), F])
+      .sort((a, b) => b[0] - a[0]).map(([, F]) => drawFace(F, M, o.center)).join(""); };
+  const add = (faces, o = {}) => {
+    const zs = []; faces.forEach(F => F.P.forEach(p => zs.push(p[2])));
+    const ob = { faces, center: o.center, key: o.key ?? Math.min(...zs) + (o.bias || 0), noRefl: o.noRefl, tag: o.tag };
+    objs.push(ob); return ob; };
+  /* local -> world for a solid at x, y, z turned by yaw */
+  const frame = o => { const a = (o.yaw || 0) * Math.PI / 180, c = Math.cos(a), s = Math.sin(a), X = o.x, Y = o.y || 0, Z = o.z;
+    const R = p => [p[0] * c - p[2] * s, p[1], p[0] * s + p[2] * c];
+    return { P: p => { const q = R(p); return [X + q[0], Y + q[1], Z + q[2]]; }, R }; };
+  const quad = (o3, U, V, N, u0, v0, u1, v1, off = .04) =>
+    [[u0, v0], [u1, v0], [u1, v1], [u0, v1]].map(([u, v]) => [0, 1, 2].map(i => o3[i] + U[i] * u + V[i] * v + N[i] * off));
+
+  const api = {
+    f, eh, hy, proj, fogAt, add, frame, quad,
+    px: z => f / z,
+    /* a heightfield; rows are geometric in z so near cells are small. x0/x1 may be
+       functions of z so far rows can be wider than near ones. col(x, y, z, n) */
+    terrain(o) {
+      const nx = o.nx, nz = o.nz, X0 = typeof o.x0 === "function" ? o.x0 : () => o.x0, X1 = typeof o.x1 === "function" ? o.x1 : () => o.x1;
+      const zs = Array.from({ length: nz + 1 }, (_, j) => o.z0 * Math.pow(o.z1 / o.z0, j / nz));
+      const G = zs.map(z => Array.from({ length: nx + 1 }, (_, i) => { const x = X0(z) + (X1(z) - X0(z)) * i / nx; return [x, o.h(x, z), z]; }));
+      for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
+        const P = [G[j][i], G[j][i + 1], G[j + 1][i + 1], G[j + 1][i]];
+        if (P.every(p => p[1] < 0)) continue;
+        let n = newell(P); if (n[1] < 0) n = n.map(v => -v);
+        const c = mid(P);
+        objs.push({ faces: [{ P, c: o.col(c[0], c[1], c[2], n), wet: true, up: true, seam: true, sh: o.shade }], key: zs[j + 1] + (o.bias || .01), tag: o.tag }); }
+      return api; },
+    /* a 2D drawing standing at a world point: fn(sx, sy, pxPerMetre, fog) -> svg */
+    sprite(o) { objs.push({ sprite: o.fn, at: [o.x, o.y || 0, o.z], key: o.z + (o.bias || 0), noRefl: o.noRefl, tag: o.tag }); return api; },
+    line(P, c, ln, o = {}) { add([{ P, c, ln, glow: o.glow, op: o.op, min: o.min }], { noRefl: o.noRefl, bias: o.bias }); return api; },
+    box(o) {
+      const { P } = frame(o), w = o.w / 2, d = o.d / 2, h = o.h, c = o.c, t = o.top || c;
+      const v = [[-w, 0, -d], [w, 0, -d], [w, 0, d], [-w, 0, d], [-w, h, -d], [w, h, -d], [w, h, d], [-w, h, d]].map(P);
+      const faces = [[0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7]].map(q => ({ P: q.map(i => v[i]), c, wet: o.wet, glow: o.glow }));
+      faces.push({ P: [v[4], v[5], v[6], v[7]], c: t, glow: o.glow });
+      if (o.bottom) faces.push({ P: [v[0], v[1], v[2], v[3]], c: o.bottom });
+      if (o.dec) o.dec(faces, P);
+      return add(faces, { center: P([0, h / 2, 0]), noRefl: o.noRefl, bias: o.bias }); },
+    /* frustum / cylinder; r1 = 0 for a cone, n sides */
+    cyl(o) {
+      const n = o.n || 16, Y = o.y || 0, r1 = o.r1 ?? o.r0, faces = [];
+      const ring = (r, y) => Array.from({ length: n }, (_, i) => { const a = i / n * Math.PI * 2 + (o.rot || 0); return [o.x + Math.cos(a) * r, y, o.z + Math.sin(a) * r]; });
+      const A = ring(o.r0, Y), B = ring(Math.max(r1, .001), Y + o.h);
+      for (let i = 0; i < n; i++) { const j = (i + 1) % n; faces.push({ P: [A[i], A[j], B[j], B[i]], c: o.c, seam: true, wet: o.wet, glow: o.glow }); }
+      if (r1 > .01 && o.top !== false) faces.push({ P: B, c: o.top || o.c, glow: o.glow && !o.top });
+      if (o.bottom) faces.push({ P: A, c: o.bottom });
+      return add(faces, { center: [o.x, Y + o.h / 2, o.z], noRefl: o.noRefl, bias: o.bias }); },
+    /* clapboard house. w along the front, d deep, h to the eaves, rh roof rise.
+       gable: true puts a gable end on the front (ridge runs front to back).
+       fy < 0: a stone foundation down that far (a house on a slope). */
+    house(o) {
+      const { P, R } = frame(o), w = o.w / 2, d = o.d / 2, h = o.h, rh = o.rh, ov = o.ov ?? .35, rr = o.rng || Math.random;
+      const wall = o.wall, roof = o.roof, trim = o.trim || "#f2eee4", faces = [], G = !!o.gable;
+      const LAMP = C.lamp || "#ffc868", night = !!C.night;
+      const walls = [
+        { n: "front", o: [-w, 0, -d], U: [1, 0, 0], N: [0, 0, -1], len: 2 * w, apex: G },
+        { n: "right", o: [w, 0, -d], U: [0, 0, 1], N: [1, 0, 0], len: 2 * d, apex: !G },
+        { n: "back", o: [w, 0, d], U: [-1, 0, 0], N: [0, 0, 1], len: 2 * w, apex: G },
+        { n: "left", o: [-w, 0, d], U: [0, 0, -1], N: [-1, 0, 0], len: 2 * d, apex: !G } ];
+      const at = (W, u, v, off = 0) => [W.o[0] + W.U[0] * u + W.N[0] * off, v, W.o[2] + W.U[2] * u + W.N[2] * off];
+      walls.forEach(W => {
+        const pts = [at(W, 0, 0), at(W, W.len, 0), at(W, W.len, h)];
+        if (W.apex) pts.push(at(W, W.len / 2, h + rh));
+        pts.push(at(W, 0, h));
+        const dec = [], Uw = R(W.U), Nw = R(W.N), Vw = [0, 1, 0], o3 = P(W.o);
+        const q = (u0, v0, u1, v1, c, extra = {}) => dec.push({ P: quad(o3, Uw, Vw, Nw, u0, v0, u1, v1, extra.off ?? .05), c, ...extra });
+        if (o.clap !== false) for (let v = .45; v < h; v += .45) dec.push({ P: [P(at(W, 0, v, .02)), P(at(W, W.len, v, .02))], c: mix(wall, "#000000", .22), ln: .035, min: .35, op: .55 });
+        dec.push({ P: [P(at(W, .08, 0, .03)), P(at(W, .08, h, .03))], c: trim, ln: .18, min: .5 }, { P: [P(at(W, W.len - .08, 0, .03)), P(at(W, W.len - .08, h, .03))], c: trim, ln: .18, min: .5 });
+        dec.push({ P: [P(at(W, 0, h - .1, .03)), P(at(W, W.len, h - .1, .03))], c: trim, ln: .2, min: .5 });
+        const rows = h > 5.2 ? [[1, 2.3], [h - 2.2, h - .9]] : [[.95, 2.25]];
+        const nW = Math.max(1, Math.floor((W.len - .8) / 2.6)), door = W.n === "front" && o.door !== false ? (o.door ?? .5) * W.len : null;
+        rows.forEach(([v0, v1], ri) => { for (let k = 0; k < nW; k++) {
+          const u = W.len * (k + .5) / nW;
+          if (ri === 0 && door !== null && Math.abs(u - door) < 1.4) continue;
+          if (o.win && !o.win(u / W.len, ri, W.n)) continue;
+          const lt = night && rr() < .7;
+          q(u - .52, v0 - .1, u + .52, v1 + .1, trim);
+          q(u - .4, v0, u + .4, v1, lt ? LAMP : (o.glass || "#3e5266"), { glow: lt, off: .07 });
+          if (!lt) q(u - .4, (v0 + v1) / 2, u, v1, "#a8bccc", { off: .08, op: .35 });
+          if (o.shut) { q(u - .9, v0, u - .56, v1, o.shut, { off: .06 }); q(u + .56, v0, u + .9, v1, o.shut, { off: .06 }); } } });
+        if (door !== null) { q(door - .62, 0, door + .62, 2.35, trim); q(door - .5, 0, door + .5, 2.2, o.doorC || "#5a3424", { off: .07 }); }
+        if (W.apex && rh > 2.2) { const lt = night && rr() < .5; q(W.len / 2 - .45, h + rh * .28, W.len / 2 + .45, h + rh * .28 + .8, trim); q(W.len / 2 - .33, h + rh * .28 + .1, W.len / 2 + .33, h + rh * .28 + .7, lt ? LAMP : (o.glass || "#3e5266"), { glow: lt, off: .07 }); }
+        if (o.extra) o.extra(W.n, q, W.len);
+        faces.push({ P: pts.map(P), c: wall, dec });
+      });
+      if (o.fy !== undefined && o.fy < 0) {
+        const v = [[-w - .15, o.fy, -d - .15], [w + .15, o.fy, -d - .15], [w + .15, o.fy, d + .15], [-w - .15, o.fy, d + .15], [-w - .15, .05, -d - .15], [w + .15, .05, -d - .15], [w + .15, .05, d + .15], [-w - .15, .05, d + .15]].map(P);
+        [[0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7]].forEach(qq => faces.push({ P: qq.map(i => v[i]), c: o.stone || "#8a8278" })); }
+      if (o.ao !== false) faces.push({ P: [[-w - .9, -d - 1.1], [w + .9, -d - 1.1], [w + .9, d + .9], [-w - .9, d + .9]].map(p => P([p[0], (o.fy || 0) + .03, p[1]])), c: "#000000", glow: true, op: .16, first: true, up: true });
+      const soff = mix(roof, "#000000", .45);
+      if (!G) { const s = rh / d, ey = h - ov * s;
+        const fr = [[-w - ov, ey, -d - ov], [w + ov, ey, -d - ov], [w + ov, h + rh, 0], [-w - ov, h + rh, 0]].map(P);
+        const bk = [[w + ov, ey, d + ov], [-w - ov, ey, d + ov], [-w - ov, h + rh, 0], [w + ov, h + rh, 0]].map(P);
+        faces.push({ P: fr, c: roof, two: true, back: soff, bias: -.2 }, { P: bk, c: roof, two: true, back: soff });
+        [-w - ov, w + ov].forEach(x => faces.push({ P: [P([x, ey, -d - ov]), P([x, h + rh, 0]), P([x, ey, d + ov])], c: trim, ln: .2, min: .6, bias: -1 })); }
+      else { const s = rh / w, ey = h - ov * s;
+        const lf = [[-w - ov, ey, d + ov], [-w - ov, ey, -d - ov], [0, h + rh, -d - ov], [0, h + rh, d + ov]].map(P);
+        const rt = [[w + ov, ey, -d - ov], [w + ov, ey, d + ov], [0, h + rh, d + ov], [0, h + rh, -d - ov]].map(P);
+        faces.push({ P: lf, c: roof, two: true, back: soff }, { P: rt, c: roof, two: true, back: soff });
+        [-d - ov, d + ov].forEach(z => faces.push({ P: [P([-w - ov, ey, z]), P([0, h + rh, z]), P([w + ov, ey, z])], c: trim, ln: .2, min: .6, bias: -1 })); }
+      if (o.chim !== undefined) { const cxl = G ? 0 : (o.chim - .5) * 2 * w, czl = G ? (o.chim - .5) * 2 * d : 0, cw = .45;
+        const v = [[-cw, 0, -cw], [cw, 0, -cw], [cw, 0, cw], [-cw, 0, cw], [-cw, 1, -cw], [cw, 1, -cw], [cw, 1, cw], [-cw, 1, cw]].map(p => P([cxl + p[0], h + rh * .45 + p[1] * (rh * .55 + 1.1), czl + p[2]]));
+        [[0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7], [4, 5, 6, 7]].forEach(qq => faces.push({ P: qq.map(i => v[i]), c: o.chimC || "#8a4a36", bias: -.5 })); }
+      return add(faces, { center: P([0, h / 2, 0]), noRefl: o.noRefl, bias: o.bias }); },
+    draw(opt = {}) { const M = !!opt.mirror;
+      return objs.filter(o => !(M && o.noRefl) && (!opt.where || opt.where(o))).sort((a, b) => b.key - a.key).map(o => drawObj(o, M)).join(""); },
+  };
+  return api;
+}
