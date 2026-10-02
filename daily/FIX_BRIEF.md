@@ -28,6 +28,19 @@ Keep the subject, palette, the day/night switch (`opts.time`), the part
 switch (`opts.part`), the one-top-level-function format, and calm text
 corners (x 0-900 and 1500-2560, y 0-260). No people, no rain or snow falling.
 
+**Sanity check, element by element (the user rejected a pass that skipped
+this).** After each render, crop and open close-ups (left third, middle,
+right third, and anything structural) with PIL, and for every object ask:
+- What is it standing on? Is there ground, grass, rock or water directly
+  under its base, with a contact shadow? Nothing hangs on a wall face or
+  floats.
+- Could it exist? A pier needs water under it and a way to reach it; a shore
+  needs the land to meet the water at a believable height; rocks are rounded
+  boulders or ledges, never a staircase of rectangles.
+- Is it repeated? Vary copies (size, shape, roof pitch, colour, detail).
+- Night: does any beam, glow or light cross the moon or the text corners?
+Write the answers down and fix every "no" before reporting.
+
 Render day and night one at a time with
 `powershell -NoProfile -ExecutionPolicy Bypass -File render.ps1 "scenes\test-<slug>.html[?time=night]" "scenes\_drafts\<slug>-day|night.png"`
 (write the test page if missing; copy `scenes\test-covered-bridge-creek.html`
