@@ -60,5 +60,11 @@
       Calories item above superseded (no Apple Health).
 - [ ] Past-day calories: `/cloud/v1/deviceManaged/nutritionScale/getNutritionDailyRecord`
       exists but its parameters are unknown (all guesses "illegal argument").
+- [x] 2026-10-02 — Past days solved: params {configModel, page, pageSize,
+      syncTimestamp} (decoded from the app). `vesync_history.py`, 220 days.
+- [x] 2026-10-02 — Bar: kcal line + weekly weight arrow beside the clock;
+      evening flash (FOOD_WEEKDAY / FOOD_WEEKEND in daily/window.js).
+- [ ] Weighed foods (foodList) kcal formula only checked on quick-add days —
+      compare a weighed day against the app.
 - Note 2026-10-02: the 4am daily run now adds one scene a day to the current
   default pool and works these items itself (WEEKLY_PROMPT 8b/8c).

@@ -9,3 +9,4 @@ if ($LASTEXITCODE -ne 0) {
     & powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\vesync-run.ps1" vesync_probe.py *>> $log
     & $py vesync_daily.py *>> $log
 }
+& $py vesync_history.py *>> $log     # past days, only what changed since last pass

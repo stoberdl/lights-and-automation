@@ -106,6 +106,25 @@ html.win #toast{z-index:200}
 .w-dry{display:inline-flex;gap:10px;align-items:center;margin-top:14px;font-size:22px;padding:8px 18px;
   border-radius:22px;background:rgba(14,20,34,.4)}
 .w-dry:empty{display:none}
+/* food and weight: one small line beside the clock */
+.w-top{display:flex;align-items:center;gap:22px}
+.w-food{display:inline-flex;align-items:center;gap:12px;font-size:20px;font-weight:500;padding:5px 16px;
+  border-radius:18px;background:rgba(14,20,34,.38);letter-spacing:.02em}
+.w-food[hidden]{display:none}
+.w-food .g{opacity:.6}
+.w-food .bar{width:90px;height:7px;border-radius:9px;background:rgba(255,255,255,.2);overflow:hidden}
+.w-food .bar i{display:block;height:100%;border-radius:9px;background:#8fe3a1}
+.w-food.short .bar i{background:#ffb35c}
+.w-food .wt{font-weight:600}
+.w-food .wt.down{color:#7ee49a}.w-food .wt.up{color:#ff8a7a}.w-food .wt.flat{opacity:.7}
+/* the evening nudge: a pulse over the whole bar until enough is logged */
+.w-nag{position:absolute;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;
+  pointer-events:none;opacity:0;box-shadow:inset 0 0 0 0 rgba(255,140,40,0);transition:opacity .25s}
+.w-nag.on{opacity:1;pointer-events:auto;animation:w-nag 0.7s ease-in-out 4 alternate}
+.w-nag b{font:700 54px Outfit,"Segoe UI",sans-serif;color:#fff;padding:22px 46px;border-radius:30px;
+  background:rgba(200,70,20,.82);box-shadow:0 10px 60px rgba(0,0,0,.5)}
+@keyframes w-nag{from{background:rgba(255,120,30,.05);box-shadow:inset 0 0 40px 10px rgba(255,140,40,.5)}
+  to{background:rgba(255,120,30,.32);box-shadow:inset 0 0 160px 50px rgba(255,140,40,.95)}}
 
 /* up and left: what's playing, only while something is */
 .w-player{position:absolute;left:64px;top:318px;width:660px;padding:18px;display:flex;gap:20px;align-items:center;
@@ -679,7 +698,7 @@ function windowLayout(){
     <canvas class="wl" id="wl-fx" width="${W}" height="${H}"></canvas>
     <div class="wl wl-shade"></div>
     <div class="w-wx ts">
-      <div class="w-clock" id="w-clock"></div>
+      <div class="w-top"><div class="w-clock" id="w-clock"></div><div class="w-food" id="w-food" hidden></div></div>
       <div class="w-row"><div class="w-temp" id="w-temp">--</div>
         <div class="w-side"><div class="w-cond" id="w-cond"></div><div class="w-hl" id="w-hl"></div></div></div>
       <div class="w-dry" id="w-dry"></div>
@@ -827,6 +846,7 @@ function windowLayout(){
   gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(.35, "rgba(255,255,255,.8)"); gr.addColorStop(1, "rgba(255,255,255,0)");
   fc.fillStyle = gr; fc.fillRect(0, 0, 32, 32);
 
+  wireFood();
   addEventListener("resize", fit); fit();
   if(location.hash === "#cycle"){ WS.cycle = true; paintBg(); }      // preview the cycle without tapping
   loadDay();
@@ -845,4 +865,69 @@ function windowLayout(){
   if(location.hash === "#allthemes") setTimeout(openPop, 1200);
 }
 window.windowLayout = windowLayout;
+
+/* ------------------------------------------------- food log and weight
+   /api/vesync (serve.py) answers today's logged calories from VeSync, read
+   live and cached 90 s, plus the latest weigh-in and its change over a week.
+   The bar shows that as one small line beside the clock, and nags when the
+   evening log is behind: by each time below, at least that many kcal. */
+const FOOD_WEEKDAY = [ { at: "17:30", min: 600 }, { at: "23:00", min: 1400 } ];
+// Weekends, Saturday and Sunday. Kept separate on purpose: these will change.
+const FOOD_WEEKEND = [ { at: "17:30", min: 600 }, { at: "23:00", min: 1400 } ];
+const NAG_EVERY = 90;        // seconds between flashes while behind
+const FOOD = { data: null, lastNag: 0 };
+
+function foodRule(now){
+  const rules = (now.getDay() === 0 || now.getDay() === 6) ? FOOD_WEEKEND : FOOD_WEEKDAY;
+  const hm = now.getHours() * 60 + now.getMinutes();
+  const due = rules.filter(r => { const [h, m] = r.at.split(":").map(Number); return hm >= h * 60 + m; });
+  return due.length ? due[due.length - 1] : null;     // the latest one that has come due
+}
+async function loadFood(){
+  try { FOOD.data = await (await fetch("/api/vesync", {cache: "no-store"})).json(); } catch { FOOD.data = null; }
+  paintFood();
+}
+function paintFood(){
+  const box = q("#w-food"), d = FOOD.data;
+  if(!d || (!d.ok && !d.weight)){ box.hidden = true; return; }
+  let h = "";
+  if(d.ok){
+    const goal = d.goal || 1800, pct = Math.min(100, Math.round(d.kcal / goal * 100));
+    const r = foodRule(new Date());
+    box.classList.toggle("short", !!(r && d.kcal < r.min));
+    h += `<span>${d.kcal.toLocaleString()}<span class="g"> / ${goal.toLocaleString()} kcal</span></span><span class="bar"><i style="width:${pct}%"></i></span>`;
+  }
+  const w = d.weight;
+  if(w && w.week != null){
+    const cls = w.week <= -0.2 ? "down" : w.week >= 0.2 ? "up" : "flat";
+    const arrow = cls === "down" ? "▼" : cls === "up" ? "▲" : "▬";
+    h += `<span class="wt ${cls}" title="${w.lb} lb, change over the week">${arrow} ${Math.abs(w.week).toFixed(1)} lb</span>`;
+  }
+  box.innerHTML = h; box.hidden = !h;
+}
+function nagCheck(){
+  const d = FOOD.data, now = new Date();
+  if(!d || !d.ok) return;                       // never nag on a failed read
+  const r = foodRule(now);
+  if(!r || d.kcal >= r.min) return;
+  if(Date.now() - FOOD.lastNag < NAG_EVERY * 1000) return;
+  FOOD.lastNag = Date.now();
+  const n = q("#w-nag");
+  n.innerHTML = `<b>Log your food · ${d.kcal.toLocaleString()} of ${r.min.toLocaleString()} kcal</b>`;
+  n.classList.remove("on"); void n.offsetWidth; n.classList.add("on");
+  setTimeout(() => n.classList.remove("on"), 3000);
+}
+function wireFood(){
+  const n = el("div", "w-nag"); n.id = "w-nag"; q("#win-stage").appendChild(n);
+  n.addEventListener("click", e => { e.stopPropagation(); n.classList.remove("on"); });
+  loadFood();
+  // Every minute while a reminder could be due or is close, otherwise every five.
+  const tick = () => {
+    const now = new Date(), soon = foodRule(new Date(now.getTime() + 30 * 60000));
+    loadFood().then(nagCheck);
+    setTimeout(tick, soon ? 60000 : 300000);
+  };
+  setTimeout(tick, 60000);
+  setInterval(nagCheck, 15000);
+}
 })();

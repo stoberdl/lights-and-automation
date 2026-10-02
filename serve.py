@@ -444,6 +444,53 @@ class Server(ThreadingHTTPServer):
     daemon_threads = True
 
 
+## ---- VeSync: today's calories and the weight trend, for the bar ----------
+# Calories are read live (cached 90 s) so the evening reminders on the bar act
+# on what is logged now, not on the hourly task's last pass. Weigh-ins come
+# from vesync_weights.json, which the hourly "Lights VeSync" task keeps fresh.
+VS = {"at": 0, "body": None, "relogin": 0}
+VS_LOCK = threading.Lock()
+
+def vesync_state():
+    with VS_LOCK:
+        if VS["body"] and time.time() - VS["at"] < 90:
+            return VS["body"]
+        out = {"ok": False}
+        try:
+            import vesync_raw
+            r = vesync_raw.call("/cloud/v1/getDailyIntakeCalorieByApp")
+            if r.get("code") == 0:
+                x = r["result"]
+                out = {"ok": True, "kcal": x.get("calorieK") or 0, "goal": x.get("goalCaloriesK"),
+                       "exercise": x.get("exerciseKcalTotal") or 0}
+                # Keep the day's row current, same file the hourly task writes.
+                f = HERE / "vesync_calories.json"
+                try: cal = json.loads(f.read_text())
+                except Exception: cal = {"days": {}}
+                row = cal.setdefault("days", {}).setdefault(time.strftime("%Y-%m-%d"), {})
+                row.update({"kcal": out["kcal"], "goal": out["goal"], "exercise": out["exercise"], "at": int(time.time())})
+                f.write_text(json.dumps(cal, indent=1))
+            elif time.time() - VS["relogin"] > 1800:
+                # The saved session was refused: the hourly script logs in again.
+                VS["relogin"] = time.time()
+                subprocess.Popen(["powershell.exe", "-NoProfile", "-WindowStyle", "Hidden", "-ExecutionPolicy",
+                                  "Bypass", "-File", str(HERE / "vesync-daily.ps1")], creationflags=0x08000000)
+        except Exception as e:
+            out = {"ok": False, "error": type(e).__name__}
+        try:
+            w = json.loads((HERE / "vesync_weights.json").read_text())["weights"]
+            if w:
+                last = w[-1]
+                week = [x for x in w if x["t"] >= last["t"] - 7 * 86400]
+                base = week[0] if len(week) > 1 else next((x for x in reversed(w) if x["t"] < last["t"] - 86400), None)
+                out["weight"] = {"lb": last["lb"], "t": last["t"],
+                                 "week": round(last["lb"] - base["lb"], 1) if base else None}
+        except Exception:
+            pass
+        VS.update(at=time.time(), body=out)
+        return out
+
+
 class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
 
@@ -546,6 +593,9 @@ class Handler(BaseHTTPRequestHandler):
         # Claude settings file and run logs, and none of that is the page's.
         if p.startswith("/daily/"):
             return self.send_daily(p)
+
+        if p == "/api/vesync":
+            return self.send_json(200, vesync_state())
 
         if p.startswith("/api/lightd/"):
             return self.proxy("GET", p[len("/api/lightd"):], q, None)
