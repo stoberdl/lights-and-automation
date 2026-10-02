@@ -185,11 +185,11 @@ function newYearsSkylineArt(opts = {}) {
 
   let city = "";
   /* far layer: hazy, many, low */
-  for (let x = -30; x < W + 30;) { const w = 24 + r() * 46, env = Math.exp(-((x - 1300) / 700) ** 2), h = 50 + r() * 90 + env * 120;
+  for (let x = -30; x < W + 30;) { const w = 24 + r() * 46, env = Math.exp(-(((x - 1300) / 700) ** 2)), h = 50 + r() * 90 + env * 120;
     city += tower(x, WY - 22, w, h, { hz: NIGHT ? .55 : .6, roof: r() < .5, lit: .22 }); x += w + r() * 6; }
   city += `<rect x="0" y="${WY - 160}" width="${W}" height="150" fill="url(#nyHaze)" opacity=".7"/>`;
   /* mid layer */
-  for (let x = -40; x < W + 40;) { const w = 34 + r() * 58, env = Math.exp(-((x - 1300) / 620) ** 2), h = 70 + r() * 110 + env * 120;
+  for (let x = -40; x < W + 40;) { const w = 34 + r() * 58, env = Math.exp(-(((x - 1300) / 620) ** 2)), h = 70 + r() * 110 + env * 120;
     if (!(x > 960 && x < 1640 && r() < .4)) city += tower(x, WY - 14, w, h, { hz: NIGHT ? .3 : .32, glass: r() < .25 }); x += w + 4 + r() * 16; }
   city += `<rect x="0" y="${WY - 110}" width="${W}" height="100" fill="url(#nyHaze)" opacity=".45"/>`;
 

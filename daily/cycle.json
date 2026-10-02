@@ -438,6 +438,30 @@
                       "to":  "01-03",
                       "scenes":  [
                                      {
+                                         "id":  "new-years-skyline",
+                                         "name":  "New Year\u0027s skyline",
+                                         "scene":  {
+                                                       "file":  "scenes/new-years-skyline.js",
+                                                       "fn":  "newYearsSkylineArt",
+                                                       "opts":  {
+
+                                                                }
+                                                   },
+                                         "night":  {
+                                                       "file":  "scenes/new-years-skyline.js",
+                                                       "fn":  "newYearsSkylineArt",
+                                                       "opts":  {
+                                                                    "time":  "night"
+                                                                }
+                                                   },
+                                         "fx":  [
+
+                                                ],
+                                         "nightFx":  [
+
+                                                     ]
+                                     },
+                                     {
                                          "id":  "city-ice-rink",
                                          "name":  "City ice rink",
                                          "scene":  {
