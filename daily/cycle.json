@@ -484,30 +484,6 @@
                                          "nightFx":  [
 
                                                      ]
-                                     },
-                                     {
-                                         "id":  "frozen-falls-pass",
-                                         "name":  "Frozen falls pass",
-                                         "scene":  {
-                                                       "file":  "scenes/frozen-falls-pass.js",
-                                                       "fn":  "frozenFallsPassArt",
-                                                       "opts":  {
-
-                                                                }
-                                                   },
-                                         "night":  {
-                                                       "file":  "scenes/frozen-falls-pass.js",
-                                                       "fn":  "frozenFallsPassArt",
-                                                       "opts":  {
-                                                                    "time":  "night"
-                                                                }
-                                                   },
-                                         "fx":  [
-
-                                                ],
-                                         "nightFx":  [
-
-                                                     ]
                                      }
                                  ]
                   },
@@ -532,30 +508,6 @@
                                                        "fn":  "winterAuroraCabinArt",
                                                        "opts":  {
 
-                                                                }
-                                                   },
-                                         "fx":  [
-
-                                                ],
-                                         "nightFx":  [
-
-                                                     ]
-                                     },
-                                     {
-                                         "id":  "frozen-falls-pass",
-                                         "name":  "Frozen falls pass",
-                                         "scene":  {
-                                                       "file":  "scenes/frozen-falls-pass.js",
-                                                       "fn":  "frozenFallsPassArt",
-                                                       "opts":  {
-
-                                                                }
-                                                   },
-                                         "night":  {
-                                                       "file":  "scenes/frozen-falls-pass.js",
-                                                       "fn":  "frozenFallsPassArt",
-                                                       "opts":  {
-                                                                    "time":  "night"
                                                                 }
                                                    },
                                          "fx":  [
