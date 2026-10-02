@@ -27,3 +27,6 @@ daily/*.png
 daily/scenes/zoom.html
 daily/logs/
 daily/calendar/*.png
+.vesync.cred
+.vesync.ok
+.vesync.token.json
