@@ -63,7 +63,7 @@ function harborLighthouseFallArt(opts = {}) {
     <radialGradient id="hlGlow"><stop offset="0" stop-color="${LAMP}" stop-opacity=".85"/><stop offset=".35" stop-color="#ffb050" stop-opacity=".3"/><stop offset="1" stop-color="#ffb050" stop-opacity="0"/></radialGradient>
     <clipPath id="hlCW"><rect x="0" y="${WY}" width="${W}" height="${H - WY}"/></clipPath>
     <clipPath id="hlC482"><rect x="0" y="482" width="${W}" height="${H - 482}"/></clipPath>
-    <clipPath id="hlCPt"><rect x="1200" y="0" width="790" height="${H}"/></clipPath>
+    <clipPath id="hlCPt"><rect x="1200" y="0" width="1360" height="${H}"/></clipPath>
     <linearGradient id="hlFaceR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${NIGHT ? "#141826" : "#3e3a36"}" stop-opacity=".55"/><stop offset=".5" stop-color="${NIGHT ? "#141826" : "#4a4640"}" stop-opacity=".35"/><stop offset="1" stop-color="${NIGHT ? "#141826" : "#4a4640"}" stop-opacity="0"/></linearGradient>
     <clipPath id="hlC500"><rect x="0" y="500" width="${W}" height="${H - 500}"/></clipPath>
     <filter id="hlLeafy" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".09" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="8" xChannelSelector="R" yChannelSelector="G"/></filter>
@@ -266,45 +266,52 @@ function harborLighthouseFallArt(opts = {}) {
   s += `<g clip-path="url(#hlCW)"><g transform="matrix(1,0,0,-1,0,${WY * 2})" opacity=".4" filter="url(#hlRipple)">${far}</g></g>`;
   const reflAt = s.length;
 
+  /* boulders seen side-on: flat waterline base, rounded top, lit cap toward the light, shaded
+     lower front, rockweed at the base, a reflection straight below; width scales with baseline */
+  const boulder = (x, y, w, hh) => {
+    const ls = LX < x ? -1 : 1, n = 10, P = [[x - w / 2, y]];
+    for (let k = 1; k < n; k++) { const t = k / n; P.push([x - w / 2 + w * t + (r() - .5) * w * .05, y - Math.pow(Math.sin(Math.PI * t), .55) * hh * (.86 + r() * .2)]); }
+    P.push([x + w / 2, y]);
+    let g = `<path d="${poly(P.map(([px, py]) => [px, y + (y - py) * .7]))}" fill="${T(NIGHT ? "#0a0e1c" : "#2a3a44")}" opacity=".38" filter="url(#hlRipple)"/>`;
+    g += `<ellipse cx="${F(x)}" cy="${F(y + 1)}" rx="${F(w * .56)}" ry="${F(Math.max(2, w * .03))}" fill="#000" opacity=".25"/>`;
+    g += `<path d="${poly(P)}" fill="${T(mix(GR[1], GR[2], r() * .3))}"/>`;
+    const top = P.slice(1, n), lit = top.filter(([px]) => (px - x) * ls > -w * .3);
+    g += `<path d="${poly([...lit, ...lit.slice().reverse().map(([px, py]) => [px - ls * w * .03, py + hh * .26])])}" fill="${T(GR[2])}"/>`;
+    const hi = lit.filter(([px]) => (px - x) * ls > w * .05);
+    if (hi.length > 1) g += `<path d="${poly([...hi, ...hi.slice().reverse().map(([px, py]) => [px, py + hh * .09])])}" fill="${T(GR[3])}" opacity=".8"/>`;
+    g += `<path d="${poly(P.map(([px, py]) => [px, Math.max(py, y - hh * .4)]))}" fill="${T(GR[0])}" opacity=".5"/>`;
+    const dk = P.filter(([px]) => (px - x) * ls < -w * .22);
+    g += `<path d="${poly([...dk, [x - ls * w * .22, y]])}" fill="${T(GR[0])}" opacity=".45"/>`;
+    g += `<path d="M${F(x + (r() - .5) * w * .3)},${F(y - hh * .75)} l${F((r() - .5) * w * .1)},${F(hh * .4)} l${F((r() - .5) * w * .1)},${F(hh * .25)}" stroke="${T(GR[0])}" stroke-width="1.3" fill="none" opacity=".6"/>`;
+    g += `<rect x="${F(x - w / 2)}" y="${F(y - Math.max(3, hh * .12))}" width="${F(w)}" height="${F(Math.max(3, hh * .12))}" fill="${T("#3a3418")}" opacity=".75"/>`;
+    for (let k = 0; k < w / 6; k++) { const px = x - w * .48 + r() * w * .96; g += `<path d="M${F(px)},${F(y)} q${F(-1 + r() * 2)},${F(-hh * .1)} ${F(-2 + r() * 4)},${F(-hh * (.12 + r() * .12))}" stroke="${T(r() < .5 ? "#6a5a24" : "#8a7a30")}" stroke-width="${F(1.2 + w * .008)}" fill="none"/>`; }
+    return g; };
   /* ---------- the lighthouse point (right) ---------- */
   const pw = wave([2, 5, 1], [220, 90, 40], [5, 3, 1.5]);
-  const wlR = x => x < 1980 ? 482 + pw(x) * .4 : 482 + Math.pow((x - 1980) / 580, 1.5) * 128 + pw(x) * .4;
+  const wlR = x => 483 + pw(x) * .4;
   const topR = x => { if (x < 1250) return 490; const a = Math.min(1, (x - 1250) / 200), sm = a * a * (3 - 2 * a);
     return 488 - sm * 90 + pw(x) - Math.min(1, Math.max(0, x - 1740) / 520) * 30; };
   let pt = "";
   { let d = `M1240,${F(wlR(1240))}`; for (let x = 1240; x <= W; x += 12) d += ` L${x},${F(topR(x))}`;
     d += ` L${W},${F(wlR(W))}`; for (let x = W; x >= 1240; x -= 12) d += ` L${x},${F(wlR(x))}`;
-    pt += `<path d="${d}Z" fill="${T("#5e5650")}"/>`;
+    pt += `<path d="${d}Z" fill="${T(mix("#6e7a38", "#4a5a2a", .5))}"/>`;
     let gpath = `M1240,${F(topR(1240))}`; for (let x = 1240; x <= W; x += 12) gpath += ` L${x},${F(topR(x))}`;
     for (let x = W; x >= 1240; x -= 12) gpath += ` L${x},${F(Math.min(wlR(x) - 6, topR(x) + 26 + pw(x * 2) * 3))}`;
     pt += `<path d="${gpath}Z" fill="url(#hlGrass)"/>`; }
   // far tree row along the top of the point
   pt += `<g filter="url(#hlLeafyS)">${forest(x => topR(x) - 6, 2, 11, .2, .3, 1720, W + 10)}</g>`;
-  // granite ledges stepping down to the water: many faceted pieces
-  // seen from the side at eye level: stacked courses of granite, each block with a lit top
-  // lip, a mid front face and a shaded underside; courses get thinner where the shore is farther
-  { const NB = 5, yAt = (x, t) => { const a = topR(x) + 20, b = wlR(x) - 1; return a + (b - a) * t; };
-    for (let i = 0; i < NB; i++) {
-      let x = 1236 + r() * 16;
-      while (x < W + 10) {
-        const fh = wlR(x) - topR(x) - 21; if (fh < 6) { x += 8; continue; }
-        const bh = fh / NB, bw = Math.max(9, bh * (1.2 + r() * 3.4)), x1 = x + bw, c = Math.min(bh * .5, bw * (.08 + r() * .2));
-        const jt = i ? (r() - .6) * bh * .6 : 0, a0 = yAt(x, i / NB) + jt, a1 = yAt(x1, i / NB) + jt + (i ? (r() - .5) * bh * .35 : 0), b0 = yAt(x, (i + 1) / NB), b1 = yAt(x1, (i + 1) / NB);
-        const sh = .15 + r() * .5, face = T(mix(GR[1], GR[2], sh * .6)), wet = i === NB - 1;
-        pt += `<path d="${poly([[x + c, a0], [x1 - c, a1], [x1, a1 + c], [x1, b1], [x, b0], [x, a0 + c]])}" fill="${wet ? mix(face, T("#3a3428"), .35) : face}"/>`;
-        const lip = (b0 - a0) * (.18 + r() * .1);
-        pt += `<path d="${poly([[x + c, a0], [x1 - c, a1], [x1, a1 + c], [x1, a1 + lip], [x, a0 + lip], [x, a0 + c]])}" fill="${T(mix(GR[2], GR[3], .3 + r() * .5))}"/>`;
-        pt += `<path d="${poly([[x, b0 - (b0 - a0) * .2], [x1, b1 - (b1 - a1) * .2], [x1, b1], [x, b0]])}" fill="${T(GR[0])}" opacity=".45"/>`;
-        pt += `<path d="${poly([[x1 - bw * .12, a1 + lip], [x1, a1 + lip], [x1, b1], [x1 - bw * .12, b1]])}" fill="${T(GR[0])}" opacity=".35"/>`;
-        if (r() < .4) { const cx = x + bw * (.3 + r() * .4); pt += `<path d="M${F(cx)},${F(yAt(cx, i / NB) + lip)} l${F((r() - .5) * bh * .4)},${F(bh * .5)}" stroke="${T(GR[0])}" stroke-width="1" opacity=".55"/>`; }
-        if (r() < .3) pt += `<ellipse cx="${F(x + bw * r())}" cy="${F(a0 + lip * .5)}" rx="${F(2 + r() * 3)}" ry="${F(1 + r())}" fill="${T(r() < .5 ? "#d8a040" : "#b8b070")}" opacity=".7"/>`;
-        x = x1 + .8;
-      } }
+  // the point's shore: a low band of rounded granite boulders along the waterline, seen
+  // side-on; a smaller back row peeks over the front one. Grass runs down to the rocks.
+  { const shore = [];
+    for (let x = 1236; x < W + 30;) { const w = 56 + r() * 60, k = Math.abs(x - 1500) < 190 ? 1.4 : 1;
+      shore.push([x + w / 2, wlR(x + w / 2) + 4, w * k, (20 + r() * 18) * k]); x += w * (.55 + r() * .25); }
+    for (let x = 1250; x < W + 30;) { const w = 40 + r() * 40; shore.push([x + w / 2, wlR(x + w / 2) - 10, w, 14 + r() * 12]); x += w * (.8 + r() * .5); }
+    shore.sort((a, b) => a[1] - b[1]).forEach(([x, y, w, hh]) => pt += boulder(x, y, w, hh));
     // bayberry and sumac shrubs tumbling down between the ledges
-    for (let x = 1290; x < W; x += 40 + r() * 70) { const y = topR(x) + 24 + r() * 16, R = 14 + r() * 14, c = r() < .5 ? ["#3a1610", "#7a2818", "#b8401e", "#e0702a"] : ["#2a3018", "#4a5228", "#7a7a3a", "#a8a058"];
+    for (let x = 1290; x < W; x += 40 + r() * 70) { const R = 14 + r() * 14, lo = topR(x) + R * .5, hi = wlR(x) - 40; if (hi < lo) continue; const y = lo + r() * (hi - lo), c = r() < .5 ? ["#3a1610", "#7a2818", "#b8401e", "#e0702a"] : ["#2a3018", "#4a5228", "#7a7a3a", "#a8a058"];
       let b = ""; for (let k = 0; k < 18; k++) { const px = x + (r() * 2 - 1) * R, py = y + (r() * 2 - 1) * R * .45, v = cl(.5 - (py - y) / R + (r() - .5) * .5 + (LX < x ? -(px - x) : (px - x)) / R * .2);
-        b += `<path d="${blobP(px, py, R * .3, R * .22, 6)}" fill="${T(c[Math.floor(v * 4)])}"/>`; }
-      pt += `<g filter="url(#hlLeafyS)">${b}</g>`; }
+        b += `<path d="${blobP(px, py - R * .3, R * .3, R * .22, 6)}" fill="${T(c[Math.floor(v * 4)])}"/>`; }
+      pt += `<ellipse cx="${F(x)}" cy="${F(y + R * .12)}" rx="${F(R * 1.05)}" ry="${F(R * .16)}" fill="#000" opacity=".22"/><g filter="url(#hlLeafyS)">${b}</g>`; }
     // wet dark band, weed and a lit lip along the waterline
     let wl = `M1240,${F(wlR(1240))}`; for (let x = 1240; x <= W; x += 10) wl += ` L${x},${F(wlR(x) - 2)}`;
     pt += `<path d="${wl}" stroke="${T("#3a3424")}" stroke-width="7" fill="none" opacity=".8"/><path d="${wl}" stroke="${T("#6a5a2a")}" stroke-width="2.5" fill="none" opacity=".8" transform="translate(0,-4)"/>`;
@@ -390,8 +397,7 @@ function harborLighthouseFallArt(opts = {}) {
   vit.sort((a, b) => a[0] - b[0]);
   vit.forEach(([, f]) => vg += f());
   // seawall of granite blocks along the village shore
-  for (let x = 0; x < 660; x += 18 + r() * 10) { const y = wlL(x) - 4 + r() * 4, w = 16 + r() * 10, hh = 7 + r() * 4, c = GR[1 + Math.floor(r() * 2)];
-    vg += `<rect x="${F(x)}" y="${F(y - hh)}" width="${F(w)}" height="${F(hh)}" rx="1.5" fill="${T(c)}"/><rect x="${F(x)}" y="${F(y - hh)}" width="${F(w)}" height="1.6" fill="${T(GR[3])}" opacity=".7"/>`; }
+  for (let x = -20; x < 980; ) { const w = 30 + r() * 34; vg += boulder(x + w / 2, wlL(x) + 3, w, 10 + r() * 10); x += w * (.6 + r() * .3); }
   vg += `<path d="M0,${F(wlL(0) + 1)} L1080,${F(wlL(1080) + 1)}" stroke="${T("#3a3424")}" stroke-width="4" opacity=".6"/>`;
 
   /* reflections of the point and the village, then the shores themselves */
@@ -400,9 +406,6 @@ function harborLighthouseFallArt(opts = {}) {
   // curves toward us the ledge face is mirrored column by column about its own waterline.
   let refl = `<g clip-path="url(#hlC482)"><g transform="matrix(1,0,0,-.88,0,${F(482 * 1.88)})" opacity=".34" filter="url(#hlRipple)"><g clip-path="url(#hlCPt)">${pt}</g></g></g>` +
                `<g clip-path="url(#hlC500)"><g transform="matrix(1,0,0,-.88,0,${F(500 * 1.88)})" opacity=".34" filter="url(#hlRipple)">${vg}</g></g>`;
-  { let d = `M1980,${F(wlR(1980))}`; for (let x = 1980; x <= W; x += 10) d += ` L${x},${F(wlR(x))}`;
-    for (let x = W; x >= 1980; x -= 10) d += ` L${x},${F(wlR(x) + (wlR(x) - topR(x)) * .8)}`;
-    refl += `<path d="${d}Z" fill="url(#hlFaceR)" filter="url(#hlRipple)"/>`; }
   let wtr = refl;
   // wind ripples and sparkle
   for (let k = 0; k < 170; k++) { const y = WY + 6 + Math.pow(r(), .8) * (H - WY - 6), t = (y - WY) / (H - WY);
@@ -472,14 +475,18 @@ function harborLighthouseFallArt(opts = {}) {
     g += `<rect x="984" y="500" width="6" height="9" rx="2" fill="${T("#2a2a2e")}"/><ellipse cx="968" cy="507.5" rx="7" ry="2.2" fill="none" stroke="${T("#c8b080")}" stroke-width="2.2"/>`;
     g += `<rect x="1001" y="462" width="3" height="46" fill="${T("#2a2a2e")}"/><path d="M997,462 h11 l-2,-8 h-7Z" fill="${NIGHT ? LAMP : T("#3a3a40")}"/>`;
     g += perch(X0 + 7 + 26 * 17, DT - 7, .8) + perch(712, 509, .7);
-    return { g, WL };
+    return { g: `<g transform="translate(0,40)">${g}</g>`, WL: WL + 40 };
   };
   const SC = y => (y - WY) * .0058;   // scale = (baseY - horizon) / (refY - horizon), ref row y 618 = scale 1
   const fleet = [[1175, 469, -1, "#f2efe8"], [1118, 510, 1, "#f2efe8"], [1800, 521, -1, "#2e5a4a"], [1330, 552, -1, "#f2efe8"], [760, 600, 1, "#2a3e5e"], [1080, 624, 1, "#f2efe8"]];
   const front = fleet.map(([x, y, d, c]) => [y, () => boat(x, y, SC(y), d, c)]);
-  front.push([534, () => { const { g, WL } = wharf();
-    let o = `<g transform="matrix(1,0,0,-.88,0,${F(WL * 1.88)})" opacity=".32" filter="url(#hlRipple)">${g}</g>${g}`;
-    if (NIGHT) o += `<circle cx="1002" cy="460" r="60" fill="url(#hlGlow)" opacity=".7"/><ellipse cx="1002" cy="600" rx="16" ry="60" fill="${LAMP}" opacity=".18" filter="url(#hlRipple)"/>`;
+  front.push([574, () => { const { g, WL } = wharf();
+    // gangway from the village shore down to the deck, with a handrail
+    const gw = `<path d="M584,499 L662,541 L662,546 L584,504Z" fill="${T("#6a5440")}"/><path d="M584,499 L662,541" stroke="${T("#b09474")}" stroke-width="1.4"/>` +
+      `<path d="M584,487 L662,529" stroke="${T("#4a3828")}" stroke-width="1.8"/>` + [0, .33, .66, 1].map(t => `<rect x="${F(584 + 78 * t - 1)}" y="${F(487 + 42 * t)}" width="2" height="12" fill="${T("#4a3828")}"/>`).join("") +
+      `<rect x="582" y="497" width="5" height="10" fill="${T("#4a3828")}"/>`;
+    let o = `<g transform="matrix(1,0,0,-.88,0,${F(WL * 1.88)})" opacity=".32" filter="url(#hlRipple)">${g}</g>${gw}${g}`;
+    if (NIGHT) o += `<circle cx="1002" cy="500" r="60" fill="url(#hlGlow)" opacity=".7"/><ellipse cx="1002" cy="640" rx="16" ry="60" fill="${LAMP}" opacity=".18" filter="url(#hlRipple)"/>`;
     return o; }]);
   front.sort((a, b) => a[0] - b[0]);
   front.forEach(([, f]) => s += f());
@@ -487,31 +494,13 @@ function harborLighthouseFallArt(opts = {}) {
   /* night: lamp glow and soft beams from the lighthouse */
   if (NIGHT) {
     s += `<circle cx="1500" cy="162" r="120" fill="url(#hlGlow)" opacity=".9"/><circle cx="1500" cy="162" r="30" fill="#fff6d0" opacity=".5"/>`;
-    s += `<g filter="url(#hlSoft)"><path d="M1500,158 L780,108 L790,196 Z" fill="url(#hlBeamL)"/><path d="M1500,162 L2150,190 L2140,250 Z" fill="url(#hlBeamR)" opacity=".7"/></g>`;
+    s += `<g filter="url(#hlSoft)"><path d="M1500,160 L800,232 L812,300 Z" fill="url(#hlBeamL)"/><path d="M1500,162 L2150,190 L2140,250 Z" fill="url(#hlBeamR)" opacity=".7"/></g>`;
     s += `<ellipse cx="1500" cy="560" rx="16" ry="90" fill="${LAMP}" opacity=".16" filter="url(#hlRipple)"/>`;
   }
 
   /* ---------- foreground granite and kelp, corners ---------- */
   // boulders seen side-on: flat waterline base, rounded top, lit cap toward the light, shaded
   // lower front, rockweed at the base, a reflection straight below; width scales with baseline
-  const boulder = (x, y, w, hh) => {
-    const ls = LX < x ? -1 : 1, n = 10, P = [[x - w / 2, y]];
-    for (let k = 1; k < n; k++) { const t = k / n; P.push([x - w / 2 + w * t + (r() - .5) * w * .05, y - Math.pow(Math.sin(Math.PI * t), .55) * hh * (.86 + r() * .2)]); }
-    P.push([x + w / 2, y]);
-    let g = `<path d="${poly(P.map(([px, py]) => [px, y + (y - py) * .7]))}" fill="${T(NIGHT ? "#0a0e1c" : "#2a3a44")}" opacity=".38" filter="url(#hlRipple)"/>`;
-    g += `<ellipse cx="${F(x)}" cy="${F(y + 1)}" rx="${F(w * .56)}" ry="${F(Math.max(2, w * .03))}" fill="#000" opacity=".25"/>`;
-    g += `<path d="${poly(P)}" fill="${T(mix(GR[1], GR[2], r() * .3))}"/>`;
-    const top = P.slice(1, n), lit = top.filter(([px]) => (px - x) * ls > -w * .3);
-    g += `<path d="${poly([...lit, ...lit.slice().reverse().map(([px, py]) => [px - ls * w * .03, py + hh * .26])])}" fill="${T(GR[2])}"/>`;
-    const hi = lit.filter(([px]) => (px - x) * ls > w * .05);
-    if (hi.length > 1) g += `<path d="${poly([...hi, ...hi.slice().reverse().map(([px, py]) => [px, py + hh * .09])])}" fill="${T(GR[3])}" opacity=".8"/>`;
-    g += `<path d="${poly(P.map(([px, py]) => [px, Math.max(py, y - hh * .4)]))}" fill="${T(GR[0])}" opacity=".5"/>`;
-    const dk = P.filter(([px]) => (px - x) * ls < -w * .22);
-    g += `<path d="${poly([...dk, [x - ls * w * .22, y]])}" fill="${T(GR[0])}" opacity=".45"/>`;
-    g += `<path d="M${F(x + (r() - .5) * w * .3)},${F(y - hh * .75)} l${F((r() - .5) * w * .1)},${F(hh * .4)} l${F((r() - .5) * w * .1)},${F(hh * .25)}" stroke="${T(GR[0])}" stroke-width="1.3" fill="none" opacity=".6"/>`;
-    g += `<rect x="${F(x - w / 2)}" y="${F(y - Math.max(3, hh * .12))}" width="${F(w)}" height="${F(Math.max(3, hh * .12))}" fill="${T("#3a3418")}" opacity=".75"/>`;
-    for (let k = 0; k < w / 6; k++) { const px = x - w * .48 + r() * w * .96; g += `<path d="M${F(px)},${F(y)} q${F(-1 + r() * 2)},${F(-hh * .1)} ${F(-2 + r() * 4)},${F(-hh * (.12 + r() * .12))}" stroke="${T(r() < .5 ? "#6a5a24" : "#8a7a30")}" stroke-width="${F(1.2 + w * .008)}" fill="none"/>`; }
-    return g; };
   const fg = [];
   for (let k = 0; k < 16; k++) { const x = 1930 + r() * 660, y = Math.max(wlR(x) + 14, 604) + r() * 106; fg.push([x, y]); }
   for (let k = 0; k < 11; k++) fg.push([-30 + r() * 540, 652 + r() * 74]);
