@@ -86,3 +86,13 @@
 - Note 2026-10-02: the 4am daily run now adds one scene a day to the current
   default pool and works these items itself (WEEKLY_PROMPT 8b/8c).
 - [x] 2026-10-02 — perspective pass: harbor-lighthouse-fall done.
+- [ ] 2026-10-03 — perspective pass, golden-aspen-lake: NOT done. The world3d
+      rebuild fixed the shores, dock, canoe and cabin, but its mountains still read
+      as smooth stair-shaded dunes. Live file restored to the committed version;
+      attempt kept in `daily/scenes/_rejected/golden-aspen-lake-3d.js`, earlier
+      half-redo in `daily/scenes/_drafts/golden-aspen-lake.pre-3d.js`. Next: keep
+      the 3D shore world and draw the far massif as 2D ridged ranges.
+- 2026-10-03: fall pool +1 (orchard-barn-lane, day + night).
+- [x] 2026-10-03 — Engine: per-pixel raster mountains (`w.raster` + `mountainField` +
+      `mountainColor`), house styles + `w.randomHouse`, scene CATALOG.md variety rule.
+      golden-aspen-lake rebuilt on it (3D shore + raster range); harbor village varied.

@@ -127,6 +127,37 @@
                                          "nightFx":  [
 
                                                      ]
+                                     },
+                                     {
+                                         "id":  "orchard-barn-lane",
+                                         "name":  "Orchard barn lane",
+                                         "scene":  {
+                                                       "file":  "scenes/orchard-barn-lane.js",
+                                                       "fn":  "orchardBarnLaneArt",
+                                                       "opts":  {
+
+                                                                }
+                                                   },
+                                         "night":  {
+                                                       "file":  "scenes/orchard-barn-lane.js",
+                                                       "fn":  "orchardBarnLaneArt",
+                                                       "opts":  {
+                                                                    "time":  "night"
+                                                                }
+                                                   },
+                                         "fx":  [
+                                                    {
+                                                        "leaves":  [
+                                                                       900,
+                                                                       300,
+                                                                       1050,
+                                                                       420
+                                                                   ]
+                                                    }
+                                                ],
+                                         "nightFx":  [
+
+                                                     ]
                                      }
                                  ]
                   },

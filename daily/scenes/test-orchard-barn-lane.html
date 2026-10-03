@@ -1,0 +1,13 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>orchard-barn-lane test</title>
+<style>html,body{margin:0;padding:0;background:#000;overflow:hidden}#s{width:2560px;height:720px;position:relative}#s svg{position:absolute;left:0;top:0}</style>
+<script src="../reference/scene-helpers.js"></script>
+<script src="orchard-barn-lane.js"></script>
+</head><body><div id="s"></div>
+<script>
+  const q = new URLSearchParams(location.search);
+  const part = q.get("part") || undefined, time = q.get("time") || undefined;
+  try { document.getElementById("s").innerHTML = orchardBarnLaneArt({ part, time }); }
+  catch (e) { document.body.style.background = "#fff"; document.body.textContent = "ERROR: " + e.message + "\n" + e.stack; }
+</script>
+</body></html>

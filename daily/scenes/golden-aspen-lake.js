@@ -4,10 +4,14 @@
    golden aspen and larch. A log cabin and a wooden dock with a red canoe sit
    on the left shore among white-trunked aspens, a larch and boulder point on
    the right, and the still water mirrors all of it.
+   The land is a world3d() model (reference/scene-helpers.js): mountains are a
+   lit heightfield, so faces, gullies and snow follow the terrain; the cabin,
+   dock, canoe, trees and rocks stand at real positions under one eye-level
+   camera, and the lake mirrors that same world.
    opts.time === "night": a full moon where the sun was, stars (and their
    reflections), moonlit snow, the cabin's windows lit and a dock lantern.
-   Same shape as reference/autumn-valley.js. Needs rng() and mix() from
-   reference/scene-helpers.js. opts.part = "sky" | "clouds" | "land".        */
+   Same shape as reference/autumn-valley.js. Needs rng(), mix() and world3d()
+   from reference/scene-helpers.js. opts.part = "sky" | "clouds" | "land".   */
 function goldenAspenLakeArt(opts = {}) {
   const NIGHT = opts.time === "night";
   const seed = opts.seed || 1209;
@@ -28,12 +32,7 @@ function goldenAspenLakeArt(opts = {}) {
       d += ` Q${F(mx + dx / L * b)},${F(my + dy / L * b)} ${F(x1)},${F(y1)}`; }
     return d + "Z";
   };
-  const angP = (cx, cy, rx, ry, n) => { const p = []; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + r() * .45, k = .72 + r() * .32; p.push([cx + Math.cos(a) * rx * k, cy + Math.sin(a) * ry * k]); } return p; };
-  const wave = (ph, fr, am) => x => fr.reduce((s, f, i) => s + Math.sin(x / f + ph[i]) * am[i], 0);
-  const ridgePath = (fn, close = H, x0 = 0, x1 = W) => { let d = `M${x0},${close} L${x0},${F(fn(x0))}`;
-    for (let x = x0; x <= x1; x += 16) d += ` L${x},${F(fn(x))}`; return d + ` L${x1},${F(fn(x1))} L${x1},${close}Z`; };
   const poly = pts => "M" + pts.map(p => F(p[0]) + "," + F(p[1])).join(" L") + "Z";
-  const line = pts => "M" + pts.map(p => F(p[0]) + "," + F(p[1])).join(" L");
 
   const SKY_H = NIGHT ? "#34446e" : "#e6e8dc", HZ = NIGHT ? "#2e3c64" : "#d8e0e0";
   const sky = NIGHT
@@ -49,7 +48,6 @@ function goldenAspenLakeArt(opts = {}) {
     <linearGradient id="alWater" x1="0" y1="${WY}" x2="0" y2="720" gradientUnits="userSpaceOnUse">${NIGHT
       ? `<stop offset="0" stop-color="#2e3e68"/><stop offset=".3" stop-color="#1a2648"/><stop offset="1" stop-color="#0a1028"/>`
       : `<stop offset="0" stop-color="#8ab8c8"/><stop offset=".3" stop-color="#4e8ea4"/><stop offset=".7" stop-color="#2e6478"/><stop offset="1" stop-color="#1c4252"/>`}</linearGradient>
-    <linearGradient id="alShore" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${T("#a89a58")}"/><stop offset=".5" stop-color="${T("#86783e")}"/><stop offset="1" stop-color="${T("#5a5228")}"/></linearGradient>
     <radialGradient id="alGlow"><stop offset="0" stop-color="${LAMP}" stop-opacity=".85"/><stop offset=".35" stop-color="#ffb050" stop-opacity=".3"/><stop offset="1" stop-color="#ffb050" stop-opacity="0"/></radialGradient>
     <clipPath id="alCW"><rect x="0" y="${WY}" width="${W}" height="${H - WY}"/></clipPath>
     <filter id="alLeafy" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".1" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="7" xChannelSelector="R" yChannelSelector="G"/></filter>
@@ -104,44 +102,7 @@ function goldenAspenLakeArt(opts = {}) {
   }
   const cloudPart = s; s = DEFS;
 
-  /* ---------- faceted mountains with dusted snow ---------- */
-  const cut = (pts, yT) => { const out = [pts[0]]; for (let i = 1; i < pts.length; i++) { const a = pts[i - 1], b = pts[i];
-      if (b[1] >= yT) { const t = (yT - a[1]) / (b[1] - a[1] || 1); out.push([a[0] + (b[0] - a[0]) * t, yT]); return out; } out.push(b); } return out; };
-  const mountains = (key, o) => {
-    const B = o.base + 6, seg = [];
-    for (let i = 0; i < key.length - 1; i++) { const [ax, ay] = key[i], [bx, by] = key[i + 1], a = [];
-      for (let k = 0; k <= 6; k++) { const t = k / 6, j = k % 6 ? 1 : 0; a.push([ax + (bx - ax) * t + j * (r() - .5) * 12, ay + (by - ay) * t + j * (r() - .5) * Math.abs(bx - ax) * .07]); }
-      seg.push(a); }
-    let m = `<path d="${poly([[key[0][0], B], ...seg.flat(), [key[key.length - 1][0], B]])}" fill="${o.mid}"/>`;
-    for (let i = 1; i < key.length - 1; i++) { if (!key[i][2]) continue;
-      const P = key[i], L = key[i - 1], R = key[i + 1], fx = P[0] + (r() - .5) * Math.min(P[0] - L[0], R[0] - P[0]) * .3, Fp = [fx, B];
-      const litL = o.lx < P[0], lc = litL ? o.lit : o.dark, rc = litL ? o.dark : o.lit;
-      m += `<path d="${poly([...seg[i - 1], Fp])}" fill="${lc}"/><path d="${poly([...seg[i], Fp])}" fill="${rc}"/>`;
-      // sub-facets and rock ribs
-      m += `<path d="${poly([P, seg[i - 1][3], [(fx + L[0]) / 2, B]])}" fill="${mix(lc, o.mid, .5)}" opacity=".7"/><path d="${poly([P, seg[i][3], [(fx + R[0]) / 2, B]])}" fill="${mix(rc, o.mid, .5)}" opacity=".7"/>`;
-      for (let k = 0; k < 4; k++) { const sd = k % 2 ? 1 : -1, t0 = .2 + r() * .4, ex = (sd < 0 ? L[0] : R[0]), sx = P[0] + (ex - P[0]) * t0 * .4, sy = P[1] + (B - P[1]) * t0 * .4;
-        m += `<path d="M${F(sx)},${F(sy)} L${F(sx + (ex - P[0]) * .25)},${F(sy + (B - P[1]) * .3)}" stroke="${mix(sd < 0 ? lc : rc, "#000000", .15)}" stroke-width="${F(2 + r() * 2)}" opacity=".3" stroke-linecap="round"/>`; }
-      m += `<path d="${line(litL ? seg[i - 1] : seg[i])}" stroke="${o.rim}" stroke-width="2" fill="none" opacity=".5"/>`;
-      if (o.snow) {   // snow cap down to a ragged line, lit and shaded halves, plus gully streaks
-        const dep = (B - P[1]) * o.snow * (.8 + r() * .4), yT = P[1] + dep;
-        const lr = cut([...seg[i - 1]].reverse(), yT), rr = cut(seg[i], yT), lp = lr[lr.length - 1], rp = rr[rr.length - 1];
-        const Fs = [P[0] + (fx - P[0]) * dep / (B - P[1]), yT];
-        const zig = (a, b, n) => { const z = []; for (let k = 1; k < n; k++) { const t = k / n; z.push([a[0] + (b[0] - a[0]) * t + (r() - .5) * 8, a[1] + (b[1] - a[1]) * t + (k % 2 ? -r() * dep * .22 : r() * dep * .12)]); } return z; };
-        const zl = zig(lp, Fs, 9), zr = zig(Fs, rp, 9);
-        const sl = litL ? o.snowLit : o.snowDk, sr = litL ? o.snowDk : o.snowLit;
-        m += `<path d="${poly([...lr, ...zl, Fs])}" fill="${sl}"/><path d="${poly([P, Fs, ...zr, rp, ...[...rr].reverse()])}" fill="${sr}"/>`;
-        // dusting: scattered flecks of snow on ledges below the cap, sloping with the faces
-        for (let k = 0; k < 14; k++) { const side = r() < .5 ? -1 : 1, base = side < 0 ? lp : rp, yy = yT + 6 + r() * dep * .8;
-          const xx = P[0] + (base[0] - P[0]) * (yy - P[1]) / (yT - P[1]) * (.2 + r() * .65);
-          const c = (xx < Fs[0]) ? sl : sr, len = 8 + r() * 12;
-          m += `<path d="M${F(xx - len / 2)},${F(yy)} Q${F(xx)},${F(yy - 3)} ${F(xx + len / 2)},${F(yy + side * 2)} Q${F(xx)},${F(yy + 1.5)} ${F(xx - len / 2)},${F(yy)}Z" fill="${c}" opacity=".8"/>`; }
-        m += `<path d="${line(litL ? lr : rr)}" stroke="#ffffff" stroke-width="1.6" fill="none" opacity="${NIGHT ? .5 : .8}"/>`;
-      }
-    }
-    return m;
-  };
-
-  /* ---------- helpers for trees and rocks ---------- */
+  /* ---------- tree and rock drawings (2D, placed by the 3D world as sprites) ---------- */
   const conifer = (x, y, h, pal) => {
     const sd = LX < x ? -1 : 1; let g = "";
     const trunk = T(pal[0]), dark = T(pal[1]), mid = T(pal[2]), lit = T(pal[3]), hl = T(pal[4]);
@@ -170,182 +131,208 @@ function goldenAspenLakeArt(opts = {}) {
   const GOLD = ["#4a3a10", "#6e5414", "#94701a", "#b88e22", "#d6aa2c", "#ecc43c", "#f6dc66", "#fdf0a8"];
   const AMBER = ["#4a2a10", "#704014", "#985a1a", "#bc7622", "#d8922a", "#eaae38", "#f6cc5e", "#fde69a"];
   /* aspen: slim white trunk with dark eyes, a narrow crown of small coin-leaf clumps */
-  const aspen = (x, y, h, n, RAMP) => {
-    const sd = LX < x ? -1 : 1; let g = "";
-    const tb = Math.max(1.6, h * .022), tt = Math.max(.8, h * .009), ty = y - h * .92;
-    g += `<path d="M${F(x - tb)},${F(y)} L${F(x - tt)},${F(ty)} L${F(x + tt)},${F(ty)} L${F(x + tb)},${F(y)}Z" fill="${T("#ece8dc")}"/>`;
-    g += `<path d="M${F(x - sd * tb)},${F(y)} L${F(x - sd * tt)},${F(ty)} L${F(x)},${F(ty)} L${F(x - sd * tb * .1)},${F(y)}Z" fill="${T("#a4a296")}"/>`;
+  const aspen = (x, y, h, n, RAMP, fog = 0) => {
+    const sd = LX < x ? -1 : 1; let g = "", Tf = c => T(mix(c, HZ, fog));
+    const tb = Math.max(1.2, h * .022), tt = Math.max(.6, h * .009), ty = y - h * .92;
+    g += `<ellipse cx="${F(x - sd * h * .12)}" cy="${F(y + 1)}" rx="${F(h * .2)}" ry="${F(Math.max(1, h * .02))}" fill="#000" opacity=".2"/>`;
+    g += `<path d="M${F(x - tb)},${F(y)} L${F(x - tt)},${F(ty)} L${F(x + tt)},${F(ty)} L${F(x + tb)},${F(y)}Z" fill="${Tf("#ece8dc")}"/>`;
+    g += `<path d="M${F(x - sd * tb)},${F(y)} L${F(x - sd * tt)},${F(ty)} L${F(x)},${F(ty)} L${F(x - sd * tb * .1)},${F(y)}Z" fill="${Tf("#a4a296")}"/>`;
     for (let k = 0; k < h / 14; k++) { const py = y - r() * h * .8, w = tb * (1 - (y - py) / h * .6);
-      g += `<ellipse cx="${F(x + (r() - .5) * w * .6)}" cy="${F(py)}" rx="${F(w * (.4 + r() * .4))}" ry="${F(.8 + r() * 1.4)}" fill="${T("#2a2a2a")}" opacity=".75"/>`; }
-    g += `<path d="M${F(x - tb * .9)},${F(y - 2)} l${F(tb * 1.8)},0" stroke="${T("#3a3424")}" stroke-width="3" opacity=".5"/>`;
+      g += `<ellipse cx="${F(x + (r() - .5) * w * .6)}" cy="${F(py)}" rx="${F(w * (.4 + r() * .4))}" ry="${F(.8 + r() * 1.4)}" fill="${Tf("#2a2a2a")}" opacity=".75"/>`; }
     const cx = x, cy = y - h * .62, rx = h * .17, ry = h * .34, dl = Math.hypot(LX - cx, LY - cy), ux = (LX - cx) / dl, uy = (LY - cy) / dl;
-    for (let k = 0; k < 5; k++) { const py = cy + ry * (.6 - k * .25), d = k % 2 ? 1 : -1; g += `<path d="M${F(x)},${F(py + 10)} L${F(x + d * rx * .7)},${F(py - ry * .2)}" stroke="${T("#d8d4c8")}" stroke-width="${F(Math.max(.8, h * .006))}"/>`; }
+    for (let k = 0; k < 5; k++) { const py = cy + ry * (.6 - k * .25), d = k % 2 ? 1 : -1; g += `<path d="M${F(x)},${F(py + 10)} L${F(x + d * rx * .7)},${F(py - ry * .2)}" stroke="${Tf("#d8d4c8")}" stroke-width="${F(Math.max(.8, h * .006))}"/>`; }
     const cs = [];
     for (let i = 0; i < n * 3 && cs.length < n; i++) { const px = cx + (r() * 2 - 1) * rx, py = cy + (r() * 2 - 1) * ry;
       const e = ((px - cx) / rx) ** 2 + ((py - cy) / ry) ** 2; if (e > 1 || (e > .55 && r() < .35)) continue;
       const nx = (px - cx) / rx, ny = (py - cy) / ry, lit = (nx * ux + ny * uy) * .5 + .5;
       cs.push([px, py, cl(lit * .78 + Math.sqrt(e) * .12 + (r() - .5) * .32), h * (.018 + r() * .016)]); }
     cs.sort((a, b) => a[2] - b[2]);
-    let cg = ""; cs.forEach(([px, py, v, R]) => cg += `<path d="${blobP(px, py, R, R * .85, 6)}" fill="${T(RAMP[Math.floor(v * RAMP.length)])}"/>`);
+    let cg = ""; cs.forEach(([px, py, v, R]) => cg += `<path d="${blobP(px, py, R, R * .85, 6)}" fill="${Tf(RAMP[Math.floor(v * RAMP.length)])}"/>`);
     return g + `<g filter="url(#alLeafy)">${cg}</g>`;
   };
+  /* small far trees: a spruce spire (lit and shaded halves) or a golden aspen clump */
+  const spire = (x, y, sz, fog) => { const lsd = x < LX ? 1 : -1, c = T(mix("#1e3a2a", HZ, fog)), dk = mix(c, "#000000", .3);
+    return `<path d="M${F(x)},${F(y - sz * 2.2)} L${F(x + sz * .22)},${F(y - sz * 1.5)} L${F(x + sz * .14)},${F(y - sz * 1.5)} L${F(x + sz * .38)},${F(y - sz * .7)} L${F(x + sz * .26)},${F(y - sz * .7)} L${F(x + sz * .5)},${F(y)} L${F(x - sz * .5)},${F(y)} L${F(x - sz * .26)},${F(y - sz * .7)} L${F(x - sz * .38)},${F(y - sz * .7)} L${F(x - sz * .14)},${F(y - sz * 1.5)} L${F(x - sz * .22)},${F(y - sz * 1.5)}Z" fill="${c}"/>` +
+      `<path d="M${F(x)},${F(y - sz * 2.2)} L${F(x - lsd * sz * .22)},${F(y - sz * 1.5)} L${F(x - lsd * sz * .14)},${F(y - sz * 1.5)} L${F(x - lsd * sz * .38)},${F(y - sz * .7)} L${F(x - lsd * sz * .26)},${F(y - sz * .7)} L${F(x - lsd * sz * .5)},${F(y)} L${F(x)},${F(y)}Z" fill="${dk}"/>`; };
+  const clump = (x, y, sz, fog, RAMP) => { const lsd = x < LX ? 1 : -1, c = T(mix(RAMP[Math.min(RAMP.length - 1, 3 + Math.floor(r() * 4))], HZ, fog)), dk = mix(c, NIGHT ? "#050814" : "#3a2a08", .38), lt = mix(c, RIM, NIGHT ? .2 : .35);
+    return `<path d="${blobP(x - lsd * sz * .1, y - sz * .5, sz * .42, sz * .78, 7)}" fill="${dk}"/><path d="${blobP(x, y - sz * .62, sz * .36, sz * .66, 7)}" fill="${c}"/><path d="${blobP(x + lsd * sz * .14, y - sz * .9, sz * .18, sz * .32, 6)}" fill="${lt}"/>`; };
+  /* a granite boulder seen side-on: flat base, rounded top, lit cap toward the light, shaded lower front */
   const GR = ["#3e3c40", "#6e6a6a", "#9c968e", "#cfc8bc"];
-  const granite = (x, y, R, flat = .5) => {
-    const sd = LX < x ? -1 : 1;
-    let g = `<path d="${poly(angP(x, y, R, R * flat, 7))}" fill="${T(GR[0])}"/>`;
-    g += `<path d="${poly(angP(x + sd * R * .1, y - R * flat * .22, R * .82, R * flat * .62, 6))}" fill="${T(GR[1])}"/>`;
-    g += `<path d="${poly(angP(x + sd * R * .28, y - R * flat * .45, R * .5, R * flat * .32, 5))}" fill="${T(GR[2])}"/>`;
-    g += `<path d="${poly(angP(x + sd * R * .38, y - R * flat * .58, R * .22, R * flat * .14, 4))}" fill="${T(GR[3])}" opacity=".85"/>`;
-    for (let k = 0; k < 3; k++) if (r() < .5) g += `<ellipse cx="${F(x + (r() - .5) * R)}" cy="${F(y - R * flat * .3)}" rx="${F(2 + r() * 3)}" ry="${F(1 + r())}" fill="${T(r() < .5 ? "#a8b070" : "#d8b050")}" opacity=".6"/>`;
-    return g;
-  };
-  /* mid-distance slope forest: mostly spruce spires, splashed with golden aspen/larch clumps */
-  const slopeForest = (fn, x0, x1, rows, size, haze, goldP) => {
-    const trees = [];
-    for (let row = 0; row < rows; row++) for (let x = x0; x < x1; x += size * (.55 + r() * .4)) {
-      const y = fn(x) + row * size * .6 + r() * size * .4, sz = size * (.7 + r() * .5);
-      trees.push([x + r() * size * .3, y, sz, goldP(x, y) > r()]); }
-    trees.sort((a, b) => a[1] - b[1]);
-    let f = "";
-    trees.forEach(([x, y, sz, gold]) => { const lsd = x < LX ? 1 : -1;
-      if (!gold) { const c = T(mix("#1e3a2a", HZ, haze)), dk = mix(c, "#000000", .3), lt = mix(c, RIM, .18);
-        f += `<path d="M${F(x)},${F(y - sz * 2.2)} L${F(x + sz * .22)},${F(y - sz * 1.5)} L${F(x + sz * .14)},${F(y - sz * 1.5)} L${F(x + sz * .38)},${F(y - sz * .7)} L${F(x + sz * .26)},${F(y - sz * .7)} L${F(x + sz * .5)},${F(y)} L${F(x - sz * .5)},${F(y)} L${F(x - sz * .26)},${F(y - sz * .7)} L${F(x - sz * .38)},${F(y - sz * .7)} L${F(x - sz * .14)},${F(y - sz * 1.5)} L${F(x - sz * .22)},${F(y - sz * 1.5)}Z" fill="${c}"/>`;
-        f += `<path d="M${F(x)},${F(y - sz * 2.2)} L${F(x - lsd * sz * .22)},${F(y - sz * 1.5)} L${F(x - lsd * sz * .14)},${F(y - sz * 1.5)} L${F(x - lsd * sz * .38)},${F(y - sz * .7)} L${F(x - lsd * sz * .26)},${F(y - sz * .7)} L${F(x - lsd * sz * .5)},${F(y)} L${F(x)},${F(y)}Z" fill="${dk}"/>`;
-        f += `<path d="M${F(x)},${F(y - sz * 2.2)} L${F(x + lsd * sz * .22)},${F(y - sz * 1.5)}" stroke="${lt}" stroke-width="1" opacity=".7"/>`; return; }
-      const base = GOLD[3 + Math.floor(r() * 4)], c = T(mix(base, HZ, haze)), dk = mix(c, NIGHT ? "#050814" : "#3a2a08", .38), lt = mix(c, RIM, NIGHT ? .2 : .35);
-      f += `<path d="${blobP(x - lsd * sz * .1, y - sz * .5, sz * .42, sz * .78, 7)}" fill="${dk}"/><path d="${blobP(x, y - sz * .62, sz * .36, sz * .66, 7)}" fill="${c}"/><path d="${blobP(x + lsd * sz * .14, y - sz * .9, sz * .18, sz * .32, 6)}" fill="${lt}"/>`;
-    });
-    return f;
-  };
+  const boulder = (x, y, w, hh, fog = 0) => {
+    const ls = LX < x ? -1 : 1, n = 10, P = [[x - w / 2, y]], Tf = c => T(mix(c, HZ, fog));
+    for (let k = 1; k < n; k++) { const t = k / n; P.push([x - w / 2 + w * t + (r() - .5) * w * .05, y - Math.pow(Math.sin(Math.PI * t), .55) * hh * (.86 + r() * .2)]); }
+    P.push([x + w / 2, y]);
+    let g = `<ellipse cx="${F(x)}" cy="${F(y + 1)}" rx="${F(w * .56)}" ry="${F(Math.max(1.5, w * .04))}" fill="#000" opacity=".25"/>`;
+    g += `<path d="${poly(P)}" fill="${Tf(mix(GR[1], GR[2], r() * .3))}"/>`;
+    const top = P.slice(1, n), lit = top.filter(([px]) => (px - x) * ls > -w * .3);
+    g += `<path d="${poly([...lit, ...lit.slice().reverse().map(([px, py]) => [px - ls * w * .03, py + hh * .26])])}" fill="${Tf(GR[2])}"/>`;
+    const hi = lit.filter(([px]) => (px - x) * ls > w * .05);
+    if (hi.length > 1) g += `<path d="${poly([...hi, ...hi.slice().reverse().map(([px, py]) => [px, py + hh * .09])])}" fill="${Tf(GR[3])}" opacity=".8"/>`;
+    g += `<path d="${poly(P.map(([px, py]) => [px, Math.max(py, y - hh * .4)]))}" fill="${Tf(GR[0])}" opacity=".5"/>`;
+    const dk = P.filter(([px]) => (px - x) * ls < -w * .22);
+    if (dk.length > 1) g += `<path d="${poly([...dk, [x - ls * w * .22, y]])}" fill="${Tf(GR[0])}" opacity=".45"/>`;
+    if (r() < .5) g += `<ellipse cx="${F(x + ls * w * .1)}" cy="${F(y - hh * .75)}" rx="${F(w * .12)}" ry="${F(hh * .06)}" fill="${Tf(r() < .5 ? "#a8b070" : "#d8b050")}" opacity=".6"/>`;
+    return g; };
 
-  /* ---------- far ranges and the massif ---------- */
-  const lit0 = NIGHT ? "#5a6c98" : "#b4c0d6", mid0 = NIGHT ? "#3e4e7a" : "#98a8c4", dk0 = NIGHT ? "#2a3660" : "#8090b0";
-  let far = mountains([[-120, 420], [60, 300, 1], [210, 360], [360, 282, 1], [520, 352], [700, 300, 1], [860, 360], [1660, 360], [1820, 296, 1], [1990, 350], [2170, 286, 1], [2330, 344], [2480, 300, 1], [2700, 420]],
-    { base: 440, lx: LX, lit: lit0, mid: mid0, dark: dk0, rim: "#ffffff", snow: .22, snowLit: NIGHT ? "#c8d4f0" : "#f4f6fa", snowDk: NIGHT ? "#7a8ab8" : "#c8d2e4" });
-  far += `<rect x="0" y="330" width="${W}" height="130" fill="url(#alHaze)" opacity=".7"/>`;
-  far += mountains([[560, 450], [760, 330, 1], [900, 380], [1070, 236, 1], [1150, 270], [1290, 150, 1], [1400, 250], [1520, 214, 1], [1640, 300], [1760, 268, 1], [1900, 380], [2020, 450]],
-    { base: 456, lx: LX, lit: T("#b0a49a"), mid: T("#847c84"), dark: T("#5e5e76"), rim: RIM, snow: .26, snowLit: NIGHT ? "#d8e2fa" : "#fbfcff", snowDk: NIGHT ? "#8090c0" : "#c4cee4" });
-  far += `<rect x="0" y="380" width="${W}" height="90" fill="url(#alHaze)" opacity=".55"/>`;
-  // forested lower slopes meeting the lake, gold in patches
-  const s1 = wave([2, 4, 1], [180, 80, 34], [16, 7, 3]), s2 = wave([5, 1, 3], [220, 90, 40], [10, 5, 2]);
-  const slopeA = x => 418 + s1(x) - Math.max(0, 1 - Math.abs(x - 1290) / 500) * 40, slopeB = x => 446 + s2(x);
-  far += `<path d="${ridgePath(slopeA, WY + 2)}" fill="${T(mix("#2a4030", HZ, .3))}"/>`;
-  far += `<g filter="url(#alLeafyS)">${slopeForest(slopeA, -10, W + 10, 6, 9, .3, x => .25 + .25 * Math.sin(x / 140))}</g>`;
-  far += `<path d="${ridgePath(slopeB, WY + 2)}" fill="${T("#24382a")}"/>`;
-  far += `<g filter="url(#alLeafyS)">${slopeForest(slopeB, -10, W + 10, 2, 12, .1, x => .35 + .3 * Math.sin(x / 110 + 2))}</g>`;
-  far += `<path d="M0,${WY - 1} L${W},${WY - 1}" stroke="${T("#8a8458")}" stroke-width="2.5" opacity=".7"/>`;
-  s += far;
+  /* ================= the 3D world =================
+     Eye 4 m above the water, horizon on WY; metres, x right, y up, z away.
+     The lake fills a basin between the left shore (cabin), the right shore
+     (larches), our own near shore and the far shore at the mountains' foot. */
+  const EYE = 4;
+  const w = world3d({ h: EYE, hy: WY, f: 2200, light: [-.62, .55, -.3], tone: T, fog: HZ, fogK: .00008,
+    shadow: SHADE, rim: RIM, shade: .55, hi: .25, night: NIGHT, lamp: LAMP });
+  const sm = t => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
+  const n2 = (x, z) => Math.sin(x / 23 + 1.3) * Math.sin(z / 31 + .7) + .5 * Math.sin(x / 9.7 + z / 13.1 + 2) + .25 * Math.sin(x / 4.1 - z / 5.3);
+  const ridged = v => (1.04 - Math.sqrt(Math.sin(v) ** 2 + .04)) / .84;     // crests rounded just enough not to alias on the mesh
+  const sx = (x, z) => 1280 + 2200 * x / z;
+  const xL = z => -.2 * z - 6 + 5 * Math.sin(z / 23) + 3 * Math.sin(z / 9 + 1);
+  const xR = z => .22 * z + 24 + 6 * Math.sin(z / 29 + 2) + 3 * Math.sin(z / 11);
+  const zF = x => 1350 + 160 * Math.sin(x / 380 + .6) + 50 * Math.sin(x / 120);
+  const zN = x => 46 + 4 * Math.sin(x / 13) + 2 * Math.sin(x / 5.3) + Math.max(0, Math.abs(x) - 11) * .9;
+  const dist = (x, z) => Math.max(xL(z) - x, x - xR(z), z - zF(x), zN(x) - z);
+  /* mountains: a front massif (summit left of centre) whose spurs and gullies fan down from the
+     peaks, and a paler second range behind; heights tuned so the text corners stay sky */
+  const crest = x => 170 + 70 * ridged(x / 520 + 1.1) + 40 * ridged(x / 210 + .4) + 400 * Math.exp(-(((x + 220) / 470) ** 2)) + 120 * Math.exp(-(((x - 380) / 260) ** 2));
+  const mtn = (x, z) => { const d = z - zF(x); if (d <= 0) return 0;
+    const zc = 4300 + 700 * Math.sin(x / 1300 + 1), u = d / (zc - zF(x));
+    const prof = u < 1 ? sm(u) * (.55 + .45 * u) : 1 - .55 * sm((u - 1) / .5);
+    const xa = x + .2 * (z - zc) * Math.sin(x / 640 + .3);                             // spurs fan out from the summits
+    const spur = 1 + (.34 * (ridged(xa / 150) - .5) + .14 * (ridged(xa / 57 + z / 700 + 2) - .5)) * (.3 + .7 * u);
+    const back = (330 + 210 * ridged(x / 900 + .2) + 130 * ridged(x / 330 + 2)) * Math.exp(-(((z - 10500) / 2600) ** 2));
+    return Math.max(crest(x) * prof * spur, back * (1 + .12 * (ridged(x / 120 + z / 900) - .5))) + 25 * sm(d / 200); };
+  const hT = (x, z) => { const d = dist(x, z); if (d < 0) return d * .25 - .3;
+    const nearF = sm((z - 30) / 50);                                     // our own shore stays low, below the eye
+    return .9 * sm(d / 5) + (3.2 * sm(d / 60) + .7 * n2(x, z) * sm(d / 12)) * nearF + .2 * n2(x * 2, z * 2) + mtn(x, z); };
 
-  /* ---------- the lake: a near mirror ---------- */
-  s += `<rect x="0" y="${WY}" width="${W}" height="${H - WY}" fill="url(#alWater)"/>`;
-  s += `<g clip-path="url(#alCW)"><g transform="matrix(1,0,0,-1,0,${WY * 2})" opacity=".62" filter="url(#alRipple)">${far}</g></g>`;
-  s += `<rect x="0" y="${WY}" width="${W}" height="${H - WY}" fill="url(#alWater)" opacity=".35"/>`;
+  /* colour: shore grass and gravel near, spruce forest with aspen groves on the lower slopes,
+     granite above the trees, snow on the high ground (lower on the shaded faces) */
+  const GRASS = ["#a89a58", "#9a8c4a", "#b4a462", "#8a7c40"];
+  const ROCK = ["#8a8484", "#a49c94", "#b8b0a4", "#7a7680", "#c4bcb0"];
+  const col = (x, y, z, n) => { const k = cl(.5 + .3 * n2(x * .37 + 11, z * .29) + (r() - .5) * .04);
+    if (z < zF(x) + 10 || y < 6) {
+      if (y < .5) return mix("#5a5040", "#7a6e58", k);                                          // wet gravel at the waterline
+      return mix(GRASS[Math.floor(k * GRASS.length)], "#6a6a38", sm((z - 300) / 600) * .5); }
+    // every band blends smoothly (no thresholds), so faces read as terrain, not as a mosaic
+    const km = cl(.5 + .32 * n2(x * .011 + 5, z * .009) + .12 * n2(x * .05, z * .04));
+    const g1 = n2(x * .021 + 3, z * .017), shadeF = sm(n[0] * 4 + .3);
+    const snowAt = 540 + 80 * n2(x * .013, z * .011) - shadeF * 110 - (1 - n[1]) * 70;
+    const sw = sm((y - snowAt) / 35) * sm((n[1] - .22) / .2);
+    const rockC = mix(mix("#5e5a66", "#9a9088", km), "#b4a898", sm((n[1] - .6) / .3) * .35);
+    const tl = 190 + 60 * g1, fw = sm((tl - y) / 45) * sm((n[1] - .38) / .15);
+    const goldW = sm((n2(x * .045 + 7, z * .03) + .3 * Math.sin(x / 140) - .3) / .4);
+    const forestC = mix(mix("#1c3222", "#30503a", km), mix(GOLD[5], "#7a6018", .25 + .2 * km), goldW * .85);
+    return mix(mix(rockC, forestC, fw), mix("#f6f8fc", "#cdd6e8", shadeF), sw); };
+  w.terrain({ x0: z => -z * .62 - 20, x1: z => z * .62 + 20, z0: 12, z1: 1260, nx: 150, nz: 80, h: hT, col, shade: .35 });
+  /* the ranges: per-pixel raster terrain (world3d raster + mountainField), so faces, gullies,
+     tree line and snow follow real slopes instead of flat facets */
+  const MF = mountainField({ seed: 41, scale: 1000, oct: 6, peaks: [
+    { x: -120, z: 3700, h: 380, rx: 1300, rz: 900 }, { x: 1000, z: 4300, h: 300, rx: 1200, rz: 850 },
+    { x: -2100, z: 6200, h: 330, r: 1600 }, { x: 2300, z: 7000, h: 560, rx: 1900, rz: 1400 }, { x: 400, z: 9500, h: 680, r: 2300 } ] });
+  const hM = (x, z) => { const d = z - zF(x); if (d <= 0) return -1; return MF(x, z) * sm(d / 500) + 30 * sm(d / 150); };
+  w.raster({ z0: 1150, z1: 16000, step: .0011, scale: .75, top: 120, bottom: WY + 30, h: hM, tone: rgbTone(T), fog: HZ, fogK: .00009, amb: .42,
+    col: mountainColor({ seed: 41, snow: 430, tree: 230, goldK: .8, forest: "#2a4630", gold: "#d4a830", rock: "#8e8680", rock2: "#5a5660" }) });
+
+  /* the far shore's forest edge: a band of spruce spires and gold aspen clumps at the mountains' foot */
+  for (let k = 0; k < 2600; k++) { const x = (r() - .5) * 3400, z = zF(x) + 10 + Math.pow(r(), 1.8) * 380, X = sx(x, z);
+    if (X < -20 || X > W + 20) continue;
+    const y0 = hT(x, z); if (y0 > 170 + 50 * n2(x * .021 + 3, z * .017)) continue;
+    const gold = n2(x * .045 + 7, z * .03) + .3 * Math.sin(x / 140) > .62 || r() < .07, hM = 9 + r() * 8;
+    w.sprite({ x, z, y: y0 - .5, tag: "m", fn: (px, py, kk, fog) => gold && r() < .6 ? clump(px, py, hM * kk * .32, fog, r() < .6 ? GOLD : LARCH) : spire(px, py, hM * kk * .42, fog) }); }
+
+  /* the shores: aspens, larches and spruce; heights capped where they would reach the text corners */
+  const cap = (x, z, y0) => { const X = sx(x, z); return (X < 900 || X > 1500) ? (WY - 272) * z / 2200 + EYE - y0 : 99; };
+  const ok = [];
+  const free = (x, z, R) => ok.every(([a, b, q]) => Math.hypot(x - a, z - b) > R + q);
+  const shoreTree = (x, z, kind) => { const y0 = hT(x, z); if (y0 < .3) return;
+    const hM = Math.min(kind === "aspen" ? 13 + r() * 8 : 11 + r() * 9, cap(x, z, y0)); if (hM < 5) return;
+    const RAMP = r() < .7 ? GOLD : AMBER;
+    w.sprite({ x, z, y: y0 - .2, fn: (px, py, kk, fog) => { const hp = hM * kk;
+      if (hp < 40) return kind === "aspen" ? clump(px, py, hp * .5, fog, RAMP) : spire(px, py, hp * .45, fog);
+      if (kind === "aspen") return aspen(px, py, hp, Math.min(150, Math.round(hp * .9)), RAMP, fog * .9);
+      const pal = (kind === "larch" ? LARCH : SPRUCE).map(c => mix(c, HZ, fog * .9)); return conifer(px, py, hp, pal); } }); };
+
+  /* ---- the log cabin on the left shore, smoke from its chimney ---- */
+  const CX = -45, CZ = 114, onGround = o => { const { P } = w.frame({ ...o, y: 0 }), c = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([a, b]) => P([a * o.w / 2, 0, b * o.d / 2]));
+    const hs = c.map(p => hT(p[0], p[2])), top = Math.max(...hs), low = Math.min(...hs); return { ...o, y: top, fy: low - top - .3 }; };
+  const cab = onGround({ x: CX, z: CZ, yaw: -8, w: 7, d: 6, h: 3, rh: 2.4, gable: false });
+  w.house({ ...cab, wall: "#6a4a30", roof: "#3e4a3a", trim: "#8a6444", shut: undefined, chim: .78, chimC: "#7a7470", door: .62, doorC: "#2e1e14", glass: "#3a4a5a", stone: "#6e6a66", rng: rl });
+  ok.push([CX, CZ, 7]);
+  const chimTop = w.proj([CX + 2.6 * Math.cos(-8 * Math.PI / 180), cab.y + 3 + 2.4 + 1.2, CZ - 2.6 * Math.sin(-8 * Math.PI / 180)]);
+
+  /* ---- the dock: planks on pilings from the shore below the cabin out into the lake ---- */
+  const PX0 = -34, PZ0 = 106, PX1 = -13, PZ1 = 96, PL = Math.hypot(PX1 - PX0, PZ1 - PZ0), ux = (PX1 - PX0) / PL, uz = (PZ1 - PZ0) / PL;
+  const pYaw = Math.atan2(uz, ux) * 180 / Math.PI, PW = 2.2, DY = .8;
+  const pAt = (t, o) => [PX0 + ux * t - uz * o, PZ0 + uz * t + ux * o];
+  const WOODT = ["#a88a66", "#9a7e5c", "#b0946e"], WOODD = "#4a3828";
+  for (let t = 0; t < PL - .1; t += 2) { const [x, z] = pAt(t + 1, 0);
+    w.box({ x, z, y: DY, yaw: pYaw, w: 2.02, d: PW, h: .18, c: "#6e5840", top: WOODT[Math.floor(r() * 3)], dec: (fc, P) => {
+      fc[4].dec = [1, 2, 3, 4, 5, 6, 7].map(i => ({ P: [P([-1 + i * .25, .19, -PW / 2]), P([-1 + i * .25, .19, PW / 2])], c: WOODD, ln: .02, min: .3, op: .45 })); } }); }
+  for (let t = 0; t <= PL; t += 2.5) [-1, 1].forEach(sd => { const [x, z] = pAt(t, sd * (PW / 2 - .08));
+    w.cyl({ x, z, y: -1, r0: .11, h: DY + 1.05, n: 7, c: "#4a3a2a", wet: true }); });
+  const [LXd, LZd] = pAt(PL - .3, -PW / 2 + .15);
+  w.box({ x: LXd, z: LZd, y: DY + .18, w: .1, d: .1, h: 1.4, c: "#2a2a2e" });
+  w.box({ x: LXd, z: LZd, y: DY + 1.58, w: .3, d: .3, h: .36, c: NIGHT ? LAMP : "#3a3a40", glow: NIGHT });
+  if (NIGHT) w.sprite({ x: LXd, z: LZd - .3, y: DY + 1.76, noRefl: true, bias: -2, fn: (px, py, kk) => `<circle cx="${F(px)}" cy="${F(py)}" r="${F(kk * 3)}" fill="url(#alGlow)" opacity=".75"/>` });
+
+  /* ---- the red canoe tied alongside, on the lake side of the dock ---- */
+  { const [cx0, cz0] = pAt(PL * .55, -PW / 2 - .75), { P } = w.frame({ x: cx0, z: cz0, yaw: pYaw + 4 });
+    const st = []; for (let i = 0; i <= 12; i++) { const t = i / 6 - 1; st.push([t * 2.6, .46 * Math.pow(Math.max(0, 1 - t * t), .6), .36 + .16 * Math.pow(Math.abs(t), 4)]); }
+    const faces = [];
+    for (let i = 0; i < st.length - 1; i++) [-1, 1].forEach(sd => { const [a, b] = [st[i], st[i + 1]];
+      faces.push({ P: [[a[0], 0, sd * a[1] * .75], [b[0], 0, sd * b[1] * .75], [b[0], b[2], sd * b[1]], [a[0], a[2], sd * a[1]]].map(P), c: "#b83222",
+        dec: [{ ln: .04, min: .4, c: "#5a2a1a", P: [[a[0], a[2], sd * a[1] * 1.01], [b[0], b[2], sd * b[1] * 1.01]].map(P) }] }); });
+    faces.push({ P: [...st.map(([x, hb, y]) => [x, y - .04, -hb * .92]), ...st.slice().reverse().map(([x, hb, y]) => [x, y - .04, hb * .92])].map(P), c: "#e8c89a", up: true });
+    const hull = w.add(faces, { center: P([0, .2, 0]) });
+    [-1, 0, 1].forEach(k => { const a = P([k * 1.1, .3, -.4]), b = P([k * 1.1, .3, .4]); w.line([a, b], "#7a5a3a", .06, { bias: -.3 }).key = hull.key - .2; });
+    w.line([P([-1.6, .34, -.15]), P([1.3, .38, .2])], "#c8a070", .05, { bias: -.4 }); }
+
+  /* ---- trees: the cabin grove on the left shore, larches and spruce on the right point ---- */
+  for (let k = 0; k < 900 && ok.length < 150; k++) { const z = 70 + Math.pow(r(), 1.3) * 900, x = xL(z) - 4 - Math.pow(r(), .8) * (z * .5 + 30);
+    if (sx(x, z) < -60 || !free(x, z, 2.2) || dist(x, z) < 3) continue;
+    if (Math.hypot(x - CX, z - CZ) < 9 || (z < CZ + 6 && Math.abs(sx(x, z) - sx(CX, CZ)) < 150) ||(x > PX0 - 5 && z < 112 && z > 98)) continue;           // clear the cabin and the dock's landing
+    ok.push([x, z, 1.6]); shoreTree(x, z, r() < .75 ? "aspen" : r() < .5 ? "larch" : "spruce"); }
+  const nR = ok.length;
+  for (let k = 0; k < 900 && ok.length < nR + 130; k++) { const z = 70 + Math.pow(r(), 1.3) * 900, x = xR(z) + 4 + Math.pow(r(), .8) * (z * .5 + 30);
+    if (sx(x, z) > W + 60 || !free(x, z, 2.2) || dist(x, z) < 3) continue;
+    ok.push([x, z, 1.6]); const q = r(); shoreTree(x, z, q < .45 ? "larch" : q < .65 ? "spruce" : "aspen"); }
+
+  /* ---- boulders along both shores' waterlines and on the near shore ---- */
+  const rock = (x, z, wM, kf = .38) => { const y0 = Math.max(0, hT(x, z)) - .15;
+    w.sprite({ x, z, y: y0, fn: (px, py, kk, fog) => boulder(px, py, wM * kk, wM * kk * (kf + r() * .14), fog * .8) }); };
+  for (let k = 0; k < 160; k++) { const z = 60 + Math.pow(r(), 1.4) * 700, left = r() < .5, x = left ? xL(z) - .5 + r() * 2.5 : xR(z) + .5 - r() * 2.5;
+    if (left && z < 112 && z > 98) continue; rock(x, z, .8 + r() * 1.8); }
+  for (let k = 0; k < 26; k++) { const x = (r() - .5) * 60, z = zN(x) - 2 - r() * 10; if (Math.abs(sx(x, z) - 1280) < 450) continue; rock(x, z, .5 + r() * 1.1, .45); }
+
+  /* ---- near shore: grass tufts, and amber willow scrub in the bottom corners ---- */
+  for (let k = 0; k < 700; k++) { const x = (r() - .5) * 60, z = 32 + r() * (zN(x) - 32); if (dist(x, z) < .5) continue;
+    w.sprite({ x, z, y: hT(x, z), fn: (px, py, kk) => { const hh = (.2 + r() * .3) * kk; let g = "";
+      for (let i = 0; i < 4; i++) { const bx = px + (r() - .5) * hh * .8; g += `<path d="M${F(bx)},${F(py)} q${F(-2 + r() * 4)},${F(-hh * .6)} ${F(-4 + r() * 8)},${F(-hh)}" stroke="${T(r() < .5 ? "#d8c070" : "#7a6a30")}" stroke-width="${F(Math.max(1.2, kk * .03))}" fill="none" stroke-linecap="round" opacity=".85"/>`; }
+      return g; } }); }
+  const scrub = (x, z, Rm) => w.sprite({ x, z, y: hT(x, z), fn: (px, py, kk) => { const R = Rm * kk; let b = `<path d="${blobP(px + 6, py - R * .3, R, R * .6)}" fill="${T("#3a2a0c")}"/>`; const cs = [];
+    for (let i = 0; i < 260 && cs.length < 90; i++) { const qx = px + (r() * 2 - 1) * R, qy = py - R * .45 + (r() * 2 - 1) * R * .6; if (((qx - px) / R) ** 2 + ((qy - py + R * .45) / (R * .6)) ** 2 > 1) continue;
+      const lit = ((LX < px ? -1 : 1) * (qx - px) / R * .5 - (qy - py + R * .45) / (R * .6) * .6) * .5 + .5; cs.push([qx, qy, cl(lit * .85 + (r() - .5) * .3)]); }
+    cs.sort((a, c) => a[2] - c[2]); cs.forEach(([qx, qy, v]) => b += `<path d="${blobP(qx, qy, R * .14, R * .1, 6)}" fill="${T(AMBER[Math.floor(v * 8)])}"/>`);
+    return `<g filter="url(#alLeafyS)">${b}</g>`; } });
+  scrub(-23, 36, 2.6); scrub(23.5, 37, 2.8); scrub(19.5, 33, 1.7);
+
+  /* ---------- the lake: water, the mirrored world, glints; then the world itself ---------- */
+  const notM = o => o.tag !== "m", isM = o => o.tag === "m";
+  s += `<rect x="0" y="${WY - 1}" width="${W}" height="${H - WY + 1}" fill="url(#alWater)"/>`;
+  s += `<g clip-path="url(#alCW)"><g opacity=".62" filter="url(#alRipple)">${w.draw({ mirror: true, where: isM })}${w.draw({ mirror: true, where: notM })}</g></g>`;
+  s += `<rect x="0" y="${WY}" width="${W}" height="${H - WY}" fill="url(#alWater)" opacity=".3"/>`;
   if (NIGHT) for (let i = 0; i < 140; i++) { const x = rl() * W, y = WY + 40 + rl() * 220; s += `<circle cx="${F(x)}" cy="${F(y)}" r="${F(.5 + rl() * .7)}" fill="#e8ecff" opacity="${F(.15 + rl() * .3)}"/>`; }
   for (let k = 0; k < 140; k++) { const y = WY + 4 + Math.pow(r(), .8) * (H - WY - 4), t = (y - WY) / (H - WY);
     s += `<rect x="${F(r() * W)}" y="${F(y)}" width="${F(40 + r() * 180 * (.4 + t))}" height="${F(1 + t * 1.2)}" rx="1" fill="${NIGHT ? "#8a9ad0" : "#eaf4f6"}" opacity="${F(.05 + r() * .1)}"/>`; }
   s += `<g filter="url(#alRipple)">`;
-  for (let y = WY + 6; y < H; y += 4 + (y - WY) * .025) { const t = (y - WY) / (H - WY), w = 30 + t * 150, n = 1 + Math.floor(t * 4);
-    for (let k = 0; k < n; k++) { const off = (r() * 2 - 1) * w * Math.pow(r(), .6), L = 8 + r() * (20 + t * 50);
-      s += `<rect x="${F(LX + off - L / 2)}" y="${F(y)}" width="${F(L)}" height="${F(1.2 + t * 1.6)}" rx="1" fill="${NIGHT ? "#dce6ff" : "#fffbe8"}" opacity="${F((.6 - Math.abs(off) / w * .4) * (1 - t * .4))}"/>`; } }
+  for (let y = WY + 6; y < H; y += 4 + (y - WY) * .025) { const t = (y - WY) / (H - WY), ww = 30 + t * 150, n = 1 + Math.floor(t * 4);
+    for (let k = 0; k < n; k++) { const off = (r() * 2 - 1) * ww * Math.pow(r(), .6), L = 8 + r() * (20 + t * 50);
+      s += `<rect x="${F(LX + off - L / 2)}" y="${F(y)}" width="${F(L)}" height="${F(1.2 + t * 1.6)}" rx="1" fill="${NIGHT ? "#dce6ff" : "#fffbe8"}" opacity="${F((.6 - Math.abs(off) / ww * .4) * (1 - t * .4))}"/>`; } }
   s += `</g>`;
-
-  /* ---------- shores: built once, reflected about their own waterline ---------- */
-  const shore = (axis, build) => { const g = build();
-    return `<g clip-path="url(#alCW)"><g transform="matrix(1,0,0,-1,0,${axis * 2})" opacity=".5" filter="url(#alRipple)">${g}</g></g>${g}`; };
-  const lw = wave([1, 4, 2], [200, 80, 30], [5, 3, 1.5]);
-  const wlL = x => 540 - x * .045 + lw(x) * .4;                  // left shore waterline
-  const topL = x => 470 - Math.max(0, 1 - x / 700) * 40 + lw(x) + x * .03;
-  s += shore(520, () => {
-    let g = "", d = `M0,${F(wlL(0))} L0,${F(topL(0))}`;
-    for (let x = 0; x <= 900; x += 12) d += ` L${x},${F(Math.min(topL(x), wlL(x)))}`;
-    for (let x = 900; x >= 0; x -= 12) d += ` L${x},${F(wlL(x))}`;
-    g += `<path d="${d}Z" fill="url(#alShore)"/>`;
-    // dark forest behind the grove, then the grove
-    g += `<g filter="url(#alLeafyS)">${slopeForest(x => topL(x) - 4, -10, 820, 1, 16, 0, () => .25)}</g>`;
-    const items = [];
-    for (let x = -10; x < 760; x += 14 + r() * 26) { const y = topL(x) + 14 + r() * Math.max(4, wlL(x) - topL(x) - 30), h = 120 + r() * 90 * (1 - x / 1400);
-      items.push([y, r() < .2 ? () => conifer(x, y, h * .8, r() < .5 ? LARCH : SPRUCE) : () => aspen(x, y, h, 140, r() < .7 ? GOLD : AMBER)]); }
-    // the log cabin
-    items.push([500, () => { let c = ""; const x = 560, y = 500;
-      c += `<ellipse cx="${x + 30}" cy="${y + 2}" rx="90" ry="6" fill="#000" opacity=".2"/>`;
-      c += `<path d="${poly([[x - 50, y], [x - 50, y - 40], [x + 14, y - 46], [x + 14, y - 4]])}" fill="${T("#6a4a30")}"/><path d="${poly([[x + 14, y - 4], [x + 14, y - 46], [x + 70, y - 52], [x + 70, y - 10]])}" fill="${T("#4e3624")}"/>`;
-      for (let k = 0; k < 7; k++) { const v = 5 + k * 6; c += `<path d="M${x - 52},${F(y - v + .5)} L${x + 14},${F(y - v - 5.5)}" stroke="${T(k % 2 ? "#8a6444" : "#7a5638")}" stroke-width="4.5" stroke-linecap="round"/><path d="M${x + 14},${F(y - v - 5.5)} L${x + 72},${F(y - v - 11.5)}" stroke="${T(k % 2 ? "#5e4228" : "#543a24")}" stroke-width="4.5" stroke-linecap="round"/><circle cx="${x - 52}" cy="${F(y - v + .5)}" r="2.4" fill="${T("#c8a070")}"/>`; }
-      c += `<path d="${poly([[x - 58, y - 38], [x - 20, y - 78], [x + 38, y - 86], [x + 78, y - 50], [x + 14, y - 44]])}" fill="${T("#3e4a3a")}"/><path d="${poly([[x - 58, y - 38], [x - 20, y - 78], [x + 14, y - 44]])}" fill="${T("#5a6a50")}"/>`;
-      c += `<path d="M${x - 58},${y - 38} L${x - 20},${y - 78} L${x + 38},${y - 86}" stroke="${RIM}" stroke-width="1.6" fill="none" opacity=".6"/>`;
-      for (let k = 1; k < 5; k++) c += `<path d="M${F(x - 58 + k * 9.5)},${F(y - 38 - k * 10)} L${F(x + 14 + k * 6)},${F(y - 44 - k * 10.5)}" stroke="${T("#2e382c")}" stroke-width="1" opacity=".6"/>`;
-      c += `<rect x="${x + 40}" y="${y - 100}" width="12" height="40" fill="${T("#6a6a6a")}"/><rect x="${x + 46}" y="${y - 100}" width="6" height="40" fill="#000" opacity=".2"/>`;
-      const lit = NIGHT;
-      c += `<path d="${poly([[x - 38, y - 30], [x - 18, y - 32], [x - 18, y - 16], [x - 38, y - 14]])}" fill="${lit ? LAMP : T("#3a4a5a")}"/><path d="M${x - 28},${y - 31} v16" stroke="${T("#2a1c12")}" stroke-width="1.5"/>`;
-      c += `<path d="${poly([[x + 26, y - 14], [x + 42, y - 16], [x + 42, y - 38], [x + 26, y - 36]])}" fill="${lit ? mix(LAMP, "#7a4a20", .25) : T("#3a2418")}"/><path d="${poly([[x - 8, y - 6], [x + 4, y - 7], [x + 4, y - 30], [x - 8, y - 29]])}" fill="${T("#2e1e14")}"/>`;
-      if (lit) c += `<circle cx="${x - 28}" cy="${y - 22}" r="50" fill="url(#alGlow)" opacity=".6"/><circle cx="${x + 34}" cy="${y - 26}" r="34" fill="url(#alGlow)" opacity=".45"/>`;
-      return c; }]);
-    items.sort((a, b) => a[0] - b[0]);
-    items.forEach(([, f]) => g += f());
-    for (let k = 0; k < 26; k++) { const x = r() * 880, y = wlL(x) - 2 - r() * 6; g += granite(x, y, 8 + r() * 16, .45); }
-    for (let x = 0; x < 900; x += 4 + r() * 6) { const y = wlL(x) - 2 - r() * 26; if (y < topL(x)) continue; const hh = 6 + r() * 12;
-      g += `<path d="M${F(x)},${F(y)} q${F(-2 + r() * 4)},${F(-hh * .6)} ${F(-3 + r() * 6)},${F(-hh)}" stroke="${T(r() < .5 ? "#d8c070" : "#8a7a38")}" stroke-width="1.6" fill="none" opacity=".85"/>`; }
-    return g; });
-  s += `<g class="smoke" filter="url(#alLeafyS)">${[0, 1, 2, 3, 4, 5, 6, 7].map(k => `<path d="${blobP(606 + k * 9 + Math.sin(k * 1.3) * 4, 394 - k * 13, 4 + k * 2.2, 3 + k * 1.5, 7, rs)}" fill="${NIGHT ? "#8a94b4" : "#eef0f2"}" opacity="${F(.6 - k * .07)}"/>`).join("")}</g>`;
-
-  const rw = wave([3, 2, 5], [190, 70, 30], [6, 3, 1.5]);
-  const wlR = x => 500 + (x - 1780) * .07 + rw(x) * .4, topR = x => 466 - (x - 1780) * .03 + rw(x);
-  s += shore(510, () => {
-    let g = "", d = `M1760,${F(wlR(1760))}`;
-    for (let x = 1760; x <= W; x += 12) d += ` L${x},${F(Math.min(topR(x), wlR(x)))}`;
-    for (let x = W; x >= 1760; x -= 12) d += ` L${x},${F(wlR(x))}`;
-    g += `<path d="${d}Z" fill="url(#alShore)"/>`;
-    g += `<g filter="url(#alLeafyS)">${slopeForest(x => topR(x) - 2, 1800, W + 10, 1, 16, 0, () => .4)}</g>`;
-    const items = [];
-    for (let x = 1830; x < W + 20; x += 18 + r() * 30) { const y = topR(x) + 10 + r() * Math.max(4, wlR(x) - topR(x) - 30), h = (130 + r() * 70) * (.8 + (x - 1800) / 2400);
-      const k = r(); items.push([y, k < .45 ? () => conifer(x, y, h * .95, LARCH) : k < .6 ? () => conifer(x, y, h, SPRUCE) : () => aspen(x, y, h, 140, r() < .5 ? GOLD : AMBER)]); }
-    items.sort((a, b) => a[0] - b[0]);
-    items.forEach(([, f]) => g += f());
-    for (let k = 0; k < 22; k++) { const x = 1790 + r() * 780, y = wlR(x) - r() * 8; g += granite(x, y, 12 + r() * 26, .5); }
-    return g; });
-
-  /* ---------- the dock and canoe ---------- */
-  { const FE0 = [700, 506], FE1 = [1090, 566], NE0 = [680, 520], NE1 = [1060, 588];
-    const lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
-    let dk = "";
-    for (let t = 0; t <= 1.001; t += .1) { const p = lerp(NE0, NE1, t), q = lerp(FE0, FE1, t), len = 12 + t * 14;
-      dk += `<rect x="${F(q[0] - 2)}" y="${F(q[1])}" width="3.5" height="${F(len * .7)}" fill="${T("#3a2c22")}"/><rect x="${F(p[0] - 3)}" y="${F(p[1] + 5)}" width="${F(4 + t * 3)}" height="${F(len)}" fill="${T("#4a3828")}"/><rect x="${F(p[0] - 3)}" y="${F(p[1] + 5)}" width="1.5" height="${F(len)}" fill="${T("#9a7a54")}" opacity=".8"/>`; }
-    dk += `<path d="${poly([NE0, NE1, [NE1[0], NE1[1] + 7], [NE0[0], NE0[1] + 6]])}" fill="${T("#5a4430")}"/><path d="${poly([FE0, FE1, NE1, NE0])}" fill="${T("#a88a66")}"/>`;
-    for (let t = .02; t < 1; t += .026) { const a = lerp(FE0, FE1, t), b = lerp(NE0, NE1, t); dk += `<path d="${line([a, b])}" stroke="${T("#6e5840")}" stroke-width="1"/>`; }
-    dk += `<path d="${line([NE0, NE1])}" stroke="${RIM}" stroke-width="1.4" opacity=".55"/>`;
-    // lantern post at the end
-    dk += `<rect x="1072" y="530" width="3" height="40" fill="${T("#2a2a2e")}"/><rect x="1068" y="522" width="11" height="12" rx="2" fill="${NIGHT ? LAMP : T("#3a3a40")}"/>`;
-    if (NIGHT) dk += `<circle cx="1073" cy="528" r="56" fill="url(#alGlow)" opacity=".7"/>`;
-    // canoe tied alongside: red hull, gunwales, thwarts, a paddle across
-    const cn = `<path d="M-120,-10 Q-60,6 0,7 Q60,6 122,-12 Q118,-2 108,4 Q60,16 0,16 Q-60,16 -110,6 Q-118,0 -120,-10Z" fill="${T("#b83222")}"/>` +
-      `<path d="M-110,6 Q-60,16 0,16 Q60,16 108,4 Q60,10 0,11 Q-60,10 -110,6Z" fill="#000" opacity=".22"/>` +
-      `<path d="M-120,-10 Q-60,-2 0,-1 Q60,-2 122,-12 Q60,2 0,3 Q-60,2 -120,-10Z" fill="${T("#e8c89a")}"/>` +
-      `<path d="M-120,-10 Q-60,6 0,7 Q60,6 122,-12" stroke="${T("#5a2a1a")}" stroke-width="2.4" fill="none"/><path d="M-116,-8 Q-60,4 0,5 Q60,4 118,-10" stroke="${RIM}" stroke-width="1.2" fill="none" opacity=".6"/>` +
-      `<path d="M-50,-1 L-48,6 M0,-1 L0,7 M50,-1 L48,6" stroke="${T("#7a5a3a")}" stroke-width="3"/>` +
-      `<path d="M-70,-4 L60,6" stroke="${T("#c8a070")}" stroke-width="3" stroke-linecap="round"/><ellipse cx="68" cy="7" rx="14" ry="4" fill="${T("#c8a070")}" transform="rotate(8 68 7)"/>`;
-    s += `<g transform="translate(900,606) scale(.95)">${`<g transform="scale(1,-1)" opacity=".4" filter="url(#alRipple)">${cn}</g>`}</g>`;
-    s += `<g filter="url(#alRipple)" opacity=".35">${dk.replace(/<circle[^>]*alGlow[^>]*>/g, "")}</g>`.replace(/<g filter="url\(#alRipple\)" opacity=".35">/, `<g transform="matrix(1,0,0,-1,0,1150)" filter="url(#alRipple)" opacity=".3">`);
-    s += dk;
-    s += `<g transform="translate(900,600) scale(.95)">${cn}</g><path d="M940,598 Q960,584 980,566" stroke="${T("#d8c8a0")}" stroke-width="1.2" fill="none"/>`;
-    s += `<path d="M780,604 q120,8 240,0" stroke="${NIGHT ? "#8a9ad0" : "#eef6f8"}" stroke-width="1.2" fill="none" opacity=".45"/>`;
-  }
-
-  /* ---------- foreground: near shore, boulders, willows and grasses ---------- */
-  const nb = wave([2, 3, 1], [260, 110, 50], [8, 4, 2]);
-  const near = x => 664 + nb(x) - Math.max(0, 1 - Math.abs(x - 300) / 420) * 40 - Math.max(0, 1 - Math.abs(x - 2300) / 380) * 34;
-  s += `<path d="${ridgePath(near)}" fill="url(#alShore)"/>`;
-  const fr = [];
-  for (let k = 0; k < 18; k++) { const x = r() * W; if (x > 820 && x < 1760) continue; fr.push([x, near(x) + 4 + r() * 30, 22 + r() * 40]); }
-  fr.sort((a, b) => a[1] - b[1]);
-  fr.forEach(([x, y, R]) => s += granite(x, y, R, .5));
-  for (let x = 0; x < W; x += 4 + r() * 8) { const y = near(x) + 3 + r() * 60, hh = 10 + r() * 20;
-    s += `<path d="M${F(x)},${F(y)} q${F(-2 + r() * 4)},${F(-hh * .6)} ${F(-4 + r() * 8)},${F(-hh)}" stroke="${T(r() < .5 ? "#d8c070" : "#7a6a30")}" stroke-width="2" fill="none" stroke-linecap="round" opacity=".75"/>`; }
-  [[70, 690, 90], [2480, 690, 96], [2330, 706, 56]].forEach(([x, y, R]) => {
-    let b = `<path d="${blobP(x + 6, y + 6, R, R * .6)}" fill="${T("#3a2a0c")}"/>`; const cs = [];
-    for (let i = 0; i < 260 && cs.length < 90; i++) { const px = x + (r() * 2 - 1) * R, py = y + (r() * 2 - 1) * R * .6; if (((px - x) / R) ** 2 + ((py - y) / (R * .6)) ** 2 > 1) continue;
-      const lit = ((LX < x ? -1 : 1) * (px - x) / R * .5 - (py - y) / (R * .6) * .6) * .5 + .5; cs.push([px, py, cl(lit * .85 + (r() - .5) * .3)]); }
-    cs.sort((a, b2) => a[2] - b2[2]);
-    cs.forEach(([px, py, v]) => b += `<path d="${blobP(px, py, R * .14, R * .1, 6)}" fill="${T(AMBER[Math.floor(v * 8)])}"/>`);
-    s += `<g filter="url(#alLeafyS)">${b}</g>`; });
+  s += w.draw({ where: isM });
+  s += `<rect x="0" y="400" width="${W}" height="80" fill="url(#alHaze)" opacity=".45"/>`;      // haze between the mountains and the shores
+  s += w.draw({ where: notM });
+  s += `<g class="smoke" filter="url(#alLeafyS)">${[0, 1, 2, 3, 4, 5, 6, 7].map(k => `<path d="${blobP(chimTop[0] + k * 7 + Math.sin(k * 1.3) * 3, chimTop[1] - 6 - k * 11, 3 + k * 1.9, 2.5 + k * 1.3, 7, rs)}" fill="${NIGHT ? "#8a94b4" : "#eef0f2"}" opacity="${F(.55 - k * .06)}"/>`).join("")}</g>`;
+  if (NIGHT) { const [gx, gy] = w.proj([CX, cab.y + 1.6, CZ - 3]); s += `<circle cx="${F(gx)}" cy="${F(gy)}" r="60" fill="url(#alGlow)" opacity=".5"/>`; }
 
   /* light + paper */
   s += `<rect width="${W}" height="${H}" fill="url(#alLight)" style="mix-blend-mode:soft-light"/>`;

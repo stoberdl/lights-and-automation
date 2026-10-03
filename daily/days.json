@@ -64,7 +64,7 @@
     "kind": "Tonight's sky",
     "title": "Saturn at its brightest",
     "detail": "Opposition is tomorrow. It rises at sunset; look south-east after dark.",
-    "chips": ["Sunny and 69° after Friday's rain", "Partly cloudy tonight, low 47°"],
+    "chips": ["Sunny and 69° after Friday's rain", "Mostly clear tonight, low 49°"],
     "scene": { "file": "scenes/perkins-observatory.js", "fn": "perkinsObservatoryArt", "opts": {} },
     "night": { "file": "scenes/perkins-observatory.js", "fn": "perkinsObservatoryArt", "opts": { "time": "night" } },
     "fx": [{ "leaves": [1600, 270, 1850, 440] }],
@@ -74,6 +74,25 @@
     "sources": [
       "https://www.almanac.com/saturn-opposition",
       "https://api.weather.gov/"
+    ],
+    "confidence": "confirmed",
+    "locked": false
+  },
+  "2026-10-04": {
+    "kind": "Tonight's sky",
+    "title": "Saturn at opposition tonight",
+    "detail": "Brightest of the year: up from sunset, highest around midnight, under clear skies.",
+    "chips": ["Mostly sunny and 74°, clear tonight", "Polar Opposites S2 finale today"],
+    "scene": { "file": "scenes/orchard-barn-lane.js", "fn": "orchardBarnLaneArt", "opts": {} },
+    "night": { "file": "scenes/orchard-barn-lane.js", "fn": "orchardBarnLaneArt", "opts": { "time": "night" } },
+    "fx": [{ "leaves": [900, 300, 1050, 420] }],
+    "nightFx": [],
+    "fx_todo": ["birds (geese near 1250-1420, 115-170)", "stars-twinkle (night)", "Saturn slow twinkle at 1060,172 (night)", "yard lamp flicker at 1374,350 (night)"],
+    "lights": null,
+    "sources": [
+      "https://www.almanac.com/saturn-opposition",
+      "https://api.weather.gov/",
+      "https://anilist.co/anime/210031"
     ],
     "confidence": "confirmed",
     "locked": false

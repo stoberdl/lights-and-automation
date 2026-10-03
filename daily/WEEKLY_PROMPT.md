@@ -128,7 +128,7 @@ and the reasons are the rules below.
 
 ### Depth and perspective (every scene so far has gotten this wrong)
 
-**Use the `scene-3d` skill** (`.claude/skills/scene-3d/SKILL.md`): place land, buildings, piers, boats and trees in world metres with `world3d()` from `reference/scene-helpers.js` instead of drawing them as flat elevations. `scenes/harbor-lighthouse-fall.js` is the worked example. The rules below still describe what a correct result looks like.
+**Read `scenes/CATALOG.md` before choosing a scene and append a row after adding one; a new scene must differ from its pool on at least three columns.** **Use the `scene-3d` skill** (`.claude/skills/scene-3d/SKILL.md`): place land, buildings, piers, boats and trees in world metres with `world3d()` from `reference/scene-helpers.js` instead of drawing them as flat elevations. `scenes/harbor-lighthouse-fall.js` is the worked example. The rules below still describe what a correct result looks like.
 
 The user's standing complaint is that the "3D" looks off. The autumn valley
 works because it is **layered 2.5D**: flat elevations stacked in bands, with

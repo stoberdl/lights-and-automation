@@ -326,9 +326,7 @@ function harborLighthouseFallArt(opts = {}) {
   for (let k = 0; k < 400 && vok.length < 26; k++) {
     const x = -230 + r() * 200, z = 300 + Math.pow(r(), 1.3) * 260, sx = 1280 + 2200 * x / z;
     if (sx < -40 || sx > 1010 || dV(x, z) < 9 || vok.some(([a, b, q]) => Math.hypot(x - a, z - b) < q + 8)) continue;
-    const Pc = PAL[Math.floor(r() * PAL.length)], two = r() < .45, G = r() < .4;
-    w.house({ ...onGround({ x, z, yaw: -18 + r() * 34, w: 7 + r() * 4, d: 6 + r() * 3, h: two ? 6 : 4.4, rh: 2.6 + r() * 1.4, gable: G }, hV),
-      wall: Pc[0], roof: Pc[1], shut: Pc[2], chim: r() < .7 ? .2 + r() * .6 : undefined, door: .3 + r() * .4, rng: rl });
+    w.house(onGround(w.randomHouse(r, { x, z, yaw: -18 + r() * 34, door: .3 + r() * .4, rng: rl, kind: "village" }), hV));
     vok.push([x, z, 6]); }
   for (let k = 0; k < 900 && vok.length < 210; k++) {
     const z = 292 + Math.pow(r(), 1.5) * 780, x = -z * .62 - 20 + r() * (edgeV(z) - 2 + z * .62 + 20);

@@ -22,6 +22,16 @@ now placed in **world metres** and projected by one camera. The reference is
   heightfield, clipped at the waterline automatically. Shape coasts with a
   distance-inland function and `smoothstep`; keep slopes natural (rise over 30+ m),
   colour from smooth noise, never per-cell random alone.
+- **Mountains and big far terrain: `w.raster({ z0, z1, top, bottom, h, col, tone: rgbTone(T), fog, fogK, step: .0011, scale: .75 })`**
+  with `h = mountainField({ seed, scale, oct, peaks: [{ x, z, h, r | rx, rz }] })` and
+  `col = mountainColor({ seed, snow, tree, goldK, forest, gold, rock, rock2 })`. Shaded per
+  pixel (ridges, gullies, tree line, snow by slope), so no facets or stair-steps. Never draw
+  mountains as polygon terrain or 2D silhouettes again. Pick a new seed and peak layout per
+  scene; keep peaks out of the text corners (screen y = hy - f*h/z). Worked example:
+  `scenes/golden-aspen-lake.js`.
+- **Houses: `w.randomHouse(r, { x, z, yaw, rng, kind })` then `w.house(...)`** gives a varied
+  style (gable, front gable, gambrel, saltbox, hip, shed), size, colours, porch, chimney and
+  shutters. Hand-pin a field only when the subject needs it.
 - `w.house({ x, z, y, yaw, w, d, h, rh, gable, wall, roof, trim, shut, chim, door, fy })`:
   windows, door, clapboards, trim, chimney, contact shadow. On slopes wrap in
   an `onGround()` helper (base = highest corner, foundation down to the lowest).
@@ -33,6 +43,14 @@ now placed in **world metres** and projected by one camera. The reference is
   reflections; then `w.draw()`. `w.proj([x,y,z])` for 2D overlays (beams, glows).
 - Painter order is by nearest depth; a part that sits on another (cabin on a
   hull) sets `obj.key = base.key - .2` so it draws after.
+
+## Variety (the user does not want the same designs over and over)
+- Read `scenes/CATALOG.md` first. A new scene differs from every scene in its pool on at least
+  three columns and does not reuse an "Overused" motif as its subject. Append its row.
+- New seeds for every generator; vary eye height (2-40 m), focal length (1600-2800),
+  horizon height and where the subject sits. Do not copy another scene's layout numbers.
+- Repeated objects inside a scene come from generators (randomHouse, trees with varied
+  ramps and heights), never one hand-made object copied.
 
 ## Sanity check (required; the user rejects work that skips it)
 Render day and night, crop left / middle / right with PIL and look at each.
