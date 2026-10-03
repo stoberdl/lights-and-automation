@@ -259,8 +259,36 @@ function harborLighthouseFallArt(opts = {}) {
     if (y < 1.7 || n[1] < .6) return mix(mix(GR[1], GR[2], k * .8), "#7a7448", y > 2 && n[1] > .7 ? .5 : 0);   // granite
     if (n2(x * .7, z * .5) > .95) return BRACK[Math.floor(r() * 3)];                   // bracken in autumn
     return mix(GRASS[Math.floor(k * GRASS.length)], fieldy, sm((z - 400) / 500) * .5); };
-  w.terrain({ x0: z => edgeP(z) - 6, x1: z => z * .62 + 30, z0: 150, z1: 1100, nx: 96, nz: 56, h: hP, col: ground("#6a6a34"), shade: .3 });
-  w.terrain({ x0: z => -z * .62 - 30, x1: z => edgeV(z) + 6, z0: 230, z1: 1100, nx: 96, nz: 50, h: hV, col: ground("#5e6430"), shade: .3 });
+  /* the land is ray-traced per pixel (world3d raster): smooth slopes, mottled autumn grass,
+     bracken, granite ledges and a wet weed band at the waterline, no facets */
+  const N1 = noise2(77), N2 = noise2(78), RG = c => hexRGB(c), lerp = (a, b, t) => a.map((v, i) => v + (b[i] - v) * Math.max(0, Math.min(1, t)));
+  const GA = RG("#a29a4c"), GB = RG("#7e7c36"), BRK = RG("#b0682a"), FIELD = RG("#6a6a34"), RK = RG(GR[1]), RK2 = RG(GR[2]), WET = RG("#3e3626");
+  const groundR = (x, y, z, n, ao) => {
+    const k = N1(x / 9, z / 9) * .5 + N1(x / 3, z / 3) * .3 + N2(x / 34, z / 34) * .45, steep = 1 - n[1];
+    let c = lerp(GA, GB, .5 + k - ao * .4);
+    c = lerp(c, BRK, (N2(x / 22 + 5, z / 22) - .25) * 2.2);                         // bracken patches
+    c = lerp(c, FIELD, sm((z - 420) / 500) * .55);
+    c = lerp(c, lerp(RK, RK2, .5 + N1(x / 2, z / 2) * .8), (1.9 - y) / 1.1 + steep * 3.5 - .8 + k * .6);   // granite ledges
+    if (hR(x, z) >= y - .05) {                                                            // granite boulder surface
+      c = lerp(lerp(RK, RK2, .5 + N1(x / 2.5, z / 2.5) * .5 - ao * .7), RG(GR[3]), (n[1] - .75) * 2.2);   // weathered pale tops
+      c = lerp(c, RG("#8a8a6a"), (N1(x * 1.7 + 9, z * 1.7) - .55) * 3);                       // grey-green lichen
+      return lerp(c, RG("#4a3e22"), (.55 - y) / .3); }                                       // rockweed at the tideline
+    return lerp(c, WET, (.6 - y) / .45); };
+  /* granite in the heightfield, so rocks shade like the land: rounded boulders along both
+     shorelines and outcrops on our side of the water. Bucketed by 8 m cells for speed. */
+  const RB = new Map(), rockAt = (cx, cz, R, ht, sq = 1) => { for (let i = Math.floor((cx - R) / 8); i <= Math.floor((cx + R) / 8); i++) for (let j = Math.floor((cz - R * sq) / 8); j <= Math.floor((cz + R * sq) / 8); j++) { const k = i + "," + j; if (!RB.has(k)) RB.set(k, []); RB.get(k).push([cx, cz, R, ht, sq]); } };
+  for (let x = -6; x < 150; x += 2 + r() * 9) if (r() < .7) rockAt(x, shoreP(x) - .6 + r() * 2.6, 1.2 + r() * 2.4, .5 + r() * 1.4, .45 + r() * .4);
+  for (let x = -230; x < -33; x += 2 + r() * 9) if (r() < .7) rockAt(x, shoreV(x) - .6 + r() * 2.6, 1.2 + r() * 2.2, .4 + r() * 1.1, .45 + r() * .4);
+  for (let k = 0; k < 26; k++) { const z = 44 + r() * 40, x = (1930 + r() * 760 - 1280) * z / 2200; rockAt(x, z, 1.8 + r() * 3, .5 + r() * 1.3, .5 + r() * .4); }
+  for (let k = 0; k < 14; k++) { const z = 42 + r() * 22, x = (-80 + r() * 520 - 1280) * z / 2200; rockAt(x, z, 1.5 + r() * 2.4, .4 + r() * 1.1, .5 + r() * .4); }
+  const hR = (x, z) => { const L = RB.get(Math.floor(x / 8) + "," + Math.floor(z / 8)); if (!L) return -9; let m = -9;
+    for (const [cx, cz, R, ht, sq] of L) {
+      const wx = N2(x / 3 + cx, z / 3) * .25, wz = N2(x / 3 - 9, z / 3 + cz) * .25;      // warped, irregular outline
+      const dx = (x - cx) / R + wx, dz = (z - cz) / (R * sq) + wz, q = 1 - dx * dx - dz * dz;
+      if (q > 0) m = Math.max(m, -.4 + (ht + .4) * Math.min(1, Math.pow(q, .3) * 1.15) * (1 + .16 * N1(x * .6 + cx, z * .6))); }
+    return m; };
+  w.raster({ z0: 38, z1: 1100, top: 250, bottom: 720, scale: 1, step: .0008, minStep: .02, amb: .5, fog: HZ, fogK: .0009,
+    h: (x, z) => Math.max(hP(x, z), hV(x, z), hR(x, z)), col: groundR, tone: rgbTone(T), key: 2e6 });
 
   /* a solid on uneven ground sits on the highest corner; a stone foundation fills down to the lowest */
   const onGround = (o, hf) => { const { P } = w.frame({ ...o, y: 0 }), c = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([a, b]) => P([a * o.w / 2, 0, b * o.d / 2]));
@@ -388,12 +416,6 @@ function harborLighthouseFallArt(opts = {}) {
   };
   const fleet = [[8, 126, 32, "#f2efe8", "#f4f0e8"], [pAt(PL - 15, -6.5)[0], pAt(PL - 15, -6.5)[1], pYaw, "#2a3e5e", "#f4f0e8"], [46, 128, 26, "#2e5a4a", "#f4f0e8"], [-9, 236, 36, "#f2efe8", "#f4f0e8"], [-52, 226, 30, "#f2efe8", "#e8d8b8"], [-18, 98, 44, "#f2efe8", "#f4f0e8"]];
   fleet.forEach(([x, z, yaw, hull, cab]) => boat(x, z, yaw, hull, cab));
-
-  /* ---- foreground: rounded granite boulders on our side, bottom corners ---- */
-  for (let k = 0; k < 18; k++) { const z = 46 + r() * 34, x = (1960 + r() * 700 - 1280) * z / 2200;
-    w.sprite({ x, z, noRefl: true, fn: (sx, sy, kk) => { const ww = (3 + r() * 5) * kk; return boulder(sx, sy, ww, ww * (.3 + r() * .16)); } }); }
-  for (let k = 0; k < 9; k++) { const z = 44 + r() * 16, x = (-60 + r() * 420 - 1280) * z / 2200;
-    w.sprite({ x, z, noRefl: true, fn: (sx, sy, kk) => { const ww = (2.4 + r() * 4) * kk; return boulder(sx, sy, ww, ww * (.28 + r() * .14)); } }); }
 
   /* ---- water: reflections of the whole world, then wind ripples and the sun path ---- */
   let wtr = `<g opacity=".4" filter="url(#hlRipple)">${w.draw({ mirror: true })}</g>`;

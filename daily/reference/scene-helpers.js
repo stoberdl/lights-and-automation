@@ -479,22 +479,23 @@ function world3d(C) {
        z0..z1 metres, top..bottom the screen band it may cover. Water (h < 0) is left clear.
        Draw it before nearer things: it is added as the farthest object and mirrors too. */
     raster(o) {
-      const sc = o.scale || .5, y0 = o.top ?? 0, y1 = o.bottom ?? hy + 60, Wd = Math.round(SW * sc), Hd = Math.max(1, Math.round((y1 - y0) * sc));
+      const sc = o.scale || .5, y0 = o.top ?? 0, y1 = o.bottom ?? hy + 60, Wd = Math.round(SW * sc);
       const Lr = unit(o.light || C.light || [-.6, .6, -.2]), FOGR = hexRGB(o.fog || C.fog || "#c8d0dc"), FK = o.fogK ?? FOGK;
       const amb = o.amb ?? .38, toneR = o.tone || (c => c);
-      let svg = null;
-      const make = () => {
+      const svg = {};
+      // M: the reflection, traced in the mirrored world (same marching, heights negated), drawn below the horizon
+      const make = M => { const Y0 = M ? hy : y0, Hd = Math.max(1, Math.round(((M ? SH : y1) - Y0) * sc));
         const cv = document.createElement("canvas"); cv.width = Wd; cv.height = Hd;
         const ctx = cv.getContext("2d"), img = ctx.createImageData(Wd, Hd), D = img.data, H = o.h;
         for (let i = 0; i < Wd; i++) {
           const dx = (i / sc + .5 - cx) / f; let ytop = Hd, prev = null;
           for (let z = o.z0; z < o.z1; z += Math.max(o.minStep || 1, z * (o.step || .0035))) {
-            const x = dx * z, hg = H(x, z), ys = (hy + f * (eh - Math.max(hg, 0)) / z - y0) * sc;
+            const x = dx * z, hg = H(x, z), ys = (hy + f * (eh + (M ? 1 : -1) * Math.max(hg, 0)) / z - Y0) * sc;
             if (ys >= ytop) continue;
             if (hg < 0) { ytop = Math.max(0, Math.ceil(ys)); prev = null; continue; }        // water hides what is below it
-            const e = Math.max(1, z * .002), hx = H(x + e, z), hz = H(x, z + e);
+            const e = Math.max(.04, z * .0012), hx = H(x + e, z), hz = H(x, z + e);
             const n = unit([-(hx - hg) / e, 1, -(hz - hg) / e]);
-            const r2 = 20 + z * .012, av = (H(x + r2, z) + H(x - r2, z) + H(x, z + r2) + H(x, z - r2)) / 4;
+            const r2 = .5 + z * .012, av = (H(x + r2, z) + H(x - r2, z) + H(x, z + r2) + H(x, z - r2)) / 4;
             const ao = Math.max(-1, Math.min(1, (hg - av) / (r2 * .45)));
             const base = o.col(x, hg, z, n, ao), l = Math.max(0, dot(n, Lr));
             const k = (amb + (1 - amb) * l) * (1 + ao * .22), t = 1 - Math.exp(-z * FK);
@@ -509,13 +510,10 @@ function world3d(C) {
           }
         }
         ctx.putImageData(img, 0, 0);
-        return cv.toDataURL("image/png"); };
+        return { url: cv.toDataURL("image/png"), Y0, h: Hd / sc }; };
       const ob = { key: o.key ?? o.z0 + 1e6, raster: true, noRefl: o.noRefl, tag: o.tag,
-        draw: M => { if (svg === null) svg = make();
-          const im = `<image href="${svg}" x="0" y="${fx(y0)}" width="${SW}" height="${fx(y1 - y0)}" preserveAspectRatio="none"/>`;
-          if (!M) return im;
-          const zm = o.mirrorZ || o.z0 * 2, wl = hy + f * eh / zm;               // waterline at the range's foot
-          return `<g transform="matrix(1,0,0,-1,0,${fx(2 * wl)})">${im}</g>`; } };
+        draw: M => { const k = M ? "m" : "n"; if (!svg[k]) svg[k] = make(M); const g = svg[k];
+          return `<image href="${g.url}" x="0" y="${fx(g.Y0)}" width="${SW}" height="${fx(g.h)}" preserveAspectRatio="none"/>`; } };
       objs.push(ob); return ob; },
     draw(opt = {}) { const M = !!opt.mirror;
       return objs.filter(o => !(M && o.noRefl) && (!opt.where || opt.where(o))).sort((a, b) => b.key - a.key).map(o => drawObj(o, M)).join(""); },
