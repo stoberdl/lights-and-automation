@@ -116,6 +116,7 @@ html.win #toast{z-index:200}
 .w-food .bar i{display:block;height:100%;border-radius:9px;background:#8fe3a1}
 .w-food.short .bar i{background:#ffb35c}
 .w-food .wt{font-weight:600}
+.w-food .burn{color:#ffa45c;font-weight:600}.w-food .burn .g{color:inherit;font-weight:500}
 .w-food .wt.down{color:#7ee49a}.w-food .wt.up{color:#ff8a7a}.w-food .wt.flat{opacity:.7}
 /* the evening nudge: a pulse over the whole bar until enough is logged */
 .w-nag{position:absolute;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;
@@ -896,6 +897,7 @@ function paintFood(){
     const r = foodRule(new Date());
     box.classList.toggle("short", !!(r && d.kcal < r.min));
     h += `<span>${d.kcal.toLocaleString()}<span class="g"> / ${goal.toLocaleString()} kcal</span></span><span class="bar"><i style="width:${pct}%"></i></span>`;
+    h += `<span class="burn" title="Burned today (exercise)">🔥 ${Math.round(d.exercise || 0).toLocaleString()}<span class="g"> burned</span></span>`;
   }
   const w = d.weight;
   if(w && w.week != null){
