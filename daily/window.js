@@ -250,6 +250,20 @@ html.win #toast{z-index:200}
 .w-bgtip{position:absolute;right:60px;top:66px;z-index:5;font-size:18px;padding:5px 12px;border-radius:14px;
   background:rgba(14,20,34,.6);opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 .w-bgtip.on{opacity:1}
+.w-tmr{position:absolute;right:8px;top:112px;width:44px;height:44px;border-radius:50%;border:0;padding:0;
+  background:rgba(14,20,34,.35);color:#fff;cursor:pointer;opacity:.55;font:600 15px Outfit,"Segoe UI",sans-serif}
+.w-tmr:hover{opacity:.9}.w-tmr[hidden]{display:none}
+.w-timer{display:inline-flex;align-items:center;gap:10px;font-size:20px;font-weight:600;padding:5px 16px;border-radius:20px;
+  background:rgba(14,20,34,.45);color:#9fd4ff;cursor:pointer;font-variant-numeric:tabular-nums}
+.w-timer[hidden]{display:none}
+.w-timer .bar{width:70px;height:7px;border-radius:9px;background:rgba(255,255,255,.2);overflow:hidden}
+.w-timer .bar i{display:block;height:100%;border-radius:9px;background:#9fd4ff}
+.w-timer.arm{color:#ff8a7a}.w-timer.arm .bar i{background:#ff8a7a}
+.w-done{position:absolute;inset:0;z-index:61;display:none;align-items:center;justify-content:center;cursor:pointer;
+  animation:w-done 1s ease-in-out infinite alternate}
+.w-done.on{display:flex}
+.w-done b{font:700 54px Outfit,"Segoe UI",sans-serif;color:#fff;padding:22px 46px;border-radius:30px;background:rgba(20,60,110,.82)}
+@keyframes w-done{from{box-shadow:inset 0 0 40px 10px rgba(110,190,255,.25)}to{box-shadow:inset 0 0 120px 40px rgba(110,190,255,.75)}}
 
 /* new theme art on the dock keys */
 .w-dock .qb .hero-art > *:not(svg){display:none}
@@ -699,7 +713,7 @@ function windowLayout(){
     <canvas class="wl" id="wl-fx" width="${W}" height="${H}"></canvas>
     <div class="wl wl-shade"></div>
     <div class="w-wx ts">
-      <div class="w-top"><div class="w-clock" id="w-clock"></div><div class="w-food" id="w-food" hidden></div></div>
+      <div class="w-top"><div class="w-clock" id="w-clock"></div><div class="w-food" id="w-food" hidden></div><div class="w-timer" id="w-timer" hidden></div></div>
       <div class="w-row"><div class="w-temp" id="w-temp">--</div>
         <div class="w-side"><div class="w-cond" id="w-cond"></div><div class="w-hl" id="w-hl"></div></div></div>
       <div class="w-dry" id="w-dry"></div>
@@ -722,6 +736,7 @@ function windowLayout(){
     </div>
     <button class="w-menu" id="w-menu" title="Full controls" aria-label="Full controls">☰</button>
     <button class="w-bgmode" id="w-bgmode"></button>
+    <button class="w-tmr" id="w-tmr" title="Start a 2 hour timer" aria-label="Start a 2 hour timer">2h</button>
     <span class="w-bgtip" id="w-bgtip"></span>
   </div>`;
   document.body.appendChild(root);
@@ -848,6 +863,7 @@ function windowLayout(){
   fc.fillStyle = gr; fc.fillRect(0, 0, 32, 32);
 
   wireFood();
+  wireTimer();
   addEventListener("resize", fit); fit();
   if(location.hash === "#cycle"){ WS.cycle = true; paintBg(); }      // preview the cycle without tapping
   loadDay();
@@ -931,5 +947,42 @@ function wireFood(){
   };
   setTimeout(tick, 60000);
   setInterval(nagCheck, 15000);
+}
+
+/* ---------- 2 hour timer ----------
+   A small "2h" button under the background button starts it; while it runs a
+   countdown sits beside the kcal line and the button hides. Tap the countdown
+   once to arm cancel (it turns red), again within 4 s to cancel. When it ends
+   the screen pulses blue until tapped. The end time survives a reload. */
+const TIMER_MS = 2 * 3600 * 1000, TIMER_KEY = "win-timer";
+function timerEnd(){ try { return +localStorage.getItem(TIMER_KEY) || 0; } catch(e){ return TIMER.end || 0; } }
+function timerSet(v){ TIMER.end = v; try { v ? localStorage.setItem(TIMER_KEY, String(v)) : localStorage.removeItem(TIMER_KEY); } catch(e){} }
+const TIMER = { end: 0, arm: 0 };
+function chime(){
+  try { const a = new (window.AudioContext || window.webkitAudioContext)();
+    [0, .35, .7].forEach(t => { const o = a.createOscillator(), g = a.createGain(); o.frequency.value = 880; o.connect(g); g.connect(a.destination);
+      g.gain.setValueAtTime(.0001, a.currentTime + t); g.gain.exponentialRampToValueAtTime(.3, a.currentTime + t + .02); g.gain.exponentialRampToValueAtTime(.0001, a.currentTime + t + .3);
+      o.start(a.currentTime + t); o.stop(a.currentTime + t + .32); }); } catch(e){}
+}
+function paintTimer(){
+  const end = timerEnd(), box = q("#w-timer"), btn = q("#w-tmr"), left = end - Date.now();
+  if(!end){ box.hidden = true; btn.hidden = false; return; }
+  if(left <= 0){
+    timerSet(0); box.hidden = true; btn.hidden = false;
+    q("#w-done").classList.add("on"); chime(); return; }
+  const sec = Math.ceil(left / 1000), h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), ss = sec % 60;
+  const armed = Date.now() - TIMER.arm < 4000;
+  box.classList.toggle("arm", armed);
+  box.innerHTML = `<span>⏱ ${armed ? "Tap to cancel" : `${h}:${String(m).padStart(2, "0")}:${String(ss).padStart(2, "0")}`}</span><span class="bar"><i style="width:${(100 * left / TIMER_MS).toFixed(1)}%"></i></span>`;
+  box.hidden = false; btn.hidden = true;
+}
+function wireTimer(){
+  const done = el("div", "w-done"); done.id = "w-done"; done.innerHTML = "<b>⏱ 2 hours are up</b>"; q("#win-stage").appendChild(done);
+  done.addEventListener("click", e => { e.stopPropagation(); done.classList.remove("on"); });
+  q("#w-tmr").addEventListener("click", e => { e.stopPropagation(); timerSet(Date.now() + TIMER_MS); paintTimer(); });
+  q("#w-timer").addEventListener("click", e => { e.stopPropagation();
+    if(Date.now() - TIMER.arm < 4000){ TIMER.arm = 0; timerSet(0); } else TIMER.arm = Date.now();
+    paintTimer(); });
+  paintTimer(); setInterval(paintTimer, 1000);
 }
 })();
