@@ -3985,6 +3985,66 @@ html.bar #q-fav{width:3.1rem; padding:0; font-size:1.3rem; justify-content:cente
 html.bar .qstar{width:2.6rem; height:2.6rem; font-size:1.3rem; top:.4rem; right:.4rem}
 html.bar .rail .pill{min-height:2.75rem; padding:.5rem .7rem}
 html.bar .btn.sm{min-height:2.75rem; padding-inline:1rem}
+
+/* ---------------------------------------------- hold a theme tile: per light
+   Press and hold a Quick apply key and this opens over the board: every light
+   the theme touches, the scene it will get, and a list to change it. A change
+   is saved into the theme itself (lightd pins that light), so the next tap of
+   the key - and the day cycle - use it too. Dark glass whatever the board's
+   own theme, like the picker menu: it floats over the wallpaper. */
+.qa-veil{position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:center;
+  padding:3vh 3vw; background:rgba(2,12,20,.5);
+  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px)}
+.qa-pop{width:min(46rem,100%); max-height:100%; display:flex; flex-direction:column; overflow:hidden;
+  border-radius:22px; color:#eaf6ff;
+  background:linear-gradient(180deg, rgba(12,40,62,.97), rgba(6,22,36,.98));
+  border:1px solid rgba(150,220,250,.4);
+  box-shadow:0 24px 60px rgba(0,8,16,.65), inset 0 1px 0 rgba(255,255,255,.18)}
+.qa-hd{display:flex; align-items:center; gap:.9rem; padding:1rem 1.1rem .9rem;
+  background:radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--a) 45%, transparent), transparent 70%);
+  border-bottom:1px solid rgba(150,220,250,.18)}
+.qa-hd .sw{width:2.6rem; height:2.6rem; border-radius:50%; flex:none;
+  background:radial-gradient(circle at 35% 30%, var(--a), var(--b)); box-shadow:0 0 18px color-mix(in srgb, var(--a) 60%, transparent)}
+.qa-hd h3{margin:0; font-size:1.35rem; line-height:1.15}
+.qa-hd .sub{font-size:.85rem; color:#a9cbe0}
+.qa-hd .gap{flex:1}
+.qa-x{width:2.8rem; height:2.8rem; border-radius:50%; border:1px solid rgba(150,220,250,.3);
+  background:rgba(255,255,255,.06); color:inherit; font-size:1.3rem; cursor:pointer}
+.qa-list{overflow-y:auto; padding:.4rem .6rem; flex:1; min-height:0}
+.qa-row{border-radius:14px}
+.qa-row + .qa-row{border-top:1px solid rgba(150,220,250,.1)}
+.qa-btn{width:100%; display:flex; align-items:center; gap:.8rem; padding:.7rem .6rem; min-height:3.2rem;
+  border:0; background:none; color:inherit; font:inherit; text-align:left; cursor:pointer; border-radius:12px}
+.qa-btn:hover,.qa-row.open .qa-btn{background:rgba(255,255,255,.06)}
+.qa-btn:disabled{cursor:default}
+.qa-btn:disabled:hover{background:none}
+.qa-dev{flex:1 1 40%; min-width:0; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.qa-sc{flex:1 1 50%; min-width:0; display:flex; align-items:center; gap:.45rem; justify-content:flex-end;
+  color:#ffd9a0; overflow:hidden; white-space:nowrap}
+.qa-sc span{overflow:hidden; text-overflow:ellipsis}
+.qa-sc.plain{color:#a9cbe0}
+.qa-pin{flex:none; font-size:.7rem; letter-spacing:.06em; text-transform:uppercase; padding:.15rem .45rem;
+  border-radius:999px; background:rgba(120,210,255,.18); color:#9fe3ff}
+.qa-car{flex:none; width:.55rem; height:.55rem; border-right:2px solid #8fbcd6; border-bottom:2px solid #8fbcd6;
+  transform:rotate(45deg) translateY(-2px); transition:transform .15s}
+.qa-row.open .qa-car{transform:rotate(-135deg)}
+.qa-opts{display:none; max-height:15rem; overflow-y:auto; margin:.2rem .4rem .6rem;
+  padding:.3rem; border-radius:12px; background:rgba(0,10,18,.45); border:1px solid rgba(150,220,250,.14)}
+.qa-row.open .qa-opts{display:grid; grid-template-columns:repeat(auto-fill,minmax(10.5rem,1fr)); gap:.3rem}
+.qa-o{padding:.6rem .7rem; min-height:2.8rem; border-radius:10px; border:1px solid transparent;
+  background:rgba(255,255,255,.05); color:inherit; font:inherit; font-size:.92rem; text-align:left; cursor:pointer}
+.qa-o:hover{background:rgba(255,255,255,.11)}
+.qa-o.on{border-color:#7fdcff; background:rgba(90,200,255,.2)}
+.qa-o.def{grid-column:1/-1; color:#a9cbe0}
+.qa-o.def b{color:#eaf6ff; font-weight:600}
+.qa-note{padding:.8rem; color:#a9cbe0; font-size:.9rem}
+.qa-ft{display:flex; gap:.6rem; align-items:center; padding:.8rem 1.1rem 1rem; border-top:1px solid rgba(150,220,250,.18)}
+.qa-ft .info{flex:1; font-size:.85rem; color:#a9cbe0}
+.qa-go{min-height:3rem; padding:0 1.4rem; border-radius:999px; border:0; cursor:pointer; font:inherit; font-weight:700;
+  color:#04263a; background:linear-gradient(180deg,#bff0ff,#5cc8f0); box-shadow:0 4px 14px rgba(40,170,230,.35)}
+.qa-row.busy{opacity:.55; pointer-events:none}
+.qb.holding{transform:scale(.97); transition:transform .45s}
+#toast{z-index:70}          /* "Table Lamp → Rainbow" has to read over the editor's veil */
 </style>
 <script src="/daily/window.js"></script>
 </head>
@@ -7874,13 +7934,147 @@ function paintQuick(){
   }).join("");
   // One handler on the key: a press that landed on the star keeps the theme,
   // anything else applies it.
-  $$("#quick .qb").forEach(b => b.onclick = e => {
-    if(e.target.closest(".qstar")){
-      const t = QUICK.find(x => x.id === b.dataset.t) || {};
-      return toggleFav(b.dataset.t, t.nm);
-    }
-    applyTheme(b.dataset.t, b);
+  $$("#quick .qb").forEach(b => {
+    b.onclick = e => {
+      if(b._held){ b._held = false; return; }   // that press was a hold, it opened the editor
+      if(e.target.closest(".qstar")){
+        const t = QUICK.find(x => x.id === b.dataset.t) || {};
+        return toggleFav(b.dataset.t, t.nm);
+      }
+      applyTheme(b.dataset.t, b);
+    };
+    wireHold(b);
   });
+}
+/* Press and hold a key: half a second, and a finger that drifts more than a
+   few pixels is a scroll, not a hold. The click that follows the release is
+   swallowed so a hold never also applies the theme. */
+const HOLD_MS = 520;
+function wireHold(b){
+  let t = null, x0 = 0, y0 = 0;
+  const stop = () => { clearTimeout(t); t = null; b.classList.remove("holding"); };
+  b.addEventListener("pointerdown", e => {
+    if(e.button > 0 || e.target.closest(".qstar")) return;
+    x0 = e.clientX; y0 = e.clientY; b.classList.add("holding");
+    t = setTimeout(() => { stop(); b._held = true; openThemeLights(b.dataset.t); }, HOLD_MS);
+  });
+  b.addEventListener("pointermove", e => { if(t && Math.hypot(e.clientX - x0, e.clientY - y0) > 12) stop(); });
+  ["pointerup", "pointercancel", "pointerleave"].forEach(ev => b.addEventListener(ev, stop));
+  b.addEventListener("contextmenu", e => e.preventDefault());   // touch long-press menu
+}
+
+/* ---------------------------------------------- the per-light editor
+   What the theme will do to each light (lightd's own preview, so it is the
+   resolver's answer and not a guess), with each light's scene library one tap
+   away. Libraries are per model and do not change between Govee firmware
+   updates, so they are cached in this browser for a week: the lists open
+   instantly after the first time instead of costing a request per light. */
+const SCENE_CACHE = "scenes.v1:", SCENE_TTL = 7 * 864e5;
+const sceneMem = {};
+async function deviceScenes(name){
+  if(sceneMem[name]) return sceneMem[name];
+  try{
+    const c = JSON.parse(localStorage.getItem(SCENE_CACHE + name) || "null");
+    if(c && Date.now() - c.at < SCENE_TTL && Array.isArray(c.list)) return (sceneMem[name] = c.list);
+  }catch(e){}
+  const r = await api(`/devices/${encodeURIComponent(name)}/scenes`);
+  if(!r.ok) return null;
+  const seen = new Set(), list = [];
+  for(const s of r.body.scenes || []){ if(!seen.has(s.name)){ seen.add(s.name); list.push(s.name); } }
+  sceneMem[name] = list;
+  try{ localStorage.setItem(SCENE_CACHE + name, JSON.stringify({at: Date.now(), list})); }catch(e){}
+  return list;
+}
+const TL = {id:null, prev:null, open:null};
+function stepText(s){
+  if(s.action === "scene") return {txt: s.label, plain:false};
+  if(s.action === "kelvin") return {txt: `${s.value}K white`, plain:true};
+  if(s.action === "color") return {txt: "colour " + (s.value || []).join(","), plain:true};
+  if(s.action === "power") return {txt: s.value ? "switched on" : "off", plain:true};
+  return {txt: s.action, plain:true};
+}
+async function openThemeLights(id){
+  const t = QUICK.find(x => x.id === id) || quickSwatch(id, null);
+  TL.id = id; TL.open = null;
+  let v = $("#qa-veil");
+  if(!v){
+    v = document.createElement("div"); v.id = "qa-veil"; v.className = "qa-veil";
+    document.body.appendChild(v);
+    v.addEventListener("click", e => { if(e.target === v) closeThemeLights(); });
+    document.addEventListener("keydown", e => { if(e.key === "Escape" && !v.hidden) closeThemeLights(); });
+  }
+  v.hidden = false;
+  v.innerHTML = `<div class="qa-pop" role="dialog" aria-modal="true" aria-label="${esc(t.nm)} lights"
+                      style="--a:${t.a};--b:${t.b}">
+    <div class="qa-hd"><span class="sw"></span>
+      <div><h3>${esc(t.nm)}</h3><div class="sub">what each light gets · tap one to change it</div></div>
+      <span class="gap"></span><button class="qa-x" aria-label="close">✕</button></div>
+    <div class="qa-list" id="qa-list"><div class="qa-note">Asking lightd…</div></div>
+    <div class="qa-ft"><span class="info" id="qa-info"></span>
+      <button class="qa-go" id="qa-go">Apply ${esc(t.nm)}</button></div></div>`;
+  v.querySelector(".qa-x").onclick = closeThemeLights;
+  $("#qa-go").onclick = () => { closeThemeLights(); applyTheme(id, null); };
+  const r = await api(`/themes/${encodeURIComponent(id)}/preview`);
+  if(TL.id !== id) return;
+  if(!r.ok){ $("#qa-list").innerHTML = `<div class="qa-note">Could not get the preview from lightd.</div>`; return; }
+  TL.prev = r.body; paintThemeLights();
+  // Warm the cache in the background so every list opens instantly.
+  (r.body.steps || []).forEach(s => deviceScenes(s.device));
+}
+function closeThemeLights(){ const v = $("#qa-veil"); if(v){ v.hidden = true; v.innerHTML = ""; } TL.id = null; }
+function paintThemeLights(){
+  const p = TL.prev, list = $("#qa-list"); if(!p || !list) return;
+  const rows = (p.steps || []).slice().sort((a, b) => a.device.localeCompare(b.device));
+  const miss = p.unreachable || [];
+  list.innerHTML = rows.map(s => {
+    const st = stepText(s), pinned = /^override/.test(s.why || "");
+    return `<div class="qa-row${TL.open === s.device ? " open" : ""}" data-d="${esc(s.device)}">
+      <button class="qa-btn"><span class="qa-dev">${esc(s.device)}</span>
+        <span class="qa-sc${st.plain ? " plain" : ""}">${pinned ? `<em class="qa-pin">pinned</em>` : ""}<span>${esc(st.txt)}</span></span>
+        <span class="qa-car"></span></button>
+      <div class="qa-opts"></div></div>`;
+  }).join("") + miss.map(m => `<div class="qa-row" data-d="${esc(m.device)}">
+      <button class="qa-btn"><span class="qa-dev">${esc(m.device)}</span>
+        <span class="qa-sc plain"><span>${esc(m.why)}</span></span><span class="qa-car"></span></button>
+      <div class="qa-opts"></div></div>`).join("");
+  const n = rows.filter(s => /^override/.test(s.why || "")).length;
+  $("#qa-info").textContent = `${rows.length} lights${n ? ` · ${n} pinned` : ""}${miss.length ? ` · ${miss.length} left out` : ""}`;
+  list.querySelectorAll(".qa-row").forEach(row => {
+    row.querySelector(".qa-btn").onclick = () => toggleLightRow(row);
+    if(row.classList.contains("open")) fillLightRow(row);
+  });
+}
+function toggleLightRow(row){
+  const d = row.dataset.d, was = row.classList.contains("open");
+  $$("#qa-list .qa-row.open").forEach(r => r.classList.remove("open"));
+  TL.open = was ? null : d;
+  if(!was){ row.classList.add("open"); fillLightRow(row); }
+}
+async function fillLightRow(row){
+  const d = row.dataset.d, box = row.querySelector(".qa-opts");
+  const step = (TL.prev.steps || []).find(s => s.device === d) || {};
+  const pinned = /^override/.test(step.why || "");
+  box.innerHTML = `<div class="qa-note">Loading ${esc(d)}'s scenes…</div>`;
+  const names = await deviceScenes(d);
+  if(!row.isConnected) return;
+  if(!names){ box.innerHTML = `<div class="qa-note">Could not load this light's scenes.</div>`; return; }
+  if(!names.length){ box.innerHTML = `<div class="qa-note">This light has no scenes, so the theme gives it its fallback white or colour.</div>`; return; }
+  const cur = step.action === "scene" ? step.label : null;
+  box.innerHTML = `<button class="qa-o def${pinned ? "" : " on"}">
+      Theme's own pick${pinned ? " — unpin" : `: <b>${esc(stepText(step).txt || "—")}</b>`}</button>` +
+    names.map((n, i) => `<button class="qa-o${n === cur ? " on" : ""}" data-i="${i}">${esc(n)}</button>`).join("");
+  box.onclick = e => { const o = e.target.closest(".qa-o"); if(o) pinLight(row, d, o.dataset.i ? names[+o.dataset.i] : null); };
+  const on = box.querySelector(".qa-o.on:not(.def)"); if(on) on.scrollIntoView({block:"nearest"});
+}
+async function pinLight(row, device, scene){
+  const id = TL.id;
+  row.classList.add("busy");
+  const r = await post(`/themes/${encodeURIComponent(id)}/override`, {device, scene});
+  if(TL.id !== id) return;
+  row.classList.remove("busy");
+  if(!r.ok) return toast((r.body && r.body.detail) || "could not save that", true);
+  TL.prev = r.body.preview; TL.open = null; paintThemeLights();
+  toast(scene ? `${device} → ${scene} in this theme` : `${device} back to the theme's pick`);
 }
 async function applyTheme(id, btn){
   const nm = (QUICK.find(t=>t.id===id) || {}).nm || id;
