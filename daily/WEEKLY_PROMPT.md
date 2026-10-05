@@ -231,7 +231,7 @@ reads (`daily\window.js`), so keep to these field names:
 }
 ```
 
-- `kind` is the label shown in the pill above the headline, written for a person: `Holiday`, `Tonight's sky`, `Out today`, `Anime · season finale`, `Outside this week`, `Somewhere else`, `On this day`.
+- `kind` is the label shown in the pill above the headline, written for a person: `Holiday`, `Tonight's sky`, `Out today`, `Anime · season finale`, `Outside this week`, `Somewhere else`, `On this day`, `Weird holiday`.
 - `scene.file` is relative to `daily\`. `fn` is the function name in that file.
 - `night` is the scene used after dark. Use `null` only for official-art days.
 - For official art, leave out `scene` and `night`, and set `"art": "art/2026-11-19-gta6.jpg"` and `"focus": "right center"` (a CSS object-position).
