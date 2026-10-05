@@ -41,6 +41,7 @@ blank ordinary day is fine; a wrong release date is not.
 | `nature` | What's happening outside around the city that week: blossom, fireflies, cicadas, leaf colour, geese heading south, first snowdrops. | Ohio DNR, extension services, general knowledge (mark as `approximate`) |
 | `place` | A place in the world at its best this week: blossom season in Kyoto, Lofoten in the dark season, Venice during Carnival. | general knowledge; no date needed |
 | `history` | A real anniversary with a strong picture (the Moon landing, first flight). | Wikipedia "On this day" |
+| `fun` | Weird and fun holidays: National Cat Day, Talk Like a Pirate Day, Pi Day, May the 4th, Nacho Day. Pick ones with a picture worth drawing and a wink in the headline. **About once a week, never two in a row.** The user asked for these occasionally, for variety. | nationaltoday.com, checkiday.com (confirm the date) |
 
 **No sports, ever.**
 
@@ -54,7 +55,9 @@ Highest first:
 5. `place`
 6. `nature`
 7. `history`
-8. fun days (Pi Day, May the 4th), only if the day is otherwise empty
+8. `fun`: weird holidays. Can outrank `place`, `nature` and `history` about once a week, so a week does not go by without one; otherwise use them to fill a quiet day. Never two in a row.
+
+**Variety is the point.** Within a week, avoid repeating a kind on back-to-back days where there is a choice, and spread the kinds out across the week.
 
 The winner sets the scene and the headline. Up to two runners-up become
 `chips`, short tags such as `"Orionid meteors still active"`. Countdown chips
