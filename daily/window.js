@@ -80,6 +80,7 @@ html.win #toast{z-index:200}
 #win{position:fixed;inset:0;background:#000;overflow:hidden;z-index:50;
   font-family:Outfit,"Segoe UI",system-ui,sans-serif;color:#fff}
 .win-stage{position:absolute;left:0;top:0;width:${W}px;height:${H}px;transform-origin:0 0}
+.wl-box{position:absolute;left:0;top:0;width:${W}px;height:${H}px;transform-origin:0 0;pointer-events:none}
 .wl{position:absolute;inset:0;width:${W}px;height:${H}px;display:block;pointer-events:none}
 .wl[hidden]{display:none}
 .wl-art{object-fit:cover}
@@ -317,6 +318,74 @@ html.win #toast{z-index:200}
 .w-con .chips{display:none}
 .w-close{position:absolute;right:16px;top:14px;width:44px;height:44px;border-radius:50%;border:0;
   background:rgba(255,255,255,.14);color:#fff;font-size:22px;cursor:pointer;z-index:2}
+
+/* ---- a board narrower than the bar: a phone on its side (see fit) */
+html.win-narrow .w-today{max-width:none;left:640px}
+html.win-narrow .w-title{font-size:64px}
+html.win-narrow .w-dock .qb:nth-child(n+5){display:none!important}
+html.win-narrow .w-dock .qb{width:118px!important;height:112px!important}
+html.win-narrow .w-side2{width:280px}
+html.win-narrow .w-player{width:440px}
+html.win-narrow .w-player:not(.has-art) .media-art{display:none}
+html.win-narrow .w-player.has-art,html.win-narrow .win-stage.has-cast .w-player.has-art{width:440px;height:248px}
+html.win-narrow .w-cast{width:440px}
+html.win-narrow .w-con{width:auto;left:640px}
+html.win-narrow .w-pop{width:auto;left:64px}
+html.win-narrow .w-pop-grid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+html.win-narrow .w-pt{width:auto}
+html.win-narrow .w-menu,html.win-narrow .w-bgmode,html.win-narrow .w-tmr{width:62px;height:62px;right:10px;opacity:.75}
+html.win-narrow .w-menu{top:12px;font-size:28px}
+html.win-narrow .w-bgmode{top:84px}
+html.win-narrow .w-tmr{top:156px;font-size:19px}
+html.win-narrow .w-bgtip{right:84px;top:100px}
+html.win-narrow .w-today,html.win-narrow .w-con{right:90px}
+
+/* ---- a phone held upright (see fit). The same pieces, stacked in one
+   scrolling column over the scene instead of pinned to the strip's corners.
+   Sizes are in board px; the board is 640 wide, so 1px here is ~0.6pt. */
+#w-flow{display:none}
+html.win-tall #w-flow{position:absolute;inset:0;display:flex;flex-direction:column;gap:22px;overflow-x:hidden;overflow-y:auto;
+  padding:calc(env(safe-area-inset-top,0px) / var(--k,1) + 34px) 26px calc(env(safe-area-inset-bottom,0px) / var(--k,1) + 26px);
+  background:linear-gradient(180deg,rgba(0,0,0,.42),rgba(0,0,0,0) 32%,rgba(0,0,0,0) 52%,rgba(0,0,0,.4))}
+html.win-tall #w-flow > *{position:relative!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;flex:none}
+html.win-tall #w-flow > .w-sp{flex:1 1 auto}
+html.win-tall .w-wx{padding-right:84px}
+html.win-tall .w-top{flex-wrap:wrap;row-gap:10px}
+html.win-tall .w-temp{font-size:150px}
+html.win-tall .w-today{text-align:left;max-width:none}
+html.win-tall .w-title{font-size:58px}
+html.win-tall .w-detail{font-size:24px}
+html.win-tall .w-chips{justify-content:flex-start}
+html.win-tall .w-chips span{font-size:20px}
+html.win-tall #w-con:not([hidden]) ~ #w-today{display:none}
+html.win-tall .w-con{width:auto;height:600px}
+html.win-tall .w-player,html.win-tall .win-stage.has-cast .w-player{width:auto;transition:none}
+html.win-tall .w-player.has-art,html.win-tall .win-stage.has-cast .w-player.has-art{width:auto;height:auto;aspect-ratio:16/9}
+html.win-tall .w-cast{width:auto}
+html.win-tall .w-dock{flex-wrap:wrap}
+html.win-tall #w-quick{flex:1 1 100%}
+html.win-tall .w-dock .quick{display:grid!important;grid-template-columns:repeat(3,1fr)!important;width:100%!important}
+html.win-tall .w-dock .qb{width:auto!important;height:124px!important}
+html.win-tall .w-side2{flex:1;width:auto;min-width:0}
+html.win-tall .w-ask{width:124px}
+html.win-tall .w-menu,html.win-tall .w-bgmode,html.win-tall .w-tmr{width:66px;height:66px;right:22px;opacity:.8}
+html.win-tall .w-menu{top:calc(env(safe-area-inset-top,0px) / var(--k,1) + 30px);font-size:30px}
+html.win-tall .w-bgmode{top:calc(env(safe-area-inset-top,0px) / var(--k,1) + 108px)}
+html.win-tall .w-bgmode svg{width:34px;height:34px}
+html.win-tall .w-tmr{top:calc(env(safe-area-inset-top,0px) / var(--k,1) + 186px);font-size:20px}
+html.win-tall .w-bgtip{right:100px;top:calc(env(safe-area-inset-top,0px) / var(--k,1) + 124px)}
+html.win-tall .w-pop{left:18px;right:18px;width:auto;overflow-y:auto;
+  top:calc(env(safe-area-inset-top,0px) / var(--k,1) + 18px);bottom:calc(env(safe-area-inset-bottom,0px) / var(--k,1) + 18px)}
+html.win-tall .w-pop-h span{display:block;margin:4px 0 0}
+html.win-tall .w-pop-grid{grid-template-columns:repeat(3,1fr);gap:12px}
+html.win-tall .w-pt{width:auto;height:112px}
+html.win-tall .w-close{width:60px;height:60px;font-size:26px}
+/* iPhone Safari cannot go fullscreen; a Home Screen icon can. Said once. */
+.w-a2hs{display:flex;gap:16px;align-items:center;padding:16px 18px;font-size:22px;line-height:1.3}
+.w-a2hs[hidden],html:not(.win-tall) .w-a2hs{display:none!important}
+.w-a2hs b{font-weight:600}
+.w-a2hs svg{width:34px;height:34px;flex:none;vertical-align:-8px}
+.w-a2hs button{flex:none;width:52px;height:52px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font-size:22px}
 `;
 
 /* ------------------------------------------------------------ small bits */
@@ -689,10 +758,43 @@ function closePop(){
 }
 
 /* ----------------------------------------------------------------- layout */
+/* The board is 2560x720 on the bar and letterboxed anywhere wider. Anything
+   squarer gets a board of its own shape instead of a thin strip: on its side
+   (a phone in landscape) the strip just gets shorter, down to 1400 wide; held
+   upright, the board is 640 wide and as tall as the screen, and the pieces
+   stack in one column (setTall). The scene always covers the board: scaled to
+   its height and centred, so an upright phone sees the middle of the
+   picture. On the bar itself every number here is what it was before. */
+const TALL_W = 640;
+function setTall(on){
+  const de = document.documentElement;
+  if(de.classList.contains("win-tall") === on && (on ? q("#w-flow") : true)) return;
+  de.classList.toggle("win-tall", on);
+  const st = q("#win-stage");
+  let flow = q("#w-flow");
+  if(!flow){ flow = el("div"); flow.id = "w-flow"; q("#wl-box").after(flow); }
+  // Order matters only upright: it is the reading order of the column.
+  const ids = ["w-wx", "w-con", "w-today", "w-sp", "w-a2hs", "w-player", "w-cast", "w-dock"];
+  if(!q("#w-sp")){ const sp = el("div", "w-sp"); sp.id = "w-sp"; flow.append(sp); }
+  for(const id of ids){
+    const n = id === "w-wx" ? q(".w-wx") : q("#" + id); if(!n) continue;
+    if(on) flow.append(n);
+    else if(id !== "w-sp") flow.before(n);
+  }
+}
 function fit(){
   const st = q("#win-stage"); if(!st) return;
-  const k = Math.min(innerWidth / W, innerHeight / H);
-  st.style.transform = `translate(${(innerWidth - W * k) / 2}px,${(innerHeight - H * k) / 2}px) scale(${k})`;
+  const vw = innerWidth, vh = innerHeight, tall = vw / vh < 1.2;
+  const sw = tall ? TALL_W : Math.round(Math.max(1400, Math.min(W, H * vw / vh)));
+  const sh = tall ? Math.round(vh * TALL_W / vw) : H;
+  const k = Math.min(vw / sw, vh / sh);
+  setTall(tall);
+  document.documentElement.classList.toggle("win-narrow", !tall && sw < 2200);
+  st.style.width = sw + "px"; st.style.height = sh + "px";
+  st.style.setProperty("--k", k);
+  st.style.transform = `translate(${(vw - sw * k) / 2}px,${(vh - sh * k) / 2}px) scale(${k})`;
+  const s = Math.max(sw / W, sh / H), box = q("#wl-box");
+  if(box) box.style.transform = `translate(${(sw - W * s) / 2}px,${(sh - H * s) / 2}px) scale(${s})`;
 }
 function windowLayout(){
   document.documentElement.classList.add("win");
@@ -703,7 +805,7 @@ function windowLayout(){
     document.head.appendChild(f);
   }
   const root = el("div"); root.id = "win";
-  root.innerHTML = `<div class="win-stage" id="win-stage">
+  root.innerHTML = `<div class="win-stage" id="win-stage"><div class="wl-box" id="wl-box">
     <img class="wl" id="wl-sky" alt="">
     <canvas class="wl" id="wl-aur" width="1280" height="360"></canvas>
     <img class="wl" id="wl-clouds" alt="">
@@ -711,7 +813,7 @@ function windowLayout(){
     <img class="wl wl-art" id="wl-art" alt="" hidden>
     <div class="wl" id="wl-tint"></div>
     <canvas class="wl" id="wl-fx" width="${W}" height="${H}"></canvas>
-    <div class="wl wl-shade"></div>
+    <div class="wl wl-shade"></div></div>
     <div class="w-wx ts">
       <div class="w-top"><div class="w-clock" id="w-clock"></div><div class="w-food" id="w-food" hidden></div><div class="w-timer" id="w-timer" hidden></div></div>
       <div class="w-row"><div class="w-temp" id="w-temp">--</div>
@@ -807,7 +909,19 @@ function windowLayout(){
     const mic = q("#mini-mic");
     if(mic && !mic.hidden) mic.click(); else { const t = q("#mini-prompt"); if(t) t.focus(); }
   };
-  q("#w-menu").onclick = () => { location.search = "?view=classic"; };
+  // On a phone the classic board is the bar's rail layout and does not fit;
+  // the ordinary page does (?view=full, which carries its own way back).
+  const onPhone = () => /^(phone|full)$/.test(new URLSearchParams(location.search).get("view") || "") ||
+                        navigator.standalone || Math.min(innerWidth, innerHeight) < 600;
+  q("#w-menu").onclick = () => { location.search = onPhone() ? "?view=full" : "?view=classic"; };
+
+  // iPhone Safari has no fullscreen for a page; the Home Screen icon opens
+  // this view with no toolbars at all. Say how once, until dismissed.
+  const a2 = el("div", "w-a2hs glass"); a2.id = "w-a2hs";
+  a2.innerHTML = `<div style="flex:1"><b>Full screen:</b> tap Share <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M6 11H5v10h14V11h-1"/></svg> then <b>Add to Home Screen</b>. Open Lights from that icon.</div><button aria-label="Dismiss">✕</button>`;
+  a2.hidden = !(/iPhone|iPad|iPod/.test(navigator.userAgent) && !navigator.standalone && store.get("win-a2hs") !== "no");
+  a2.querySelector("button").onclick = () => { a2.hidden = true; store.set("win-a2hs", "no"); };
+  q("#win-stage").appendChild(a2);
 
   // Background: today's special scene, or the plain day/night cycle.
   const ICON_TODAY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="M12 13l1 2 2 .3-1.5 1.4.4 2.1-1.9-1-1.9 1 .4-2.1L9 15.3l2-.3z" fill="currentColor" stroke="none"/></svg>';

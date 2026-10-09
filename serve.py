@@ -544,6 +544,24 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send_bytes(200, ico.read_bytes(), "image/x-icon")
             return self.send_json(404, {"detail": "no icon"})
 
+        # Home Screen app for a phone. iOS Safari has no fullscreen for a
+        # page, so the only way to lose the toolbars is to be launched from a
+        # Home Screen icon; this manifest and the icons are what make that
+        # icon open the phone view standalone.
+        if p in ("/icon-180.png", "/icon-512.png"):
+            f = HERE / p.lstrip("/")
+            if f.exists():
+                return self.send_bytes(200, f.read_bytes(), "image/png")
+        if p == "/manifest.webmanifest":
+            return self.send_bytes(200, json.dumps({
+                "name": "Lights", "short_name": "Lights",
+                "start_url": "/?view=phone", "scope": "/",
+                "display": "fullscreen", "orientation": "any",
+                "background_color": "#000000", "theme_color": "#000000",
+                "icons": [{"src": "/icon-180.png", "sizes": "180x180", "type": "image/png"},
+                          {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png"}],
+            }).encode(), "application/manifest+json")
+
         if p == "/api/config":
             # Deliberately no token. The page never needs it.
             return self.send_json(200, {

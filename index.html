@@ -8,6 +8,10 @@
 <meta name="theme-color" content="#37a6d9">
 <title>Apartment</title>
 <link rel="icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="Lights">
+<meta name="mobile-web-app-capable" content="yes">
 <style>
 /* ============================================================ Frutiger Aero
    Gloss, glass and water. Three moods, chosen by lightd rather than by the
@@ -8835,9 +8839,13 @@ applySeason();
    here rather than behind a new one. The previous board layout is kept at
    ?view=classic; if window.js fails to load, the bar falls back to it. */
 {
-  const _view = new URLSearchParams(location.search).get("view");
+  // ?view=phone is the same scene view; window.js lays it out for a phone.
+  // Launched from a Home Screen icon (navigator.standalone) it is the
+  // default, whichever URL the icon was saved from.
+  let _view = new URLSearchParams(location.search).get("view");
+  if(!_view && (navigator.standalone || matchMedia("(display-mode: fullscreen), (display-mode: standalone)").matches)) _view = "phone";
   if(_view === "classic" || (_view === "bar" && !window.windowLayout)) barLayout();
-  else if((_view === "bar" || _view === "window") && window.windowLayout) windowLayout();
+  else if((_view === "bar" || _view === "window" || _view === "phone") && window.windowLayout) windowLayout();
   // The classic board is reached from the new bar's ☰, and has no address
   // bar to come back with - so it carries its own way back.
   if(_view === "classic"){
@@ -8849,6 +8857,16 @@ applySeason();
     back.onclick = () => { location.search = "?view=bar"; };
     const rail = document.querySelector(".rail");
     (rail || document.body).appendChild(back);
+  }
+  // The phone's ☰ opens the ordinary page as ?view=full. From a Home Screen
+  // icon there is no back button either, so it gets one too.
+  if(_view === "full"){
+    const back = document.createElement("button");
+    back.className = "pill";
+    back.textContent = "← Scene";
+    back.style.cssText = "position:fixed;left:.8rem;bottom:calc(3.2rem + env(safe-area-inset-bottom,0px));z-index:65;font-weight:600";
+    back.onclick = () => { location.search = "?view=phone"; };
+    document.body.appendChild(back);
   }
 }
 
