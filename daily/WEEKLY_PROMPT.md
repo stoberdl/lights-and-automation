@@ -19,8 +19,12 @@ today, unless the request names specific dates; then do exactly those dates.
 The result goes into `days.json` (section 8). Keep every existing entry you
 were not asked to rebuild, and never change a day marked `"locked": true`.
 
-Location for anything local (sky, sunset, nature, weather) is the city, Ohio
-(weather station the local station). Times are America/New_York.
+Location for anything local (sky, sunset, nature, weather) is in
+`LOCATION.md` next to this file, which is kept out of git. Times are
+America/New_York. Never write the city, the NWS grid point or the station
+into any other file: in `days.json` cite the forecast as
+`https://api.weather.gov`, and in reviews and scene comments say "the local
+forecast" or "the city".
 
 ## 2. What counts as news
 
@@ -32,13 +36,13 @@ blank ordinary day is fine; a wrong release date is not.
 | Kind | Include | Where to confirm |
 |---|---|---|
 | `holiday` | Major US holidays, plus Lunar New Year, Diwali, Hanukkah, Día de Muertos, Halloween, the solstices and equinoxes. Countdown chips 30, 14 and 7 days out, and daily in the last 7. | timeanddate.com |
-| `sky` | Named full moons, supermoons, eclipses visible from Ohio, meteor shower peaks, bright planets worth finding, ISS passes over the city after dark. | timeanddate.com, in-the-sky.org, NASA |
+| `sky` | Named full moons, supermoons, eclipses visible from Ohio, meteor shower peaks, bright planets worth finding, ISS passes overhead after dark. | timeanddate.com, in-the-sky.org, NASA |
 | `aurora` | Kp 6+ forecast for a night, meaning it might be visible this far south. | NOAA SWPC 27-day outlook, then re-checked on the day by the live layer |
 | `game` | **Only these series:** World of Warcraft, Overwatch, League of Legends, Apex Legends, Slay the Spire, Borderlands, The Elder Scrolls (Skyrim etc.), Grand Theft Auto. Count launches, expansions and new seasons. The only other game allowed is a PC launch that is front-page news everywhere, at the size of a new GTA or Elder Scrolls. **When in doubt, leave it out.** The user rejected Aion 2, Gears of War: E-Day and Dragon Ball as noise. No sports games. | Steam store page, publisher news, the game's official site |
 | `anime` | Premieres and season finales of shows that are genuinely big: in AniList's top 50 by popularity for their season. Prefer non-shonen. Use a shonen show only for a finale or premiere, and only if nothing else is on that week. Dragon Ball was rejected. | AniList (`graphql.anilist.co`), Crunchyroll schedule |
-| `weather` | Notable days ahead in the forecast: first frost, first snow, a heat wave, a storm system. Live warnings are handled by the dashboard, not by you. | api.weather.gov for the local station / the city |
+| `weather` | Notable days ahead in the forecast: first frost, first snow, a heat wave, a storm system. Live warnings are handled by the dashboard, not by you. | api.weather.gov (station in `LOCATION.md`) |
 | `daylight` | Clock changes, the shortest and longest day, first sunset after 8 PM (or before 5 PM). | timeanddate.com |
-| `nature` | What's happening outside around the city that week: blossom, fireflies, cicadas, leaf colour, geese heading south, first snowdrops. | Ohio DNR, extension services, general knowledge (mark as `approximate`) |
+| `nature` | What's happening outside around home that week: blossom, fireflies, cicadas, leaf colour, geese heading south, first snowdrops. | Ohio DNR, extension services, general knowledge (mark as `approximate`) |
 | `place` | A place in the world at its best this week: blossom season in Kyoto, Lofoten in the dark season, Venice during Carnival. | general knowledge; no date needed |
 | `history` | A real anniversary with a strong picture (the Moon landing, first flight). | Wikipedia "On this day" |
 | `fun` | Weird and fun holidays: National Cat Day, Talk Like a Pirate Day, Pi Day, May the 4th, Nacho Day. Pick ones with a picture worth drawing and a wink in the headline. **About once a week, never two in a row.** The user asked for these occasionally, for variety. | nationaltoday.com, checkiday.com (confirm the date) |

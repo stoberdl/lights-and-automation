@@ -35,3 +35,7 @@ vesync_*.json
 # Scratch scripts and backups (hold device IDs)
 .tmp_*
 *.bak-*
+
+# Local-only: home location, and the daily run reviews (they name it)
+daily/LOCATION.md
+daily/calendar/*.review.md

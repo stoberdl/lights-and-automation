@@ -32,7 +32,7 @@
     "fx_todo": ["water-shimmer band x 0-2560, y 432-650", "birds (gulls near 560-870, 280-340)", "stars-twinkle (night)", "lighthouse beam slow sweep from 1180,207 (night)", "masthead lights flicker at 312,431 / 560,430 / 742,427 / 150,442 (night)"],
     "lights": null,
     "sources": [
-      "https://api.weather.gov/",
+      "https://api.weather.gov",
       "https://data.rcc-acis.org/StnData (CMH daily normal max for Oct 1: 72°F)",
       "https://en.wikipedia.org/wiki/Halloween",
       "https://www.almanac.com/saturn-opposition"
@@ -54,7 +54,7 @@
     "sources": [
       "https://anilist.co/anime/195516",
       "https://animecorner.me/the-apothecary-diaries-season-3-reveals-new-trailer-visual-opening-theme-by-yorushika-october-2-premiere/",
-      "https://api.weather.gov/",
+      "https://api.weather.gov",
       "https://www.almanac.com/saturn-opposition"
     ],
     "confidence": "confirmed",
@@ -73,7 +73,7 @@
     "lights": null,
     "sources": [
       "https://www.almanac.com/saturn-opposition",
-      "https://api.weather.gov/"
+      "https://api.weather.gov"
     ],
     "confidence": "confirmed",
     "locked": false
@@ -91,7 +91,7 @@
     "lights": null,
     "sources": [
       "https://www.almanac.com/saturn-opposition",
-      "https://api.weather.gov/",
+      "https://api.weather.gov",
       "https://anilist.co/anime/210031"
     ],
     "confidence": "confirmed",
