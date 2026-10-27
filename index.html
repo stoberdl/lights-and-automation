@@ -7452,9 +7452,12 @@ async function haMedia(){
     art:haArt(p.art || p.entity_picture),
   };
 }
+// Filled in by serve.py from "ha_url" in lightd.config.json.
+const HA_URL = "__HA_URL__";
 function haArt(u){
   if(!u) return null;
-  return /^https?:/.test(u) ? u : "http://192.168.x.x" + u;
+  if(/^https?:/.test(u)) return u;
+  return /^https?:/.test(HA_URL) ? HA_URL.replace(/\/$/, "") + u : null;
 }
 /* The main PC's browser, through the bridge extension (ytbridge/).
    That machine has no server on it: the extension posts what it is playing to

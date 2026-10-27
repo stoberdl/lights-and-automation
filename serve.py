@@ -44,7 +44,10 @@ DEFAULTS = {
     # why that folder is as sensitive as this file.
     "browser_token": "",
     "beatsaber_ui": "",
-    "claude_exe":   r"C:\Users\user\.local\bin\claude.exe",
+    "claude_exe":   str(Path.home() / ".local" / "bin" / "claude.exe"),
+    # Home Assistant, for the cover art it serves from its own host, e.g.
+    # "http://192.168.x.x". Set it in lightd.config.json; empty means no art.
+    "ha_url":       "",
     # Claude Code runs here, with this directory as its working directory.
     "claude_model": "",
 }
@@ -529,7 +532,10 @@ class Handler(BaseHTTPRequestHandler):
             f = HERE / "index.html"
             if not f.exists():
                 return self.send_json(404, {"detail": "index.html missing"})
-            return self.send_bytes(200, f.read_bytes(), "text/html; charset=utf-8")
+            # The HA address lives in the config, not in the page source.
+            body = f.read_bytes().replace(
+                b'"__HA_URL__"', json.dumps(CFG.get("ha_url") or "").encode())
+            return self.send_bytes(200, body, "text/html; charset=utf-8")
 
         # Any other .html in this directory, so a diagnostic harness can be
         # loaded same-origin and read the dashboard's own layout.

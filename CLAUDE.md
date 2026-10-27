@@ -65,7 +65,7 @@ must never be printed.
 ## The service
 
 lightd runs on `http://127.0.0.1:8787` on this machine. It owns Govee scenes,
-themes, the day cycle, and all automation. Home Assistant (`http://192.168.x.x`,
+themes, the day cycle, and all automation. Home Assistant (LAN address in `D:\lightd\data\ha.host`,
 port 80) supplies live state and fast local control; lightd already routes to
 it automatically, so drive everything through lightd rather than calling HA
 directly.

@@ -31,3 +31,7 @@ daily/calendar/*.png
 .vesync.ok
 .vesync.token.json
 vesync_*.json
+
+# Scratch scripts and backups (hold device IDs)
+.tmp_*
+*.bak-*

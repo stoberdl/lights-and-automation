@@ -14,7 +14,7 @@ if ($Daily) {
 }
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $here
-$claude = "C:\Users\user\.local\bin\claude.exe"
+$claude = "$env:USERPROFILE\.local\bin\claude.exe"
 New-Item -ItemType Directory -Force "$here\logs", "$here\calendar" | Out-Null
 $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $log = "$here\logs\run-$stamp.log"

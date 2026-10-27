@@ -3,7 +3,7 @@
 You are building next week's backgrounds for the lights bar, the 2560×720
 touch strip that shows the apartment dashboard. Each day gets a scene and a
 short headline that answers "what's going on today". Work in
-`C:\Users\user\Desktop\Lights\daily\`. Run unattended: nobody will answer
+`%USERPROFILE%\Desktop\Lights\daily\`. Run unattended: nobody will answer
 questions, so decide and log your reasons.
 
 Read `..\CLAUDE.md` first for how the dashboard and lightd work. Do not edit
