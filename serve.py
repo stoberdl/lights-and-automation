@@ -7,7 +7,7 @@ browser.
   python serve.py            # http://127.0.0.1:8790
   python serve.py --port 9100 --no-browser
 """
-import argparse, json, os, shutil, socket, subprocess, sys, threading, time, webbrowser
+import argparse, json, os, re, shutil, socket, subprocess, sys, threading, time, webbrowser
 import urllib.request, urllib.error, urllib.parse
 from collections import deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -318,6 +318,46 @@ which attaches the token for you - start with /context and /levers.
 {prompt}
 """
 
+# Talk mode: the page listens, sends, and reads the reply aloud, then listens
+# again. Follow-ups resume the same Claude session, so "a bit warmer" knows
+# what it is warmer than, and the briefing above is not sent twice.
+VOICE_NOTE = """
+(Spoken aloud: this came by voice, and your final message will be read out by
+a speech synthesiser in the room. Do the work first, then answer in one or two
+short, plain spoken sentences - no markdown, lists, symbols, ids or counts
+like "4/6"; say "four of six lights" instead. If something failed, say so.
+If you need a choice from them, end with a short question.)
+"""
+
+# The voice for talk mode. Browsers' built-in speechSynthesis is unreliable in
+# Chrome - it can stay silent and never report finishing, which stalls the
+# conversation - so the page asks for an MP3 here instead. edge-tts uses
+# Microsoft's online neural voices: free, no key, but it needs the internet.
+TTS_VOICES = ("en-US-AriaNeural", "en-US-AvaNeural")
+
+
+def tts_mp3(text):
+    import asyncio
+    import edge_tts
+
+    async def one(voice):
+        out = bytearray()
+        async for chunk in edge_tts.Communicate(text, voice, rate=CFG.get("tts_rate") or "+22%").stream():
+            if chunk.get("type") == "audio":
+                out += chunk["data"]
+        return bytes(out)
+
+    last = None
+    for voice in (CFG.get("tts_voice") or TTS_VOICES[0],) + TTS_VOICES[1:]:
+        try:
+            data = asyncio.run(one(voice))
+            if data:
+                return data
+        except Exception as e:
+            last = e
+    raise RuntimeError("no audio: %s" % last)
+
+
 RUNS, RUNS_LOCK = {}, threading.Lock()
 RUN_ORDER = deque(maxlen=25)
 RUN_ACTIVE = threading.Lock()       # serialises: one Claude at a time
@@ -328,6 +368,8 @@ class Run:
 
     def __init__(self, run_id, prompt):
         self.id = run_id
+        self.resume = None
+        self.warm = None
         self.prompt = prompt
         self.started = time.time()
         self.events = []            # parsed stream-json objects, in order
@@ -357,6 +399,8 @@ def _pump(run, exe, full_prompt):
     """Run Claude and turn its stdout into events. Runs on its own thread."""
     args = [exe, "-p", full_prompt,
             "--output-format", "stream-json", "--verbose"]
+    if run.resume:
+        args += ["--resume", run.resume]
     if CFG.get("claude_model"):
         args += ["--model", CFG["claude_model"]]
     try:
@@ -399,7 +443,7 @@ def _pump(run, exe, full_prompt):
         RUN_ACTIVE.release()
 
 
-def start_claude(prompt):
+def start_claude(prompt, voice=False, resume=None):
     exe = CFG.get("claude_exe") or ""
     if not exe or not Path(exe).exists():
         exe = shutil.which("claude") or ""
@@ -409,7 +453,13 @@ def start_claude(prompt):
         return None, "a Claude run is already going - wait for it to finish"
 
     run_id = time.strftime("%Y%m%d-%H%M%S")
-    full = PREAMBLE.format(port=CFG.get("port", 8790), prompt=prompt)
+    # A session id is only ever one Claude printed itself; anything else is
+    # not passed to a command line.
+    if resume and not re.fullmatch(r"[0-9a-fA-F-]{8,64}", resume):
+        resume = None
+    full = prompt if resume else PREAMBLE.format(port=CFG.get("port", 8790), prompt=prompt)
+    if voice:
+        full += VOICE_NOTE
     PROMPTS.mkdir(exist_ok=True)
     try:
         (PROMPTS / (run_id + ".md")).write_text(full, encoding="utf-8")
@@ -417,6 +467,7 @@ def start_claude(prompt):
         pass
 
     run = Run(run_id, prompt)
+    run.resume = resume
     with RUNS_LOCK:
         RUNS[run_id] = run
         RUN_ORDER.append(run_id)
@@ -426,6 +477,268 @@ def start_claude(prompt):
 
     threading.Thread(target=_pump, args=(run, exe, full), daemon=True).start()
     return run, None
+
+
+# ---------------------------------------------------------------- bulk
+# lightd has no "every light at once" call, so "all lights 40%" used to be
+# nineteen separate tool calls from Claude, one after another - each a
+# PowerShell start-up plus a Govee round trip. This fans one request out to
+# every device in parallel and answers once, so it costs about as long as the
+# slowest light (a Bluetooth strip, ~2-6s) rather than the sum of them all.
+def bulk(req):
+    from concurrent.futures import ThreadPoolExecutor
+    instance = req.get("instance")
+    if not instance or "value" not in req:
+        return 400, {"detail": "need instance and value"}
+    status, raw, _ = lightd("GET", "/live")
+    try:
+        devs = json.loads(raw).get("devices") or []
+    except Exception:
+        return 502, {"detail": "could not read /live"}
+    want = req.get("devices", "all")
+    if want == "all":
+        pick = devs
+    elif want == "on":
+        pick = [d for d in devs if d.get("power")]
+    else:
+        names = {str(x).lower() for x in (want if isinstance(want, list) else [want])}
+        pick = [d for d in devs if str(d.get("device", "")).lower() in names
+                or str(d.get("id", "")).lower() in names]
+    if not pick:
+        return 404, {"detail": "no devices matched", "known": [d.get("device") for d in devs]}
+    body = json.dumps({"instance": instance, "value": req["value"],
+                       **({"hold": True} if req.get("hold") else {})}).encode()
+
+    def one(d):
+        path = "/devices/%s/capability" % urllib.parse.quote(str(d["id"]), safe="")
+        st, out, _ = lightd("POST", path, "", body)
+        try:
+            out = json.loads(out)
+        except Exception:
+            out = out[:200].decode("utf-8", "replace")
+        ok = st < 300
+        return {"device": d.get("device"), "ok": ok, "status": st,
+                "transport": out.get("transport") if isinstance(out, dict) else None,
+                **({} if ok else {"error": out})}
+
+    with ThreadPoolExecutor(max_workers=24) as ex:
+        results = list(ex.map(one, pick))
+    with CACHE_LOCK:
+        CACHE.clear()
+    return 200, {"instance": instance, "value": req["value"],
+                 "accepted": sum(r["ok"] for r in results), "of": len(results),
+                 "note": "accepted is not the same as lit: the usual 6 wall-switched "
+                         "lights accept and do nothing while their switch is off.",
+                 "results": results}
+
+
+# ---------------------------------------------------------------- warm Claude
+# A fresh `claude -p` per request cost ~3s of start-up before the model saw a
+# word, and then it spent two or three more tool round trips reading /context
+# and /levers - so "hi" took six seconds and "living room to 40%" far longer.
+# Talking to it is only bearable if it answers like a speaker does.
+#
+# So one Claude stays running, fed over stdin (--input-format stream-json),
+# and is primed *before* anyone speaks: the server reads /context, /levers and
+# /live itself and hands them over as the first message. A request then costs
+# one model turn plus whatever it actually has to do. Each turn also carries a
+# fresh /live, so "which lights are on" needs no tool call at all.
+#
+# The conversation lives as long as the process. After WARM_IDLE seconds
+# without a message it is replaced (and re-primed) in the background, so the
+# next "hey" starts clean but still starts warm.
+WARM_IDLE = 600
+WARM_MODEL_DEFAULT = "claude-sonnet-5-5"
+WARM_SYSTEM = """You are the voice and chat assistant for this apartment's lights,
+running inside the dashboard. Speed matters more than anything: people are
+standing in the room waiting. Rules:
+- Act immediately. Do not explore, plan aloud, or re-read the briefing - you
+  were given /context, /levers and /live in the first message and a fresh /live
+  with every request.
+- Drive lights with ONE Bash call to curl (the proxy at 127.0.0.1:8790 adds
+  auth; use -s -m 20). Several lights or all of them: ALWAYS the bulk call,
+  never one call per light:
+    curl -s -m 20 -X POST http://127.0.0.1:8790/api/bulk -H 'Content-Type: application/json' \
+      -d '{"devices":"all","instance":"brightness","value":40}'
+  "devices" is "all", "on" (only lights currently on), or a list of device
+  names/ids. instance is any capability: powerSwitch (value 1 or 0),
+  brightness (1-100), colorTemperatureK, colorRgb ([r,g,b]), lightScene (name).
+  Devices that lack a capability just report an error in their row - fine.
+  Whole-apartment looks: POST /api/lightd/themes/{id}/apply?verify=true.
+  One light: POST /api/lightd/devices/{id}/capability.
+- Before any text, do the work. Then reply in one or two short sentences.
+- Never show commands, ids or JSON in the reply."""
+
+
+def _lightd_text(path):
+    try:
+        status, data, _ = lightd("GET", path, "", None)
+        return data.decode("utf-8", "replace") if status < 400 else "(%s %s)" % (path, status)
+    except Exception as e:
+        return "(%s unavailable: %s)" % (path, e)
+
+
+def _compact_live():
+    """/live trimmed to what a request needs: name, id, on, brightness, theme."""
+    raw = _lightd_text("/live")
+    try:
+        d = json.loads(raw)
+    except Exception:
+        return raw[:6000]
+    rows = []
+    devs = d.get("devices") or d.get("lights") or []
+    if isinstance(devs, dict):
+        devs = list(devs.values())
+    for x in devs:
+        if not isinstance(x, dict):
+            continue
+        intent = x.get("intent") or {}
+        rows.append("%s | id=%s | %s | %s | brightness %s%s" % (
+            x.get("name") or x.get("device"), x.get("id"),
+            "online" if x.get("online") else ("unreachable" if x.get("live") else "no live state"),
+            "on" if x.get("power") else ("off" if x.get("power") is False else "?"),
+            x.get("brightness"),
+            (" | last sent: %s (theme %s)" % (intent.get("label"), intent.get("theme"))) if intent else ""))
+    return "\n".join(rows) if rows else raw[:6000]
+
+
+class Warm:
+    """One long-lived Claude, primed and waiting."""
+
+    def __init__(self):
+        self.lock = threading.Lock()        # one request at a time
+        self.proc = None
+        self.ready = threading.Event()
+        self.run = None                     # the Run currently receiving events
+        self.last = 0.0
+        self.gen = 0
+
+    def _spawn(self):
+        exe = CFG.get("claude_exe") or ""
+        if not exe or not Path(exe).exists():
+            exe = shutil.which("claude") or ""
+        if not exe:
+            raise RuntimeError("claude executable not found")
+        args = [exe, "-p", "--input-format", "stream-json",
+                "--output-format", "stream-json", "--verbose",
+                "--strict-mcp-config",
+                "--model", CFG.get("voice_model") or WARM_MODEL_DEFAULT,
+                "--append-system-prompt", WARM_SYSTEM]
+        flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0
+        self.gen += 1
+        self.ready.clear()
+        self.proc = subprocess.Popen(
+            args, cwd=str(HERE), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL, text=True, encoding="utf-8",
+            errors="replace", bufsize=1, creationflags=flags)
+        threading.Thread(target=self._read, args=(self.proc, self.gen), daemon=True).start()
+        prime = ("Briefing for this session. Read it now; do not reply with more "
+                 "than the word ready.\n\n=== /context ===\n%s\n\n=== /levers ===\n%s\n\n"
+                 "=== /live (compact) ===\n%s\n" % (
+                     _lightd_text("/context"), _lightd_text("/levers"), _compact_live()))
+        self._write(prime)
+        self.last = time.time()
+
+    def _write(self, text):
+        msg = {"type": "user", "message": {"role": "user", "content": text}}
+        self.proc.stdin.write(json.dumps(msg) + "\n")
+        self.proc.stdin.flush()
+
+    def _read(self, proc, gen):
+        priming = True
+        for line in proc.stdout:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                obj = json.loads(line)
+            except json.JSONDecodeError:
+                obj = {"type": "raw", "text": line}
+            if priming:
+                if obj.get("type") == "result":
+                    priming = False
+                    self.ready.set()
+                continue
+            run = self.run
+            if run:
+                run.emit(obj)
+                if obj.get("type") == "result":
+                    self.run = None
+                    run.finish("error" if obj.get("is_error") else None)
+                    self.last = time.time()
+                    self.lock.release()
+        # The process ended. Whatever was waiting on it learns so.
+        if gen == self.gen:
+            self.ready.clear()
+            self.proc = None
+        run = self.run
+        if run:
+            self.run = None
+            run.emit({"type": "dashboard_error", "text": "Claude stopped."})
+            run.finish("stopped")
+            self.lock.release()
+
+    def ensure(self):
+        if self.proc is None or self.proc.poll() is not None:
+            self._spawn()
+
+    def ask(self, prompt, voice):
+        if not self.lock.acquire(blocking=False):
+            return None, "Claude is still answering the last one"
+        try:
+            if self.proc is not None and time.time() - self.last > WARM_IDLE:
+                self.kill()                 # stale conversation: start over
+            self.ensure()
+            if not self.ready.wait(timeout=60):
+                raise RuntimeError("Claude did not get ready in time")
+            run_id = time.strftime("%Y%m%d-%H%M%S")
+            run = Run(run_id, prompt)
+            run.warm = self
+            with RUNS_LOCK:
+                RUNS[run_id] = run
+                RUN_ORDER.append(run_id)
+                for old in list(RUNS):
+                    if old not in RUN_ORDER:
+                        RUNS.pop(old, None)
+            text = "Request: %s\n\nLive right now:\n%s" % (prompt, _compact_live())
+            if voice:
+                text += VOICE_NOTE
+            self.run = run
+            self._write(text)
+            self.last = time.time()
+            return run, None
+        except Exception as e:
+            self.run = None
+            self.lock.release()
+            return None, str(e)
+
+    def kill(self):
+        proc, self.proc = self.proc, None
+        self.ready.clear()
+        if proc:
+            try:
+                proc.terminate()
+            except Exception:
+                pass
+
+    def keeper(self):
+        """Keep one primed and waiting; refresh an idle conversation."""
+        while True:
+            try:
+                idle = time.time() - self.last
+                if self.run is None and self.lock.acquire(blocking=False):
+                    try:
+                        if self.proc is not None and idle > WARM_IDLE:
+                            self.kill()
+                        self.ensure()
+                    finally:
+                        self.lock.release()
+            except Exception as e:
+                sys.stderr.write("warm claude: %s\n" % e)
+            time.sleep(20)
+
+
+WARM_CLAUDE = Warm()
 
 
 def launch_beatsaber():
@@ -698,21 +1011,50 @@ class Handler(BaseHTTPRequestHandler):
 
         if p == "/api/claude":
             try:
-                prompt = (json.loads(body or b"{}").get("prompt") or "").strip()
+                req = json.loads(body or b"{}")
             except Exception:
-                prompt = ""
+                req = {}
+            prompt = (req.get("prompt") or "").strip()
             if not prompt:
                 return self.send_json(400, {"detail": "empty prompt"})
-            run, err = start_claude(prompt)
+            voice = bool(req.get("voice"))
+            run, err = WARM_CLAUDE.ask(prompt, voice)
+            if err and "still answering" not in err:
+                sys.stderr.write("warm claude unavailable (%s); one-shot instead\n" % err)
+                run, err = start_claude(prompt, voice=voice,
+                                        resume=(req.get("session") or None))
             if err:
                 return self.send_json(409, {"ok": False, "detail": err})
             return self.send_json(200, {"ok": True, "id": run.id,
                                         "stream": "/api/claude/stream?id=" + run.id})
 
+        if p == "/api/bulk":
+            try:
+                req = json.loads(body or b"{}")
+            except Exception:
+                return self.send_json(400, {"detail": "bad json"})
+            st, out = bulk(req)
+            return self.send_json(st, out)
+
+        if p == "/api/tts":
+            try:
+                text = (json.loads(body or b"{}").get("text") or "").strip()[:1200]
+            except Exception:
+                text = ""
+            if not text:
+                return self.send_json(400, {"detail": "empty text"})
+            try:
+                return self.send_bytes(200, tts_mp3(text), "audio/mpeg")
+            except Exception as e:
+                return self.send_json(502, {"detail": str(e)})
+
         if p == "/api/claude/stop":
             run_id = (json.loads(body or b"{}").get("id") or "")
             with RUNS_LOCK:
                 run = RUNS.get(run_id)
+            if run and getattr(run, "warm", None):
+                run.warm.kill()
+                return self.send_json(200, {"ok": True, "stopped": run_id})
             if not run or not run.proc:
                 return self.send_json(404, {"detail": "no such run"})
             try:
@@ -887,6 +1229,7 @@ def main():
             pass
     print("lightd     %s  (actor %s)" % (CFG["lightd_url"], CFG["actor"]))
     print("claude     %s" % (CFG.get("claude_exe") or "not found"))
+    threading.Thread(target=WARM_CLAUDE.keeper, daemon=True).start()
     if not a.no_browser:
         threading.Timer(0.4, lambda: webbrowser.open(url)).start()
     try:

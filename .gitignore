@@ -39,3 +39,10 @@ vesync_*.json
 # Local-only: home location, and the daily run reviews (they name it)
 daily/LOCATION.md
 daily/calendar/*.review.md
+
+# Private migration notes (LAN details)
+LINUX_SWAP_CONTEXT.md
+
+# Local notes and generated day text: can name the home area, stay off the public repo
+TODO.md
+daily/days.json

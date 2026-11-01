@@ -2322,6 +2322,13 @@ details.panel[open] > summary::before{transform:rotate(90deg)}
 .stat.wx .wcast.hot[data-cast="thunder"]{color:#f3e9ff;
   background:rgba(38,22,62,.68); border-color:rgba(198,160,255,.55);
   box-shadow:0 0 14px rgba(170,120,255,.32), inset 0 1px 0 rgba(255,255,255,.14)}
+/* The alert's own sentence: allowed two lines, since it is the detail the
+   capsule above cannot carry, and cut cleanly after that. */
+.stat.wx.has-alert{min-height:7.2rem}
+.stat.wx .wcast-x{position:relative; z-index:3; display:-webkit-box;
+  -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;
+  font-size:.6rem; line-height:1.25; margin-top:.12rem;
+  color:#ffe9c4; text-shadow:0 1px 2px rgba(0,0,0,.6)}
 .stat.wx .wcast-d{display:block; font-size:.6rem; margin-top:.08rem;
   color:rgba(233,248,255,.66); text-shadow:0 1px 2px rgba(0,0,0,.5);
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
@@ -2764,6 +2771,35 @@ code,.mono{font-family:"Cascadia Code",ui-monospace,"SF Mono",Consolas,monospace
 .ev.done{color:#7fe6c8; border-left-color:#39c7a0; background:rgba(57,199,160,.13); font-weight:600}
 .ev .k{color:#7fd4f5; font-weight:700}
 .ev pre{margin:.3rem 0 0; white-space:pre-wrap; word-break:break-word; opacity:.85; max-height:14rem; overflow:auto}
+/* The conversation. The transcript used to be a terminal - every command,
+   every tool result - which is the machine talking to itself. What the room
+   wants is the two of you: what you said, what Claude said back, and one
+   plain line saying what it is doing in between. Set in the page's own face,
+   not the console's monospace, and big enough to read across the room. */
+.ev.me, .ev.claude, .ev.status{font-family:"Segoe UI",system-ui,sans-serif; border-left:0; white-space:pre-wrap}
+.ev.me{margin:.55rem 0 .3rem auto; max-width:85%; width:fit-content;
+  padding:.6rem .9rem; border-radius:16px 16px 4px 16px;
+  background:linear-gradient(180deg,rgba(90,190,230,.38),rgba(60,150,200,.28));
+  color:#f2fbff; font-size:1.12em; line-height:1.4}
+.ev.claude{margin:.3rem auto .55rem 0; max-width:92%; width:fit-content;
+  padding:.65rem .95rem; border-radius:16px 16px 16px 4px;
+  background:rgba(255,255,255,.08); border:1px solid rgba(160,220,245,.16);
+  color:#eef8fd; font-size:1.18em; line-height:1.45}
+.ev.claude.err{color:#ffc4b8; background:rgba(229,86,63,.16); border-color:rgba(229,86,63,.35)}
+.ev.status{margin:.15rem 0; padding:.2rem .3rem; background:none; color:#8fbfd6;
+  font-size:.92em; font-style:italic}
+.ev.status::before{content:""; display:inline-block; width:.5em; height:.5em; margin-right:.55em;
+  border-radius:50%; background:#7fd4f5; vertical-align:.1em; animation:statuspulse 1.1s ease-in-out infinite}
+.ev.status.fin{color:#6f9db3; font-style:normal}
+.ev.status.fin::before{animation:none; background:#39c7a0}
+@keyframes statuspulse{0%,100%{opacity:.25} 50%{opacity:1}}
+html.bar .bar-con .ev.me, html.bar .bar-con .ev.claude{padding:.75rem 1.05rem}
+/* Talk mode: the mic stays lit for the whole conversation, not just while
+   the microphone is open, so you can see it is going to listen again. */
+.console-in button#mini-mic.talk:not(.rec){
+  background:linear-gradient(180deg,#9fe8ff,#3aa9d6); color:#04202e;
+  border-color:rgba(190,240,255,.9); box-shadow:0 0 14px rgba(120,210,245,.55)}
+.console-cue[data-state="speaking"] .ready{color:#9fe8ff}
 .console-in .caret{animation:blink 2.4s steps(2,start) infinite}
 @keyframes blink{50%{opacity:0}}
 .chips{display:flex; gap:.4rem; flex-wrap:wrap; margin:.55rem 0 0}
@@ -4049,6 +4085,72 @@ html.bar .btn.sm{min-height:2.75rem; padding-inline:1rem}
 .qa-row.busy{opacity:.55; pointer-events:none}
 .qb.holding{transform:scale(.97); transition:transform .45s}
 #toast{z-index:70}          /* "Table Lamp → Rainbow" has to read over the editor's veil */
+/* ==========================================================================
+   ASK CLAUDE AS A CONVERSATION
+   Not a terminal any more. Everything above styles it as one - monospace,
+   black well, a caret, a READY cursor - and this undoes it: the page's own
+   type, a glass panel like the others, chat bubbles, and one big button.
+   The cue strip stays in the DOM because code writes to it; it is not shown.
+   ========================================================================== */
+#mini-console{
+  font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
+  background:linear-gradient(180deg, rgba(14,46,66,.55), rgba(8,30,46,.62));
+  box-shadow:0 8px 26px rgba(4,28,44,.35);
+}
+#mini-console .console-out{font-size:1rem; line-height:1.5; cursor:default; padding:1rem 1rem .6rem}
+#mini-console .console-cue{display:none}
+#mini-console .console-in{
+  flex-direction:column; align-items:stretch; gap:.35rem;
+  border-top:0; background:none; padding:.4rem .9rem .9rem;
+}
+#mini-console .type-row{display:none; align-items:flex-end; gap:.5rem;
+  padding:.45rem .6rem; border-radius:14px; background:rgba(255,255,255,.07);
+  border:1px solid rgba(160,220,245,.2)}
+#mini-console.typing .type-row{display:flex}
+#mini-console .type-row textarea{font-size:1.05rem; line-height:1.45; padding:.35rem 0; min-height:0}
+#mini-console #mini-stop{display:none}
+#mini-console .talk-row{display:flex; align-items:center; justify-content:center; gap:1.4rem}
+#mini-console .kb, #mini-console .kb-twin{width:2.8rem; height:2.8rem; flex:none}
+#mini-console .kb{
+  appearance:none; cursor:pointer; padding:0; border-radius:50%;
+  background:rgba(255,255,255,.06); border:1px solid rgba(160,220,245,.22); color:#9fcfe4;
+  box-shadow:none;
+}
+#mini-console .kb svg{width:1.3rem; height:1.3rem; display:block; margin:auto;
+  fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round}
+#mini-console.typing .kb{background:rgba(127,212,245,.22); color:#e6f7ff}
+#mini-console .console-in button#mini-mic{
+  width:5rem; height:5rem; border-radius:50%;
+  background:radial-gradient(circle at 50% 35%, #a8ecff, #3aa9d6 70%);
+  color:#03202e; border:2px solid rgba(220,248,255,.85);
+  box-shadow:0 6px 22px rgba(30,150,200,.45);
+}
+#mini-console .console-in button#mini-mic svg{width:2.1rem; height:2.1rem; stroke-width:2}
+#mini-console .console-in button#mini-mic.talk:not(.rec){
+  box-shadow:0 0 0 6px rgba(127,212,245,.18), 0 6px 22px rgba(30,150,200,.5)}
+#mini-console .console-in button#mini-mic.rec{
+  background:radial-gradient(circle at 50% 35%, #ffc2b6, #e5563f 72%); color:#fff;
+  animation:talkpulse 1.2s ease-in-out infinite}
+#mini-console .console-in button#mini-mic.speaking{animation:speakpulse 1.6s ease-in-out infinite}
+@keyframes talkpulse{0%,100%{box-shadow:0 0 0 0 rgba(229,86,63,.55)} 50%{box-shadow:0 0 0 14px rgba(229,86,63,0)}}
+@keyframes speakpulse{0%,100%{box-shadow:0 0 0 0 rgba(127,212,245,.55)} 50%{box-shadow:0 0 0 14px rgba(127,212,245,0)}}
+#mini-console .talk-label{text-align:center; font-size:.95rem; color:#9fcfe4; letter-spacing:.02em; min-height:1.3em}
+#mini-console.no-mic .talk-row, #mini-console.no-mic .talk-label{display:none}
+/* The empty state: an invitation, not a status readout. */
+#mini-console .hello{display:flex; flex-direction:column; justify-content:center; height:100%;
+  min-height:8rem; text-align:center; color:#cfe9f6; font-family:inherit; line-height:1.4}
+#mini-console .hello .hi{font-size:1.7rem; font-weight:600; color:#f0faff}
+#mini-console .hello .sub{font-size:1.05rem; margin-top:.35rem; color:#9fcfe4}
+#mini-console .hello .try{font-size:1rem; margin-top:1rem; color:#7fb6cf; font-style:italic}
+html.bar #mini-console .console-out{font-size:1.25rem}
+html.bar #mini-console .hello .hi{font-size:2.1rem}
+html.bar #mini-console .hello .sub{font-size:1.2rem}
+html.bar #mini-console .console-in button{width:auto; height:auto}
+html.bar #mini-console .console-in button#mini-mic{width:5.4rem; height:5.4rem}
+html.bar #mini-console .kb{width:3rem; height:3rem}
+html.bar #mini-console .kb-twin{width:3rem; height:3rem}
+html.bar #mini-console #mini-send{width:2.9rem; height:2.9rem}
+html.bar #mini-console .type-row textarea{padding:.4rem 0; min-height:0}
 </style>
 <script src="/daily/window.js"></script>
 </head>
@@ -4171,27 +4273,36 @@ html.bar .btn.sm{min-height:2.75rem; padding-inline:1rem}
         <div class="console-cue" id="mini-cue" data-state="ready">
           <span class="ready">READY</span><span class="cur"></span>
         </div>
+        <!-- Talk first. One big button you press and speak to; the keyboard
+             is there for when you cannot talk out loud, folded away until
+             asked for. Send and Stop stay in the DOM for the code that drives
+             them, but are not shown: Enter sends, and tapping the mic again
+             ends a conversation. -->
         <div class="console-in">
-          <span class="caret">&gt;</span>
-          <!-- A textarea, not an input, so a long sentence is readable while
-               you write it: the strip grows upward into the transcript rather
-               than scrolling three words at a time inside one line. Enter
-               still sends; Shift+Enter is the newline. See autoGrow(). -->
-          <textarea id="mini-prompt" rows="1"
-                 placeholder="describe a change, or ask about the lights"
-                 spellcheck="false" autocapitalize="sentences" autocomplete="off"></textarea>
-          <!-- Hidden unless the browser can actually do this: see wireMic(). -->
-          <button id="mini-mic" title="Speak" aria-label="Speak" hidden>
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <rect x="9" y="2.6" width="6" height="11" rx="3"/>
-              <path d="M5.5 11a6.5 6.5 0 0 0 13 0"/><path d="M12 17.5V21"/><path d="M8.5 21h7"/>
-            </svg>
-          </button>
-          <button id="mini-send" title="Send">↵</button>
-          <button id="mini-stop" class="stop" disabled title="Stop">■</button>
+          <div class="type-row">
+            <textarea id="mini-prompt" rows="1"
+                   placeholder="Type instead…"
+                   spellcheck="false" autocapitalize="sentences" autocomplete="off"></textarea>
+            <button id="mini-send" title="Send">↵</button>
+            <button id="mini-stop" class="stop" disabled title="Stop">■</button>
+          </div>
+          <div class="talk-row">
+            <button id="mini-kb" class="kb" title="Type instead" aria-label="Type instead">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/>
+                <path d="M6 10h.01M9.5 10h.01M13 10h.01M16.5 10h.01M7.5 14h9"/></svg>
+            </button>
+            <button id="mini-mic" title="Talk to Claude" aria-label="Talk to Claude" hidden>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="9" y="2.6" width="6" height="11" rx="3"/>
+                <path d="M5.5 11a6.5 6.5 0 0 0 13 0"/><path d="M12 17.5V21"/><path d="M8.5 21h7"/>
+              </svg>
+            </button>
+            <span class="kb-twin" aria-hidden="true"></span>
+          </div>
+          <div class="talk-label" id="talk-label">Tap to talk</div>
         </div>
       </div>
-      <div class="chips" id="c-chips"></div>
+      <div class="chips" id="c-chips" hidden></div>
     </div>
     <!-- Reference, not controls: the schedule you check and the exceptions to
          it. Under Quick apply so the acting half of the board reads top-down
@@ -5625,6 +5736,7 @@ function wxTile(w){
   // answers: "Rain" is equally true five minutes before it stops and five
   // minutes before it starts.
   const c = S.cast || null;
+  const alert = c && c.kind === "alert" && Array.isArray(c.alerts) ? c.alerts[0] : null;
   const urgent = c && (c.kind === "alert" || c.kind === "starting"
                        || c.kind === "stopping" || c.kind === "thunder");
   const cast = !c ? "" : `
@@ -5635,7 +5747,11 @@ function wxTile(w){
      // rain". Print it once.
      + (c.detail && c.detail.toLowerCase() !== String(foot).toLowerCase()
         && c.detail.toLowerCase() !== said.toLowerCase()
-          ? `<span class="wcast-d">${esc(c.detail)}</span>` : "");
+          ? `<span class="wcast-d">${esc(c.detail)}</span>` : "")
+     // A catch-all product ("Special Weather Statement") names no weather at
+     // all, so the forecaster's own first sentence goes under it - the thing
+     // the event name never says, like "visibility a quarter mile or less".
+     + (alert && alert.summary ? `<span class="wcast-x">${esc(alert.summary)}</span>` : "");
   // The next two hours as fifteen-minute buckets, drawn only when something is
   // actually due - an empty gauge under a clear sky is noise.
   const mm = (c && Array.isArray(c.minutes)) ? c.minutes : [];
@@ -5649,12 +5765,14 @@ function wxTile(w){
 
   let tip2 = c ? tip + ` Next: ${c.headline}${c.detail ? " — " + c.detail : ""}.`
                : tip;
+  if(alert && alert.summary) tip2 += ` ${alert.summary}`;
+  if(alert && alert.advice)  tip2 += ` ${alert.advice}`;
   // Said in the tooltip rather than on the face of the tile: the numbers are
   // real either way, and a permanent badge would be noise. It matters only
   // when somebody is asking why the chart looks different.
   if(S.fcSrc && S.fcSrc !== "ha")
     tip2 += ` Forecast from ${S.fcSrc} — Home Assistant is not answering.`;
-  return `<div class="stat wx${c ? " has-cast" : ""}" data-wx="${art}"
+  return `<div class="stat wx${c ? " has-cast" : ""}${alert && alert.summary ? " has-alert" : ""}" data-wx="${art}"
        style="${vars}" title="${esc(tip2)}">
      <i class="l1"></i><i class="l2"></i><i class="l3"></i>
      <span class="k">${wxIcon(shown)}outside</span>
@@ -7249,29 +7367,17 @@ function bubblesHTML(){
   </div>`;
 }
 function idleHTML(){
-  const on   = S.devs.filter(d=>d.power).length;
-  const live = S.devs.filter(d=>d.live === true).length;
-  const held = Object.keys(S.holds||{}).length;
-  const t    = S.tray || {};
-  const up   = upFor(BOOT.version && BOOT.version.started);
-  const cfg  = BOOT.config || {};
-  const linkBad = t.link === false;
-  const row = (k, v, cls) =>
-    `<div><span class="k">${k}</span><span class="v ${cls||""}">${v}</span></div>`;
-  const rule = `<span class="rule"></span>`;
-  return `<div class="idle">
-    <div class="hdr">APARTMENT · LIGHTING ENGINE</div>
-    ${rule}
-    ${row("engine", linkBad ? "unreachable" : `online${up?" · up "+up:""}`,
-          linkBad ? "bad" : "")}
-    ${row("devices", live ? `${S.devs.length} known · ${on} lit · ${live} reporting`
-                          : `${S.devs.length} known · no live state`)}
-    ${row("held", held ? `${held} by hand` : "none — the schedule owns everything",
-          held ? "warn" : "")}
-    ${row("band", t.band ? esc(t.band) : "—")}
-    ${row("sky", esc(S.forced ? S.forced + " (held)" : S.mood))}
-    ${row("host", esc(cfg.host || "—") + (cfg.claude_model ? " · " + esc(cfg.claude_model) : ""))}
-    ${document.documentElement.classList.contains("bar") ? bubblesHTML() : ""}
+  // Before anything is said: who you are talking to and how, plus one thing
+  // you could say. The machine readout that lived here (engine, devices,
+  // held, band) is on the rest of the board already.
+  bubblesHTML();
+  const h = new Date().getHours();
+  const hi = h < 5 ? "Still up?" : h < 12 ? "Morning." : h < 18 ? "Afternoon." : "Evening.";
+  const mic = !$("#mini-console") || !$("#mini-console").classList.contains("no-mic");
+  return `<div class="idle hello">
+    <div class="hi">${hi}</div>
+    <div class="sub">${mic ? "Tap the mic and just say it." : "Type what you want the lights to do."}</div>
+    <div class="try">“${esc(BUBBLE.text)}”</div>
   </div>`;
 }
 function paintIdle(){
@@ -7285,73 +7391,113 @@ function paintIdle(){
 const esc = s => String(s==null?"":s).replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 function clip(s, n){ s = String(s==null?"":s); return s.length>n ? s.slice(0,n)+" …" : s; }
 
+/* Voice conversation state; declared up here because setBusy() reads it. */
+const TALK = {on:false, rec:null, utter:null, heard:false};
+/* What Claude is doing, said the way you would say it. The transcript shows
+   one of these at a time, updated in place, instead of the commands
+   themselves: "Checking which lights are on" is the useful part of a curl
+   call, and the rest is noise on a wall panel. */
+function doing(name, inp){
+  inp = inp || {};
+  const blob = [inp.command, inp.url, inp.file_path, inp.pattern, inp.prompt, inp.description]
+    .filter(Boolean).join(" ");
+  const api = (blob.match(/\/api\/lightd(\/[\w\/.-]*)/) || blob.match(/:8787(\/[\w\/.-]*)/) || [])[1] || "";
+  const post = /-Method\s+(Post|Put|Patch|Delete)|-X\s*(POST|PUT|PATCH|DELETE)|method=["']?(POST|PUT|PATCH|DELETE)/i.test(blob);
+  if(api){
+    if(/^\/context/.test(api))        return post ? "Making a note for next time" : "Reading the room";
+    if(/^\/levers/.test(api))         return "Looking at the controls";
+    if(/^\/live/.test(api))           return "Checking which lights are on";
+    if(/^\/today/.test(api))          return "Looking at today's plan";
+    if(/^\/media/.test(api))          return post ? "Working the TV" : "Checking what's playing";
+    if(/^\/automations/.test(api))    return post ? "Setting up an automation" : "Reading your automations";
+    if(/^\/expr/.test(api))           return "Testing a condition";
+    if(/^\/(themes|apply|theme)/.test(api)) return post ? "Changing the theme" : "Looking through the themes";
+    if(/^\/devices/.test(api))        return post ? "Adjusting the lights" : "Looking at a light";
+    if(/^\/(scenes|groups)/.test(api))return post ? "Adjusting the lights" : "Looking at scenes";
+    if(/^\/(cycle|schedule|day)/.test(api)) return post ? "Changing the schedule" : "Reading the schedule";
+    if(/^\/hold/.test(api))           return post ? "Releasing a hold" : "Checking hand-set lights";
+    return post ? "Making a change" : "Checking the lights";
+  }
+  if(/^(Read|Glob|Grep)$/.test(name)) return "Looking something up";
+  if(/^(Edit|Write|NotebookEdit)$/.test(name)) return "Editing the dashboard";
+  if(/^Web/.test(name))               return "Looking it up online";
+  if(/^(Task|Agent)$/.test(name))     return "Handing part of it off";
+  return "Working on it";
+}
+function status(text){
+  const t = $("#mini-term"); if(!t) return;
+  let d = S.statusEl;
+  if(!d || !d.isConnected || d.classList.contains("fin")) d = S.statusEl = ev("status", "");
+  else t.appendChild(d);                // keep it under the newest bubble
+  if(d) d.textContent = text + "…";
+  t.scrollTop = t.scrollHeight;
+}
 function render(e){
-  if(e.type === "system" && e.subtype === "init")
-    return ev("sys", `<span class="k">session</span> ${esc(e.session_id||"").slice(0,8)} · ${esc(e.cwd||"")} · ${(e.tools||[]).length} tools`);
+  if(e.type === "system" && e.subtype === "init"){
+    if(e.session_id) S.session = e.session_id;
+    return;
+  }
   if(e.type === "assistant" && e.message){
     for(const b of (e.message.content||[])){
-      if(b.type === "thinking" && (b.thinking||"").trim())
-        ev("think", `<span class="k">thinking</span> ${esc(clip(b.thinking, 1400))}`);
-      else if(b.type === "text" && (b.text||"").trim())
-        ev("text", esc(b.text));
-      else if(b.type === "tool_use")
-        ev("tool", `<span class="k">${esc(b.name)}</span> ${esc(clip(summarise(b.input), 220))}` +
-                   `<pre>${esc(clip(JSON.stringify(b.input, null, 1), 900))}</pre>`);
-    }
-    return;
-  }
-  if(e.type === "user" && e.message){
-    for(const b of (e.message.content||[])){
-      if(b.type === "tool_result"){
-        const c = typeof b.content === "string" ? b.content
-                : Array.isArray(b.content) ? b.content.map(x=>x.text||"").join("\n") : "";
-        if(c.trim()) ev("result", `<span class="k">→</span> ${esc(clip(c, 700))}`);
+      if(b.type === "text" && (b.text||"").trim()){
+        S.lastText = b.text.trim();
+        ev("claude", esc(S.lastText));
       }
+      else if(b.type === "tool_use") status(doing(b.name, b.input));
     }
     return;
   }
-  if(e.type === "dashboard_error" || e.is_error) return ev("err", esc(e.text || JSON.stringify(e)));
-  if(e.type === "raw") return ev("result", esc(clip(e.text, 400)));
-  if(e.type === "dashboard_done")
-    return ev("done", e.error ? `finished with an error: ${esc(e.error)}` : `done in ${e.seconds}s`);
-  if(e.total_cost_usd !== undefined)
-    return ev("done", `<span class="k">result</span> ${(e.duration_api_ms/1000).toFixed(1)}s api · ` +
-              `${e.usage?e.usage.output_tokens:"?"} out · $${(e.total_cost_usd||0).toFixed(4)}`);
+  if(e.type === "result"){
+    if(e.session_id) S.session = e.session_id;
+    if(typeof e.result === "string" && e.result.trim()) S.lastText = e.result.trim();
+    if(e.is_error){ S.failed = true; ev("claude err", esc(e.result || "That didn't work.")); }
+    return;
+  }
+  if(e.type === "dashboard_error"){ S.failed = true; return ev("claude err", esc(e.text || "Something went wrong.")); }
+  if(e.type === "dashboard_done"){
+    const d = S.statusEl && S.statusEl.isConnected ? S.statusEl : ev("status", "");
+    if(d){ d.classList.add("fin"); d.textContent = e.error ? "Stopped" : `Done · ${e.seconds}s`; }
+    S.statusEl = null;
+  }
 }
-function summarise(inp){
-  if(!inp) return "";
-  return inp.file_path || inp.command || inp.pattern || inp.url || inp.prompt ||
-         inp.description || Object.keys(inp).join(", ");
-}
-
 function setBusy(on, note){
   $("#mini-send").disabled = on;
   $("#mini-stop").disabled = !on;
   // Dictating into a box you cannot send from is a dead end, so the mic goes
   // with the send button.
-  const mic = $("#mini-mic"); if(mic) mic.disabled = on;
+  // In a voice conversation it stays live: tapping it is how you end one.
+  const mic = $("#mini-mic"); if(mic) mic.disabled = on && !TALK.on;
   $("#mini-status").textContent = note;
   // The cue on the input strip says the same thing in the console's own
   // voice, so the state is legible from inside the terminal as well as from
   // the panel title.
+  const lab = $("#talk-label");
+  if(lab) lab.textContent = on ? "Thinking…" : (TALK.on ? "Listening…" : "Tap to talk");
   const cue = $("#mini-cue");
   cue.dataset.state = on ? "busy" : "ready";
   cue.querySelector(".ready").textContent =
     on ? note.replace(/[.…\s]+$/, "").toUpperCase() : "READY";
 }
-async function send(text){
+async function send(text, voice){
   const p = (text !== undefined ? text : $("#mini-prompt").value).trim();
   if(!p) return toast("nothing to send", true);
   setBusy(true, "starting…");
+  // A follow-up carries on the same Claude session, so it remembers what was
+  // just said. Typed messages do too, for ten minutes after the last reply:
+  // "and the bedroom" should mean something.
+  const fresh = !S.session || Date.now() - (S.sessionAt || 0) > 10 * 60000;
   const r = await fetch("/api/claude", {method:"POST", headers:{"Content-Type":"application/json"},
-                                        body:JSON.stringify({prompt:p})});
+                                        body:JSON.stringify({prompt:p, voice:!!voice,
+                                                             session: fresh ? null : S.session})});
   const b = await r.json();
   if(!r.ok || !b.ok){
     setBusy(false, "idle");
+    if(TALK.on) talkSay("Sorry, I couldn't start that.", false);
     return toast(b.detail || "could not start Claude", true);
   }
-  clearConsoles();
-  ev("sys", `<span class="k">you</span> ${esc(p)}`);
+  if(fresh){ S.session = null; clearConsoles(); }
+  S.lastText = ""; S.failed = false; S.statusEl = null;
+  ev("me", esc(p));
   $("#mini-prompt").value = "";
   autoGrow($("#mini-prompt"));                 // back to one line
   $("#mini-console").classList.remove("has-text");
@@ -7368,8 +7514,14 @@ function attach(id){
     render(e);
     if(e.type === "dashboard_done"){
       es.close(); S.es = null; S.run = null;
+      S.sessionAt = Date.now();
       setBusy(false, "idle");
       loadToday(); loadDevices(true);
+      if(TALK.on){
+        const said = S.lastText || (e.error ? "Sorry, that didn't work." : "Done.");
+        // Listen for a follow-up after answering, like a smart speaker does.
+        talkSay(said, true);
+      }
     }
   };
   es.onerror = ()=>{ /* the server closes the stream when done; that is normal */ };
@@ -8657,59 +8809,200 @@ function barLayout(){
   autoGrow($("#mini-prompt"));              // pick up the bar's larger type
 }
 
-/* Dictation into the console. Browser-side, so there is nothing new listening
-   on the network and no key to hold. Note that Chromium sends the audio to
-   Google's speech service - it is not local - so this is a button you press,
-   never an open microphone. */
-function wireMic(){
-  const btn = $("#mini-mic"), input = $("#mini-prompt"), cue = $("#mini-cue");
+/* Talk to Claude. Tap the mic once and it is a conversation, the way a
+   smart speaker is: it listens, sends what you said, reads the answer out,
+   then listens again for a follow-up. Silence, "thanks" or "that's all" ends
+   it; so does tapping the mic again, which also cuts the voice off mid-sentence.
+   Follow-ups resume the same Claude session, so "a bit warmer" and "no, the
+   other lamp" mean something.
+
+   Browser-side, so there is nothing new listening on the network. Chromium
+   sends the audio to Google's speech service - it is not local - so the
+   microphone only opens after a tap or a reply, never on its own. */
+const BYE = /^(stop|cancel|never ?mind|nevermind|that'?s (all|it)|thanks?( you)?|thank you|no thanks?|nope|bye|goodbye|done|nothing)[.!]*$/i;
+
+function chime(up){
+  try{
+    const ac = chime.ac || (chime.ac = new (window.AudioContext || window.webkitAudioContext)());
+    const now = ac.currentTime;
+    (up ? [660, 990] : [740, 494]).forEach((f, i)=>{
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = "sine"; o.frequency.value = f;
+      g.gain.setValueAtTime(0, now + i*.09);
+      g.gain.linearRampToValueAtTime(.12, now + i*.09 + .02);
+      g.gain.exponentialRampToValueAtTime(.001, now + i*.09 + .22);
+      o.connect(g).connect(ac.destination); o.start(now + i*.09); o.stop(now + i*.09 + .25);
+    });
+  }catch{}
+}
+function talkVoice(){
+  const vs = speechSynthesis.getVoices();
+  const en = vs.filter(v => /^en/i.test(v.lang));
+  return en.find(v => /natural/i.test(v.name) && /(Aria|Jenny|Ava|Emma|Sonia|Libby)/i.test(v.name))
+      || en.find(v => /natural/i.test(v.name))
+      || en.find(v => /Google UK English Female|Google US English/i.test(v.name))
+      || en.find(v => /Zira|Hazel|Samantha/i.test(v.name))
+      || en[0] || null;
+}
+function forSpeech(t){
+  return String(t||"")
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/`([^`]*)`/g, "$1")
+    .replace(/\*\*?|__|#+\s|^\s*[-*•]\s+/gm, "")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/https?:\/\/\S+/g, "")
+    .replace(/(\d+)\s*\/\s*(\d+)/g, "$1 of $2")
+    .replace(/%/g, " percent")
+    .replace(/\s+/g, " ").trim().slice(0, 600);
+}
+function talkCue(state, text){
+  const lab = $("#talk-label");
+  if(lab) lab.textContent = {listening:"Listening…", busy:"Thinking…", speaking:"Speaking…  tap to stop"}[state] || "Tap to talk";
+  const btn = $("#mini-mic"); if(btn) btn.classList.toggle("speaking", state === "speaking");
+  const cue = $("#mini-cue"); if(!cue) return;
+  cue.dataset.state = state; cue.querySelector(".ready").textContent = text;
+}
+/* The voice comes from the server (/api/tts, a neural voice) as an audio
+   clip, played through one <audio> element that the mic tap unlocked. The
+   browser's own speechSynthesis was the first attempt and it failed exactly
+   the way it is known to in Chrome: silently, and without ever firing onend -
+   so nothing was heard and the conversation never listened again. It is kept
+   only as a fallback, and both paths have a watchdog so a voice that never
+   reports finishing cannot strand the conversation. */
+const SILENT = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=";
+function talkUnlock(){
+  if(!TALK.audio){ TALK.audio = new Audio(); TALK.audio.preload = "auto"; }
+  try{ TALK.audio.src = SILENT; TALK.audio.play().catch(()=>{}); }catch{}
+  try{ chime.ac && chime.ac.resume(); }catch{}
+}
+async function talkSay(text, thenListen){
+  if(!TALK.on) return;
+  const say = forSpeech(text);
+  const my = TALK.turn = (TALK.turn || 0) + 1;
+  let doneOnce = false;
+  const after = ()=>{
+    if(doneOnce || my !== TALK.turn) return; doneOnce = true;
+    clearTimeout(TALK.dog); talkCue("ready", "READY");
+    if(!TALK.on) return;
+    thenListen ? talkListen() : talkEnd();
+  };
+  if(!say) return after();
+  talkCue("speaking", "SPEAKING");
+  // Never wait longer than the sentence could possibly take.
+  const guard = ms => { clearTimeout(TALK.dog); TALK.dog = setTimeout(after, ms); };
+  guard(25000);
+  try{
+    const r = await fetch("/api/tts", {method:"POST", headers:{"Content-Type":"application/json"},
+                                        body:JSON.stringify({text:say})});
+    if(!r.ok) throw new Error("tts " + r.status);
+    const url = URL.createObjectURL(await r.blob());
+    if(my !== TALK.turn || !TALK.on) return;
+    const au = TALK.audio || (TALK.audio = new Audio());
+    au.onended = ()=>{ URL.revokeObjectURL(url); after(); };
+    au.onerror = ()=>{ URL.revokeObjectURL(url); browserSay(say, after, guard); };
+    au.onloadedmetadata = ()=>{ if(isFinite(au.duration)) guard(au.duration * 1000 + 2500); };
+    au.src = url;
+    await au.play();
+  }catch(e){
+    if(my !== TALK.turn || !TALK.on) return;
+    browserSay(say, after, guard);
+  }
+}
+function browserSay(say, after, guard){
+  if(!window.speechSynthesis) return after();
+  const u = new SpeechSynthesisUtterance(say);
+  const v = talkVoice(); if(v){ u.voice = v; u.lang = v.lang; }
+  u.onend = after; u.onerror = after;
+  TALK.utter = u;                        // held, or Chrome can drop onend
+  guard(say.length * 75 + 4000);
+  // No cancel() straight before speak(): in Chrome that pairing is what
+  // swallows the utterance.
+  speechSynthesis.resume();
+  speechSynthesis.speak(u);
+}
+function talkListen(){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  // Dictation needs a secure context. 127.0.0.1 counts as one; the LAN address
-  // the phone uses does not, and the API stays silent rather than saying so -
+  const btn = $("#mini-mic"), input = $("#mini-prompt");
+  const rec = TALK.rec = new SR();
+  rec.lang = navigator.language || "en-US";
+  rec.interimResults = true;
+  rec.continuous = false;
+  let said = "";
+  rec.onstart = ()=>{ btn.classList.add("rec"); talkCue("listening", "LISTENING"); chime(true); };
+  rec.onresult = e=>{
+    said = "";
+    for(let i = 0; i < e.results.length; i++) said += e.results[i][0].transcript;
+    input.value = said.trim();
+    // The box is folded away in talk mode, so what it heard shows under the
+    // button instead - you can see it was understood before it is sent.
+    const lab = $("#talk-label"); if(lab && said.trim()) lab.textContent = "“" + said.trim() + "”";
+  };
+  rec.onerror = e=>{
+    if(e.error === "not-allowed")        toast("Microphone blocked — allow it for this page", true);
+    else if(e.error === "audio-capture") toast("No microphone found", true);
+    else if(e.error === "network")       toast("Voice needs the internet", true);
+  };
+  rec.onend = ()=>{
+    btn.classList.remove("rec"); TALK.rec = null;
+    if(!TALK.on) return;
+    const p = said.trim();
+    input.value = ""; input.dispatchEvent(new Event("input")); autoGrow(input);
+    if(!p){
+      if(!TALK.heard) toast("Didn't catch that");
+      return talkEnd();
+    }
+    TALK.heard = true;
+    if(BYE.test(p)){ ev("me", esc(p)); return talkEnd(); }
+    talkCue("busy", "THINKING");
+    send(p, true);
+  };
+  try{ rec.start(); }catch{ talkEnd(); }
+}
+function talkEnd(){
+  const was = TALK.on;
+  TALK.on = false;
+  try{ TALK.rec && TALK.rec.abort(); }catch{}
+  TALK.rec = null;
+  try{ window.speechSynthesis && speechSynthesis.cancel(); }catch{}
+  try{ TALK.audio && TALK.audio.pause(); }catch{}
+  clearTimeout(TALK.dog); TALK.turn = (TALK.turn || 0) + 1;
+  talkCue("ready", "READY");
+  const btn = $("#mini-mic");
+  if(btn){ btn.classList.remove("rec", "talk", "speaking"); btn.title = "Talk to Claude"; }
+  if(was) chime(false);
+  if(!S.run) setBusy(false, "idle");
+}
+function wireMic(){
+  const btn = $("#mini-mic");
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  // Needs a secure context. 127.0.0.1 counts as one; the LAN address the
+  // phone uses does not, and the API stays silent rather than saying so -
   // which would read as a dead button. Better to not offer it there.
-  if(!btn || !SR || !window.isSecureContext) return;
+  const con = $("#mini-console");
+  const kb = $("#mini-kb");
+  if(kb) kb.onclick = ()=>{
+    const on = con.classList.toggle("typing");
+    if(on) $("#mini-prompt").focus();
+  };
+  if(!btn || !SR || !window.isSecureContext){
+    // No voice in this browser: the keyboard is the only way in, so it is
+    // simply open rather than hidden behind a button.
+    con.classList.add("no-mic", "typing"); paintIdle();
+    return;
+  }
   btn.hidden = false;
-
-  let rec = null, live = false, base = "";
-  const label = t=>{ if(cue){ cue.dataset.state = t === "READY" ? "ready" : "listening";
-                              cue.querySelector(".ready").textContent = t; } };
-
+  btn.title = "Talk to Claude"; btn.setAttribute("aria-label", "Talk to Claude");
+  // Voices load late in Chromium; asking once early means the first reply
+  // already has the good one.
+  try{ speechSynthesis.getVoices(); }catch{}
   btn.onclick = ()=>{
-    if(live){ try{ rec.stop(); }catch{} return; }
-    rec = new SR();
-    rec.lang = navigator.language || "en-US";
-    rec.interimResults = true;      // so the text appears while you are talking
-    rec.continuous = false;
-
-    rec.onstart = ()=>{
-      live = true;
-      // Dictation adds to what is already typed rather than replacing it, so
-      // you can start a sentence with the keyboard and finish it out loud.
-      base = input.value ? input.value.replace(/\s+$/, "") + " " : "";
-      btn.classList.add("rec"); label("LISTENING");
-    };
-    rec.onresult = e=>{
-      let s = "";
-      for(let i = e.resultIndex; i < e.results.length; i++) s += e.results[i][0].transcript;
-      input.value = base + s.trim();
-      // Same as typing: the box grows and the bubbles stand aside.
-      input.dispatchEvent(new Event("input"));
-    };
-    rec.onerror = e=>{
-      if(e.error === "not-allowed")    toast("Microphone blocked — allow it for this page", true);
-      else if(e.error === "no-speech") toast("Didn't catch that");
-      else if(e.error === "audio-capture") toast("No microphone found", true);
-      else if(e.error === "network")   toast("Dictation needs the internet", true);
-      else if(e.error !== "aborted")   toast("Mic: " + e.error, true);
-    };
-    rec.onend = ()=>{
-      live = false; rec = null;
-      btn.classList.remove("rec"); label("READY");
-      // Left focused and not sent: a misheard word on a wall panel should cost
-      // a backspace, not a room full of lights.
-      input.focus();
-    };
-    try{ rec.start(); }catch{ label("READY"); btn.classList.remove("rec"); }
+    // Tapped mid-answer: stop talking. Tapped while Claude works: the run
+    // carries on and its answer still lands in the transcript, just quietly.
+    if(TALK.on) return talkEnd();
+    talkUnlock();
+    TALK.on = true; TALK.heard = false;
+    btn.classList.add("talk"); btn.title = "End the conversation";
+    talkListen();
   };
 }
 
@@ -8737,7 +9030,7 @@ function wireMic(){
  * there is text in the box, and not while the console has focus. */
 (function watchForNewVersion(){
   let known = null;
-  const busy = ()=> !!S.run ||
+  const busy = ()=> !!S.run || TALK.on ||
                     ($("#mini-prompt").value || "").trim().length > 0 ||
                     document.activeElement === $("#mini-prompt");
   async function look(){

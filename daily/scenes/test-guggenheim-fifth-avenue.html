@@ -1,0 +1,14 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>guggenheim-fifth-avenue test</title>
+<style>html,body{margin:0;padding:0;background:#000;overflow:hidden}#s{width:2560px;height:720px;position:relative}#s svg{position:absolute;left:0;top:0}</style>
+<script>window.onerror = (m, src, l, c) => { window._err = m + " @" + src + ":" + l + ":" + c; };</script>
+<script src="../reference/scene-helpers.js"></script>
+<script src="guggenheim-fifth-avenue.js"></script>
+</head><body><div id="s"></div>
+<script>
+  const q = new URLSearchParams(location.search);
+  const part = q.get("part") || undefined, time = q.get("time") || undefined;
+  try { document.getElementById("s").innerHTML = guggenheimFifthAvenueArt({ part, time }); }
+  catch (e) { document.body.style.background = "#fff"; document.body.textContent = "ERROR: " + e.message + "\n" + e.stack + "\n" + (window._err || ""); }
+</script>
+</body></html>

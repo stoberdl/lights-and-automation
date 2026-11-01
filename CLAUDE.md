@@ -133,3 +133,8 @@ rediscover it:
 ```
 POST /context/facts/{key}   {"value": ..., "why": "how you know"}
 ```
+
+## If this machine is now running Linux
+
+Read `LINUX_SWAP_CONTEXT.md` in this folder first (private, not in git). It is the full
+migration handoff. Commands above that use PowerShell need their Linux equivalents.

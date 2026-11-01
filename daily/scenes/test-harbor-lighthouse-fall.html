@@ -6,8 +6,8 @@
 </head><body><div id="s"></div>
 <script>
   const q = new URLSearchParams(location.search);
-  const part = q.get("part") || undefined, time = q.get("time") || undefined;
-  try { document.getElementById("s").innerHTML = harborLighthouseFallArt({ part, time }); }
+  const part = q.get("part") || undefined, time = q.get("time") || undefined, moon = q.get("moon") === "0" ? false : undefined;
+  try { document.getElementById("s").innerHTML = harborLighthouseFallArt({ part, time, moon }); }
   catch (e) { document.body.style.background = "#fff"; document.body.textContent = "ERROR: " + e.message + "\n" + e.stack; }
 </script>
 </body></html>

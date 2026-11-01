@@ -10,7 +10,7 @@
    Same shape as reference/autumn-valley.js. Needs rng() and mix() from
    reference/scene-helpers.js. opts.part = "sky" | "clouds" | "land".        */
 function harborLighthouseFallArt(opts = {}) {
-  const NIGHT = opts.time === "night";
+  const NIGHT = opts.time === "night", MOON = opts.moon !== false;   // moon: false = a moonless night (new moon weeks)
   const seed = opts.seed || 1107;
   const r = rng(seed), rs = rng(seed + 7), rl = rng(seed + 13);   // land / sky / night-only streams
   const W = 2560, H = 720, F = v => (+v).toFixed(1);
@@ -76,7 +76,11 @@ function harborLighthouseFallArt(opts = {}) {
   <rect width="${W}" height="${H}" fill="url(#hlSky)"/>`;
 
   /* sun, or a full moon with stars */
-  if (NIGHT) {
+  if (NIGHT && !MOON) {
+    for (let i = 0; i < 620; i++) { const x = rs() * W, y = Math.pow(rs(), 1.4) * 430, big = rs() < .08, o = .25 + rs() * .65 * (1 - y / 470);
+      s += `<circle cx="${F(x)}" cy="${F(y)}" r="${big ? 1.7 : F(.6 + rs() * .6)}" fill="${rs() < .2 ? "#ffe8c8" : "#e8ecff"}" opacity="${F(o)}"/>`; }
+    s += `<path d="M0,300 C700,220 1500,120 2560,30" stroke="#8a96c8" stroke-width="150" fill="none" opacity=".05" filter="url(#hlSoft)"/>`;
+  } else if (NIGHT) {
     for (let i = 0; i < 440; i++) { const x = rs() * W, y = Math.pow(rs(), 1.5) * 420, d = Math.hypot(x - LX, y - LY), big = rs() < .08, o = .2 + rs() * .6 * (1 - y / 470);
       if (d < 170) continue;
       s += `<circle cx="${F(x)}" cy="${F(y)}" r="${big ? 1.7 : F(.6 + rs() * .6)}" fill="${rs() < .2 ? "#ffe8c8" : "#e8ecff"}" opacity="${F(o)}"/>`; }
@@ -424,6 +428,7 @@ function harborLighthouseFallArt(opts = {}) {
   wtr += `<g filter="url(#hlRipple)">`;
   for (let y = WY + 3; y < H; y += 3 + (y - WY) * .02) { const t = (y - WY) / (H - WY), ww = 50 + t * 260, n = 2 + Math.floor(t * 6);
     for (let k = 0; k < n; k++) { const off = (r() * 2 - 1) * ww * Math.pow(r(), .6), Lr = 10 + r() * (30 + t * 70);
+      if (!MOON) continue;   // keep r() in step so the rest of the scene is unchanged
       wtr += `<rect x="${F(LX + off - Lr / 2)}" y="${F(y)}" width="${F(Lr)}" height="${F(1.3 + t * 2)}" rx="1" fill="${NIGHT ? "#dce6ff" : "#fff8e0"}" opacity="${F((.75 - Math.abs(off) / ww * .5) * (1 - t * .4))}"/>`; } }
   wtr += `</g>`;
   s = s.slice(0, reflAt) + wtr + s.slice(reflAt);
@@ -435,8 +440,8 @@ function harborLighthouseFallArt(opts = {}) {
     s += `<g filter="url(#hlSoft)"><path d="M${F(lx)},${F(ly - 2)} L800,${F(ly + 70)} L812,${F(ly + 138)} Z" fill="url(#hlBeamL)"/><path d="M${F(lx)},${F(ly)} L2150,${F(ly + 28)} L2140,${F(ly + 88)} Z" fill="url(#hlBeamR)" opacity=".7"/></g>`; }
 
   /* light + paper */
-  s += `<rect width="${W}" height="${H}" fill="url(#hlLight)" style="mix-blend-mode:soft-light"/>`;
-  if (NIGHT) s += `<rect width="${W}" height="${H}" fill="#0a1030" opacity=".1"/>`;
+  if (MOON) s += `<rect width="${W}" height="${H}" fill="url(#hlLight)" style="mix-blend-mode:soft-light"/>`;
+  if (NIGHT) s += `<rect width="${W}" height="${H}" fill="#0a1030" opacity="${MOON ? .1 : .16}"/>`;
   s += `<rect width="${W}" height="${H}" filter="url(#hlPaper)" opacity=".1" style="mix-blend-mode:multiply"/>`;
   const wrap = x => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${x}</svg>`;
   if (opts.part === "sky") return wrap(skyPart);

@@ -158,6 +158,94 @@
                                          "nightFx":  [
 
                                                      ]
+                                     },
+                                     {
+                                         "id":  "mosel-vineyard-bend",
+                                         "name":  "Mosel vineyard bend",
+                                         "scene":  { "file":  "scenes/mosel-vineyard-bend.js", "fn":  "moselVineyardBendArt", "opts":  {} },
+                                         "night":  { "file":  "scenes/mosel-vineyard-bend.js", "fn":  "moselVineyardBendArt", "opts":  { "time":  "night" } },
+                                         "fx":  [],
+                                         "nightFx":  []
+                                     },
+                                     {
+                                         "id":  "stone-viaduct-gorge",
+                                         "name":  "Stone viaduct gorge",
+                                         "scene":  { "file":  "scenes/stone-viaduct-gorge.js", "fn":  "stoneViaductGorgeArt", "opts":  {} },
+                                         "night":  { "file":  "scenes/stone-viaduct-gorge.js", "fn":  "stoneViaductGorgeArt", "opts":  { "time":  "night" } },
+                                         "fx":  [],
+                                         "nightFx":  []
+                                     },
+                                     {
+                                         "id":  "blue-ridge-switchbacks",
+                                         "name":  "Blue Ridge switchbacks",
+                                         "scene":  { "file":  "scenes/blue-ridge-switchbacks.js", "fn":  "blueRidgeSwitchbacksArt", "opts":  {} },
+                                         "night":  { "file":  "scenes/blue-ridge-switchbacks.js", "fn":  "blueRidgeSwitchbacksArt", "opts":  { "time":  "night" } },
+                                         "fx":  [],
+                                         "nightFx":  []
+                                     },
+                                     {
+                                         "id":  "rio-grande-balloons",
+                                         "name":  "Rio Grande balloons",
+                                         "scene":  { "file":  "scenes/rio-grande-balloons.js", "fn":  "rioGrandeBalloonsArt", "opts":  {} },
+                                         "night":  { "file":  "scenes/rio-grande-balloons.js", "fn":  "rioGrandeBalloonsArt", "opts":  { "time":  "night" } },
+                                         "fx":  [],
+                                         "nightFx":  []
+                                     },
+                                     {
+                                         "id":  "dune-bluff-storm",
+                                         "name":  "Dune bluff storm",
+                                         "scene":  { "file":  "scenes/dune-bluff-storm.js", "fn":  "duneBluffStormArt", "opts":  {} },
+                                         "night":  { "file":  "scenes/dune-bluff-storm.js", "fn":  "duneBluffStormArt", "opts":  { "time":  "night" } },
+                                         "fx":  [],
+                                         "nightFx":  []
+                                     },
+                                     {
+                                         "id":  "great-circle-earthworks",
+                                         "name":  "Great Circle earthworks",
+                                         "scene":  { "file":  "scenes/great-circle-earthworks.js", "fn":  "greatCircleEarthworksArt", "opts":  {} },
+                                         "night":  { "file":  "scenes/great-circle-earthworks.js", "fn":  "greatCircleEarthworksArt", "opts":  { "time":  "night" } },
+                                         "fx":  [ { "leaves":  [ 1400, 270, 2500, 400 ] } ],
+                                         "nightFx":  []
+                                     },
+                                     {
+                                         "id":  "hocking-hills-falls",
+                                         "name":  "Hocking Hills falls",
+                                         "scene":  { "file":  "scenes/hocking-hills-falls.js", "fn":  "hockingHillsFallsArt", "opts":  {} },
+                                         "night":  { "file":  "scenes/hocking-hills-falls.js", "fn":  "hockingHillsFallsArt", "opts":  { "time":  "night" } },
+                                         "fx":  [ { "leaves":  [ 780, 60, 1640, 330 ] } ],
+                                         "nightFx":  []
+                                     },
+                                     {
+                                         "id":  "guggenheim-fifth-avenue",
+                                         "name":  "Guggenheim, Fifth Avenue",
+                                         "scene":  { "file":  "scenes/guggenheim-fifth-avenue.js", "fn":  "guggenheimFifthAvenueArt", "opts":  {} },
+                                         "night":  { "file":  "scenes/guggenheim-fifth-avenue.js", "fn":  "guggenheimFifthAvenueArt", "opts":  { "time":  "night" } },
+                                         "fx":  [ { "leaves":  [ 660, 270, 900, 420 ] } ],
+                                         "nightFx":  []
+                                     },
+                                     {
+                                         "id":  "fox-squirrel-stump",
+                                         "name":  "Squirrel's Nut Stash",
+                                         "scene":  { "file":  "scenes/fox-squirrel-stump.js", "fn":  "foxSquirrelStumpArt", "opts":  {} },
+                                         "night":  { "file":  "scenes/fox-squirrel-stump.js", "fn":  "foxSquirrelStumpArt", "opts":  { "time":  "night" } },
+                                         "fx":  [ { "leaves":  [ 700, 0, 1900, 200 ] } ],
+                                         "nightFx":  []
+                                     },
+                                     {
+                                         "id":  "capistrano-mission-swallows",
+                                         "name":  "Capistrano mission",
+                                         "scene":  { "file":  "scenes/capistrano-mission-swallows.js", "fn":  "capistranoMissionSwallowsArt", "opts":  {} },
+                                         "night":  { "file":  "scenes/capistrano-mission-swallows.js", "fn":  "capistranoMissionSwallowsArt", "opts":  { "time":  "night" } },
+                                         "fx":  [],
+                                         "nightFx":  []
+                                     },
+                                     {
+                                         "id":  "courthouse-clock-dusk",
+                                         "name":  "Courthouse square clock",
+                                         "scene":  { "file":  "scenes/courthouse-clock-dusk.js", "fn":  "courthouseClockDuskArt", "opts":  {} },
+                                         "night":  { "file":  "scenes/courthouse-clock-dusk.js", "fn":  "courthouseClockDuskArt", "opts":  { "time":  "night" } },
+                                         "fx":  [ { "leaves":  [ 0, 250, 820, 460 ] } ],
+                                         "nightFx":  []
                                      }
                                  ]
                   },
@@ -287,6 +375,86 @@
                                          "nightFx":  [
 
                                                      ]
+                                     },
+                                     {
+                                         "id":  "hollow-mill-pond",
+                                         "name":  "Hollow mill pond",
+                                         "scene":  {
+                                                       "file":  "scenes/hollow-mill-pond.js",
+                                                       "fn":  "hollowMillPondArt",
+                                                       "opts":  {
+
+                                                                }
+                                                   },
+                                         "night":  {
+                                                       "file":  "scenes/hollow-mill-pond.js",
+                                                       "fn":  "hollowMillPondArt",
+                                                       "opts":  {
+                                                                    "time":  "night"
+                                                                }
+                                                   },
+                                         "fx":  [
+
+                                                ],
+                                         "nightFx":  [
+
+                                                     ]
+                                     },
+                                     {
+                                         "id":  "roadside-pumpkin-stand",
+                                         "name":  "Roadside pumpkin stand",
+                                         "scene":  { "file":  "scenes/roadside-pumpkin-stand.js", "fn":  "roadsidePumpkinStandArt", "opts":  {} },
+                                         "night":  { "file":  "scenes/roadside-pumpkin-stand.js", "fn":  "roadsidePumpkinStandArt", "opts":  { "time":  "night" } },
+                                         "fx":  [],
+                                         "nightFx":  []
+                                     },
+                                     {
+                                         "id":  "hunters-moon-lake",
+                                         "name":  "Hunter's moon lake",
+                                         "scene":  { "file":  "scenes/hunters-moon-lake.js", "fn":  "huntersMoonLakeArt", "opts":  { "time":  "day" } },
+                                         "night":  { "file":  "scenes/hunters-moon-lake.js", "fn":  "huntersMoonLakeArt", "opts":  {} },
+                                         "fx":  [],
+                                         "nightFx":  []
+                                     },
+                                     {
+                                         "id":  "sleepy-hollow-church",
+                                         "name":  "Sleepy Hollow church",
+                                         "scene":  { "file":  "scenes/sleepy-hollow-church.js", "fn":  "sleepyHollowChurchArt", "opts":  {} },
+                                         "night":  { "file":  "scenes/sleepy-hollow-church.js", "fn":  "sleepyHollowChurchArt", "opts":  { "time":  "night" } },
+                                         "fx":  [ { "leaves":  [ 860, 150, 1200, 390 ] } ],
+                                         "nightFx":  []
+                                     },
+                                     {
+                                         "id":  "carpathian-castle-crag",
+                                         "name":  "Carpathian castle",
+                                         "scene":  { "file":  "scenes/carpathian-castle-crag.js", "fn":  "carpathianCastleCragArt", "opts":  {} },
+                                         "night":  { "file":  "scenes/carpathian-castle-crag.js", "fn":  "carpathianCastleCragArt", "opts":  { "time":  "night" } },
+                                         "fx":  [],
+                                         "nightFx":  []
+                                     },
+                                     {
+                                         "id":  "candy-shop-main-street",
+                                         "name":  "Main Street candy shop",
+                                         "scene":  { "file":  "scenes/candy-shop-main-street.js", "fn":  "candyShopMainStreetArt", "opts":  {} },
+                                         "night":  { "file":  "scenes/candy-shop-main-street.js", "fn":  "candyShopMainStreetArt", "opts":  { "time":  "night" } },
+                                         "fx":  [ { "leaves":  [ 780, 250, 1060, 420 ] } ],
+                                         "nightFx":  []
+                                     },
+                                     {
+                                         "id":  "frost-on-the-pumpkin",
+                                         "name":  "Frost on the pumpkin",
+                                         "scene":  { "file":  "scenes/frost-on-the-pumpkin.js", "fn":  "frostOnThePumpkinArt", "opts":  {} },
+                                         "night":  { "file":  "scenes/frost-on-the-pumpkin.js", "fn":  "frostOnThePumpkinArt", "opts":  { "time":  "night" } },
+                                         "fx":  [],
+                                         "nightFx":  []
+                                     },
+                                     {
+                                         "id":  "bodie-ghost-town",
+                                         "name":  "Bodie ghost town",
+                                         "scene":  { "file":  "scenes/bodie-ghost-town.js", "fn":  "bodieGhostTownArt", "opts":  {} },
+                                         "night":  { "file":  "scenes/bodie-ghost-town.js", "fn":  "bodieGhostTownArt", "opts":  { "time":  "night" } },
+                                         "fx":  [],
+                                         "nightFx":  []
                                      }
                                  ]
                   },
@@ -320,6 +488,62 @@
                                          "nightFx":  [
 
                                                      ]
+                                     },
+                                     {
+                                         "id":  "main-street-thanksgiving",
+                                         "name":  "Village green, Thanksgiving",
+                                         "scene":  { "file":  "scenes/main-street-thanksgiving.js", "fn":  "mainStreetThanksgivingArt", "opts":  {} },
+                                         "night":  { "file":  "scenes/main-street-thanksgiving.js", "fn":  "mainStreetThanksgivingArt", "opts":  { "time":  "night" } },
+                                         "fx":  [],
+                                         "nightFx":  []
+                                     },
+                                     {
+                                         "id":  "cranberry-bog-harvest",
+                                         "name":  "Cranberry bog harvest",
+                                         "scene":  { "file":  "scenes/cranberry-bog-harvest.js", "fn":  "cranberryBogHarvestArt", "opts":  {} },
+                                         "night":  { "file":  "scenes/cranberry-bog-harvest.js", "fn":  "cranberryBogHarvestArt", "opts":  { "time":  "night" } },
+                                         "fx":  [],
+                                         "nightFx":  []
+                                     },
+                                     {
+                                         "id":  "frost-on-the-pumpkin-harvest",
+                                         "name":  "Frost on the pumpkin",
+                                         "scene":  { "file":  "scenes/frost-on-the-pumpkin.js", "fn":  "frostOnThePumpkinArt", "opts":  { "carved":  false } },
+                                         "night":  { "file":  "scenes/frost-on-the-pumpkin.js", "fn":  "frostOnThePumpkinArt", "opts":  { "time":  "night", "carved":  false } },
+                                         "fx":  [],
+                                         "nightFx":  []
+                                     },
+                                     {
+                                         "id":  "harvest-porch-cat",
+                                         "name":  "Harvest porch cat",
+                                         "scene":  { "file":  "scenes/harvest-porch-cat.js", "fn":  "harvestPorchCatArt", "opts":  {} },
+                                         "night":  { "file":  "scenes/harvest-porch-cat.js", "fn":  "harvestPorchCatArt", "opts":  { "time":  "night" } },
+                                         "fx":  [],
+                                         "nightFx":  []
+                                     },
+                                     {
+                                         "id":  "stone-viaduct-gorge",
+                                         "name":  "Over the river viaduct",
+                                         "scene":  { "file":  "scenes/stone-viaduct-gorge.js", "fn":  "stoneViaductGorgeArt", "opts":  {} },
+                                         "night":  { "file":  "scenes/stone-viaduct-gorge.js", "fn":  "stoneViaductGorgeArt", "opts":  { "time":  "night" } },
+                                         "fx":  [],
+                                         "nightFx":  []
+                                     },
+                                     {
+                                         "id":  "mayflower-plymouth-harbor",
+                                         "name":  "Mayflower at Plymouth",
+                                         "scene":  { "file":  "scenes/mayflower-plymouth-harbor.js", "fn":  "mayflowerPlymouthHarborArt", "opts":  {} },
+                                         "night":  { "file":  "scenes/mayflower-plymouth-harbor.js", "fn":  "mayflowerPlymouthHarborArt", "opts":  { "time":  "night" } },
+                                         "fx":  [],
+                                         "nightFx":  []
+                                     },
+                                     {
+                                         "id":  "guggenheim-fifth-avenue",
+                                         "name":  "Fifth Avenue, November",
+                                         "scene":  { "file":  "scenes/guggenheim-fifth-avenue.js", "fn":  "guggenheimFifthAvenueArt", "opts":  {} },
+                                         "night":  { "file":  "scenes/guggenheim-fifth-avenue.js", "fn":  "guggenheimFifthAvenueArt", "opts":  { "time":  "night" } },
+                                         "fx":  [ { "leaves":  [ 660, 270, 900, 420 ] } ],
+                                         "nightFx":  []
                                      }
                                  ]
                   },
